@@ -65,7 +65,7 @@ class SignalPlotWidget(PlotWidget):
         self.axes.plot(fx, py, color='#1f77b4')
         self.axes.axis('tight')
         self.axes.set_aspect('equal')
-        self.axes.autoscale(enable=True)
+        self.axes.autoscale(enable=True) # ???
 
         self.view.draw()
 

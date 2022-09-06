@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 
-import serial.tools.list_ports
+###import serial.tools.list_ports
 
 
 class MainWindow(QWidget):
@@ -25,17 +25,20 @@ class MainWindow(QWidget):
         super().__init__(parent)
 
         self.thread_manager = QThreadPool()
-
+        
         self.stop_flag = False
 
+        """
         self.serial_ports_combo = QComboBox(self)
-        self.serial_ports = serial.tools.list_ports.comports()
+        ###self.serial_ports = serial.tools.list_ports.comports()
         serial_ports_desc = [port.name for port in self.serial_ports]
         serial_ports_desc.insert(0, '-')
         self.serial_ports_combo.addItems(serial_ports_desc)
         self.serial_ports_combo_label = QLabel('Select port', self)
         self.serial_ports_combo_label.setBuddy(self.serial_ports_combo)
-
+        """
+        
+        
         self.amplitude_sensitivity_label = QLabel('Amplitude sensitivity', self)
         self.amplitude_sensitivity_spin = QSpinBox()
         self.amplitude_sensitivity_spin.setRange(0, 200_000)
@@ -48,7 +51,7 @@ class MainWindow(QWidget):
         self.fs_toggle_button.clicked.connect(self.set_signal)
         self.fs_params_label.setBuddy(self.fs_toggle_button)
 
-        signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
+        signal_types = ['-', 'sinus', 'cosinus', 'triangle', 'sawtooth', 'square']
 
         self.fs_signal_form_combo = QComboBox(self)
         self.fs_signal_form_combo.addItems(signal_types)
@@ -81,10 +84,13 @@ class MainWindow(QWidget):
         self.fs_duration_label = QLabel('Duration, sec')
         self.fs_duration_label.setBuddy(self.fs_duration_spin)
 
+        """
         serial_ports_layout = QHBoxLayout()
         serial_ports_layout.addWidget(self.serial_ports_combo_label)
         serial_ports_layout.addWidget(self.serial_ports_combo)
-
+        """
+        
+        
         amplitude_sensitivity_layout = QHBoxLayout()
         amplitude_sensitivity_layout.addWidget(self.amplitude_sensitivity_label)
         amplitude_sensitivity_layout.addWidget(self.amplitude_sensitivity_spin)
@@ -127,7 +133,7 @@ class MainWindow(QWidget):
         self.ss_toggle_button.setCheckable(True)
         self.ss_toggle_button.clicked.connect(self.set_signal)
         self.ss_params_label.setBuddy(self.ss_toggle_button)
-
+        
         self.ss_signal_form_combo_label = QLabel('Signal form', self)
         self.ss_signal_form_combo = QComboBox(self)
         self.ss_signal_form_combo.addItems(signal_types)
@@ -204,11 +210,11 @@ class MainWindow(QWidget):
         self.stop_listening_button = QPushButton('Stop')
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(serial_ports_layout)
+        ###main_layout.addLayout(serial_ports_layout)
         main_layout.addLayout(amplitude_sensitivity_layout)
         main_layout.addLayout(params_layout)
         main_layout.addLayout(plots_layout)
-        # main_layout.addWidget(self.formula_label)
+        #main_layout.addWidget(self.formula_label)
         main_layout.addWidget(self.receive_button)
         main_layout.addWidget(self.stop_listening_button)
 
@@ -218,16 +224,18 @@ class MainWindow(QWidget):
         self.stop_listening_button.clicked.connect(self.set_stop_safely)
 
         self.showMaximized()
-
+        
+    
     def set_stop(self):
         self.stop_flag = True
 
     def set_stop_safely(self):
         self.thread_manager.start(self.set_stop)
-
+    
     def receive_signal(self):
         if self.serial_ports_combo.currentText() == '-':
             return
+            
         else:
             self.stop_flag = False
             generator_name = self.serial_ports_combo.currentText()
@@ -264,10 +272,11 @@ class MainWindow(QWidget):
                     else:
                         self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
                         return
+                        
 
     def receive_signal_safely(self):
         self.thread_manager.start(self.receive_signal)
-
+    
     def set_signal(self):
         if not (self.fs_toggle_button.isChecked() or self.ss_toggle_button.isChecked()):
             self.signal_plot.clear()
@@ -306,6 +315,7 @@ class MainWindow(QWidget):
         elif self.fs_toggle_button.isChecked():
             self.signal_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
             self.spectre_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
+        
 
 
 if __name__ == "__main__":
