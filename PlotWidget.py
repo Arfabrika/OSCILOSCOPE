@@ -27,5 +27,8 @@ class PlotWidget(QWidget):
 
     def clear(self):
         if len(self.axes.lines):
-            self.axes.lines[0].remove()
+            self.axes.clear()
+            self.axes.set_xlabel('Time, s')
+            self.axes.set_ylabel('U, V')
+            self.axes.grid(True)         
             self.view.draw()

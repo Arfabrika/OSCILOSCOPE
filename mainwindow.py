@@ -51,7 +51,7 @@ class MainWindow(QWidget):
         self.fs_toggle_button.clicked.connect(self.set_signal)
         self.fs_params_label.setBuddy(self.fs_toggle_button)
 
-        signal_types = ['-', 'sinus', 'cosinus', 'triangle', 'sawtooth', 'square']
+        signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
 
         self.fs_signal_form_combo = QComboBox(self)
         self.fs_signal_form_combo.addItems(signal_types)
@@ -231,6 +231,7 @@ class MainWindow(QWidget):
 
     def set_stop_safely(self):
         self.thread_manager.start(self.set_stop)
+    
     
     def receive_signal(self):
         if self.serial_ports_combo.currentText() == '-':
