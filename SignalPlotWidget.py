@@ -46,9 +46,33 @@ class SignalPlotWidget(PlotWidget):
 
         x, y = wave_generators[signal_name](amplitude, frequency, sample_rate, duration)
 
+        self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency, sample_rate, duration))
+
         self.axes.plot(x, y, color='#1f77b4')
 
         self.view.draw()
+
+    def generate_formula(self, fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+                               ss_form_name = '-', ss_amplitude =1, ss_frequency=1, ss_sample_rate=1, ss_duration=1):
+        form = 'Formula is: '
+        """
+        if (ss_form_name != '-' and fs_form_name != '-'):
+             form = 'a'
+        elif (ss_form_name != '-'):
+            form = 'b'
+        elif (fs_form_name != '-'):
+        """
+        if (fs_form_name == 'sine'):
+            form += str(fs_amplitude) + 'sin(' + str(fs_frequency) + 't)'
+        elif (fs_form_name == 'cosine'):
+            form += str(fs_amplitude) +'cos(' + str(fs_frequency) + 't)'
+        elif (fs_form_name == 'square'):
+            form += r'$\frac{4\cdot'+ str(fs_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{sin(k\cdot' + str(fs_frequency) +  r'\cdot t)}{k}$'   
+        elif (fs_form_name == 'triangle'):
+            form += r'$\frac{8\cdot'+ str(fs_amplitude) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(fs_frequency) + r'\cdot t)}{k^{2}}$'
+        else:
+            form += r'$\frac{' + str(fs_amplitude) + r'}{2} - \frac{'+ str(fs_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(fs_frequency) +  r'\cdot t)$'   
+        return form
 
     def polyharmonic(self, fs_signal_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
                      ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration):
@@ -66,6 +90,8 @@ class SignalPlotWidget(PlotWidget):
         self.axes.axis('tight')
         self.axes.set_aspect('equal')
         self.axes.autoscale(enable=True) # ???
+        self.axes.set_title(self.generate_formula(fs_signal_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+                     ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration))
 
         self.view.draw()
 

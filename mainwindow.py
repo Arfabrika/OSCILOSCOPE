@@ -188,8 +188,6 @@ class MainWindow(QWidget):
         ss_duration_input_layout.addWidget(self.ss_duration_label)
         ss_duration_input_layout.addWidget(self.ss_duration_spin)
 
-        # self.formula_label = QLabel()
-
         ss_params_layout.addLayout(ss_switch_layout)
         ss_params_layout.addLayout(ss_signal_form_layout)
         ss_params_layout.addLayout(ss_frequency_input_layout)
@@ -214,7 +212,6 @@ class MainWindow(QWidget):
         main_layout.addLayout(amplitude_sensitivity_layout)
         main_layout.addLayout(params_layout)
         main_layout.addLayout(plots_layout)
-        #main_layout.addWidget(self.formula_label)
         main_layout.addWidget(self.receive_button)
         main_layout.addWidget(self.stop_listening_button)
 
@@ -284,9 +281,6 @@ class MainWindow(QWidget):
             self.spectre_plot.clear()
             return
 
-        # self.formula_label.setText('Formula')
-        # self.formula_label.setWordWrap(True)
-
         amplitude_sensitivity = self.amplitude_sensitivity_spin.value()
 
         fs_form_name = self.fs_signal_form_combo.currentText()
@@ -300,7 +294,7 @@ class MainWindow(QWidget):
         ss_frequency = self.ss_frequency_spin.value()
         ss_sample_rate = self.ss_sample_rate_spin.value()
         ss_duration = self.ss_duration_spin.value()
-
+        
         if self.fs_toggle_button.isChecked() and self.ss_toggle_button.isChecked():
             # self.signal_plot.modulate(amplitude_sensitivity, fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate,
             # fs_duration, ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
@@ -313,9 +307,11 @@ class MainWindow(QWidget):
         elif self.ss_toggle_button.isChecked():
             self.signal_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
             self.spectre_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+            
         elif self.fs_toggle_button.isChecked():
             self.signal_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
             self.spectre_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
+
         
 
 

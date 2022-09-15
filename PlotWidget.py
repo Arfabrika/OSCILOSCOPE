@@ -14,7 +14,7 @@ class PlotWidget(QWidget):
         super().__init__(parent)
 
         #  create widgets
-        self.view = FigureCanvas(Figure(figsize=(5, 3)))
+        self.view = FigureCanvas(Figure(figsize=(8, 6)))
         self.axes = self.view.figure.subplots()
         self.axes.grid(True)
         self.toolbar = NavigationToolbar2QT(self.view, self)
