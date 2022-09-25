@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 
-###import serial.tools.list_ports
+import serial.tools.list_ports
 
 
 class MainWindow(QWidget):
@@ -28,15 +28,16 @@ class MainWindow(QWidget):
         
         self.stop_flag = False
 
-        """
+        
         self.serial_ports_combo = QComboBox(self)
-        ###self.serial_ports = serial.tools.list_ports.comports()
+        self.serial_ports = serial.tools.list_ports.comports()
         serial_ports_desc = [port.name for port in self.serial_ports]
-        serial_ports_desc.insert(0, '-')
+        serial_ports_desc.reverse()
+        # serial_ports_desc.insert(0, '-')
         self.serial_ports_combo.addItems(serial_ports_desc)
         self.serial_ports_combo_label = QLabel('Select port', self)
         self.serial_ports_combo_label.setBuddy(self.serial_ports_combo)
-        """
+        
         
         
         self.amplitude_sensitivity_label = QLabel('Amplitude sensitivity', self)
@@ -84,11 +85,11 @@ class MainWindow(QWidget):
         self.fs_duration_label = QLabel('Duration, sec')
         self.fs_duration_label.setBuddy(self.fs_duration_spin)
 
-        """
+        
         serial_ports_layout = QHBoxLayout()
         serial_ports_layout.addWidget(self.serial_ports_combo_label)
         serial_ports_layout.addWidget(self.serial_ports_combo)
-        """
+        
         
         
         amplitude_sensitivity_layout = QHBoxLayout()
@@ -208,7 +209,7 @@ class MainWindow(QWidget):
         self.stop_listening_button = QPushButton('Stop')
 
         main_layout = QVBoxLayout()
-        ###main_layout.addLayout(serial_ports_layout)
+        main_layout.addLayout(serial_ports_layout)
         main_layout.addLayout(amplitude_sensitivity_layout)
         main_layout.addLayout(params_layout)
         main_layout.addLayout(plots_layout)
@@ -224,6 +225,7 @@ class MainWindow(QWidget):
         
     
     def set_stop(self):
+        print('set stop')
         self.stop_flag = True
 
     def set_stop_safely(self):
@@ -251,13 +253,18 @@ class MainWindow(QWidget):
 
                         data = []
 
-                        print(self.stop_flag)
+                        print('stop flag', self.stop_flag)
 
-                        while not self.stop_flag: # чтение байтов с порта
+                        while not self.stop_flag: # чтение байтов с порта                          
                             ser_bytes = generator_ser.readline()
+                            print('huint', ser_bytes, len(ser_bytes) )
                             if len(ser_bytes) != 0:
-                                data.append(float(ser_bytes))
-                                print(ser_bytes)
+                                try:
+                                    for i in range(0, len(ser_bytes)-1, 2):
+                                        data.append(int.from_bytes(ser_bytes[i:i+2], 'little'))
+                                    print(ser_bytes)
+                                except:
+                                    print('error')
                         else:
                             print("Stop flag:", self.stop_flag)
                             print("Data", data)
