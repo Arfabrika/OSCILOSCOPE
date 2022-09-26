@@ -82,3 +82,4 @@ class SpectrePlotWidget(PlotWidget):
         self.axes.magnitude_spectrum(my, Fs=fs_sample_rate, color='#1f77b4')
 
         self.view.draw()
+
