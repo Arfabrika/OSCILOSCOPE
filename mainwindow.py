@@ -1,4 +1,5 @@
 import sys
+import struct
 
 from PySide6.QtCore import QThreadPool
 
@@ -11,7 +12,8 @@ from PySide6.QtWidgets import (
     QComboBox,
     QLabel,
     QSpinBox,
-    QPushButton
+    QPushButton,
+    QMessageBox
 )
 
 from SignalPlotWidget import SignalPlotWidget
@@ -74,23 +76,37 @@ class MainWindow(QWidget):
         self.fs_amplitude_label = QLabel('Amplitude')
         self.fs_amplitude_label.setBuddy(self.fs_amplitude_spin)
 
+        unit_prefixes = ["Hz", "kHz", "mHz", "nHz"]
+
+        self.unit_prefixes_Hz = QComboBox(self)
+        self.unit_prefixes_Hz.addItems(unit_prefixes)
+        self.unit_prefixes_Hz.setFixedWidth(50)
+
+        self.hiden_widh_1 = QLabel(self)
+        self.hiden_widh_1.setFixedWidth(343)
+
         self.fs_sample_rate_spin = QSpinBox()
         self.fs_sample_rate_spin.setRange(0, 200_000)
         self.fs_sample_rate_spin.setValue(440)
-        self.fs_sample_rate_label = QLabel('Sample rate, Hz')
+        self.fs_sample_rate_spin.setFixedWidth(470)
+        self.fs_sample_rate_label = QLabel('Sample rate')
+        self.fs_sample_rate_label.setFixedWidth(65)
         self.fs_sample_rate_label.setBuddy(self.fs_sample_rate_spin)
+
+        unit_prefixes_sec = ["sec", "msec",]
+        self.unit_prefixes_sec = QComboBox(self)
+        self.unit_prefixes_sec.addItems(unit_prefixes_sec)
+        self.unit_prefixes_sec.setFixedWidth(60)
 
         self.fs_duration_spin = QSpinBox()
         self.fs_duration_spin.setValue(5)
-        self.fs_duration_label = QLabel('Duration, sec')
+        self.fs_duration_spin.setFixedWidth(470)
+        self.fs_duration_label = QLabel('Duration')
         self.fs_duration_label.setBuddy(self.fs_duration_spin)
-
         
         serial_ports_layout = QHBoxLayout()
         serial_ports_layout.addWidget(self.serial_ports_combo_label)
         serial_ports_layout.addWidget(self.serial_ports_combo)
-        
-        
         
         amplitude_sensitivity_layout = QHBoxLayout()
         amplitude_sensitivity_layout.addWidget(self.amplitude_sensitivity_label)
@@ -116,11 +132,16 @@ class MainWindow(QWidget):
 
         fs_sample_rate_input_layout = QHBoxLayout()
         fs_sample_rate_input_layout.addWidget(self.fs_sample_rate_label)
+        fs_sample_rate_input_layout.addWidget(self.unit_prefixes_Hz)
+        fs_sample_rate_input_layout.addWidget(self.hiden_widh_1)
         fs_sample_rate_input_layout.addWidget(self.fs_sample_rate_spin)
 
         fs_duration_input_layout = QHBoxLayout()
         fs_duration_input_layout.addWidget(self.fs_duration_label)
+        fs_duration_input_layout.addWidget(self.unit_prefixes_sec)
+        fs_duration_input_layout.addWidget(self.hiden_widh_1)
         fs_duration_input_layout.addWidget(self.fs_duration_spin)
+
 
         fs_params_layout.addLayout(fs_switch_layout)
         fs_params_layout.addLayout(fs_signal_form_layout)
@@ -303,14 +324,17 @@ class MainWindow(QWidget):
         ss_duration = self.ss_duration_spin.value()
         
         if self.fs_toggle_button.isChecked() and self.ss_toggle_button.isChecked():
-            # self.signal_plot.modulate(amplitude_sensitivity, fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate,
-            # fs_duration, ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-            # self.spectre_plot.modulate(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
-            #                            ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-            self.signal_plot.polyharmonic(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
-                                          ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-            self.spectre_plot.polyharmonic(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
-                                           ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+            self.signal_plot.modulate(amplitude_sensitivity, fs_form_name, fs_frequency, fs_sample_rate,
+            fs_duration, ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+            
+            self.spectre_plot.modulate(amplitude_sensitivity, fs_form_name, fs_frequency, fs_sample_rate, fs_duration,
+                                       ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+
+
+            # self.signal_plot.polyharmonic(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+            #                               ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+            # self.spectre_plot.polyharmonic(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+            #                                ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
         elif self.ss_toggle_button.isChecked():
             self.signal_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
             self.spectre_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
@@ -318,6 +342,8 @@ class MainWindow(QWidget):
         elif self.fs_toggle_button.isChecked():
             self.signal_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
             self.spectre_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
+
+
 
         
 
