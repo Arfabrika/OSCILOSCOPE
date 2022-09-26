@@ -44,9 +44,10 @@ class SignalPlotWidget(PlotWidget):
         
         if signal_name == '-':
             return
+        
         #self.figure.set_size_inches(8, 6)
         #self.view.set_size_inches(8, 6)
-        self.axes.set_xlim(duration)
+        #self.axes.set_xlim(duration)
 
         x, y = wave_generators[signal_name](amplitude, frequency, sample_rate, duration)
 
