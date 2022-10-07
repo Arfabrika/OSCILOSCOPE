@@ -1,6 +1,8 @@
 # This Python file uses the following encoding: utf-8
 from PlotWidget import PlotWidget
 
+import asyncio
+
 from wave import (
     generate_sine_wave,
     generate_cosine_wave,
@@ -11,7 +13,8 @@ from wave import (
     mod_generate_cosine_wave,
     mod_generate_triangle_wave,
     mod_generate_sawtooth_wave,
-    mod_generate_square_wave
+    mod_generate_square_wave,
+    modulating
 )
 
 wave_generators = {
@@ -46,15 +49,33 @@ class SignalPlotWidget(PlotWidget):
             return
         #self.figure.set_size_inches(8, 6)
         #self.view.set_size_inches(8, 6)
-        self.axes.set_xlim(duration)
+        #self.axes.set_xlim(duration)
 
         x, y = wave_generators[signal_name](amplitude, frequency, sample_rate, duration)
 
         self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency, sample_rate, duration))
 
-        self.axes.plot(x, y, color='#1f77b4')
+        # x_points = []
+        # y_points = []
 
+        # i = 0
+
+        # for point in x:
+        #     x_points.append(point)
+        #     y_points.append(y[i])
+
+        #     i += 1
+
+        #     self.axes.plot(x_points, y_points, color='#1f77b4')
+        #     self.view.draw()
+        #     self.view.flush_events()
+
+        
+        self.axes.plot(x, y, color='#1f77b4')
+        
         self.view.draw()
+        self.view.flush_events()
+        
 
     def generate_formula(self, fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
                                ss_form_name = '-', ss_amplitude =1, ss_frequency=1, ss_sample_rate=1, ss_duration=1):
@@ -106,18 +127,11 @@ class SignalPlotWidget(PlotWidget):
 
         self.view.draw()
 
-    def modulate(self, modulation_sensitivity, fs_signal_name, fs_frequency, fs_sample_rate, fs_duration,
-                 ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration):
+    def modulate(self, fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
         self.clear()
 
-        if fs_signal_name == '-' or ss_signal_name == '-':
-            return
+        x, y = modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
 
-        fx, fy = mod_wave_generators[fs_signal_name](fs_frequency, fs_sample_rate, fs_duration)
-        sx, sy = mod_wave_generators[ss_signal_name](ss_frequency, ss_sample_rate, ss_duration)
-
-        my = ss_amplitude * (1 + modulation_sensitivity * fy) * sy
-
-        self.axes.plot(my, color='#1f77b4')
+        self.axes.plot(x, y, color='#1f77b4')
 
         self.view.draw()

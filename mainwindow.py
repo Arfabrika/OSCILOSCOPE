@@ -1,4 +1,5 @@
 import sys
+import struct
 
 from PySide6.QtCore import QThreadPool
 
@@ -16,6 +17,7 @@ from PySide6.QtWidgets import (
 
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
+from amplitudeWindow import AmplitudeWindow
 from signalData import signalData, signalDataArray
 
 import serial.tools.list_ports
@@ -32,6 +34,7 @@ class MainWindow(QWidget):
 
         self.signalDataArray = signalDataArray([])
 
+        self.amplitude_window = None
         
         self.serial_ports_combo = QComboBox(self)
         self.serial_ports = serial.tools.list_ports.comports()
@@ -55,7 +58,12 @@ class MainWindow(QWidget):
         self.fs_toggle_button.setCheckable(True)
         self.fs_toggle_button.clicked.connect(self.set_signal)
         self.fs_params_label.setBuddy(self.fs_toggle_button)
-
+        
+        active_label_layout = QHBoxLayout()
+        active_label_layout.setDirection(QHBoxLayout.RightToLeft)
+        self.active_label = QLabel('Choose signal', self)
+        #self.active_label = QLabel('a', self)
+        active_label_layout.addWidget(self.active_label)
 
         self.fs_signal_form_combo = QComboBox(self)
         self.fs_signal_form_combo.addItems(signal_types)
@@ -92,9 +100,7 @@ class MainWindow(QWidget):
         serial_ports_layout = QHBoxLayout()
         serial_ports_layout.addWidget(self.serial_ports_combo_label)
         serial_ports_layout.addWidget(self.serial_ports_combo)
-        
-        
-        
+               
         amplitude_sensitivity_layout = QHBoxLayout()
         amplitude_sensitivity_layout.addWidget(self.amplitude_sensitivity_label)
         amplitude_sensitivity_layout.addWidget(self.amplitude_sensitivity_spin)
@@ -104,6 +110,7 @@ class MainWindow(QWidget):
         fs_switch_layout = QHBoxLayout()
         fs_switch_layout.addWidget(self.fs_params_label)
         fs_switch_layout.addWidget(self.fs_toggle_button)
+        #fs_switch_layout.addWidget(self.active_label)
 
         fs_signal_form_layout = QHBoxLayout()
         fs_signal_form_layout.addWidget(self.fs_signal_form_combo_label)
@@ -125,12 +132,22 @@ class MainWindow(QWidget):
         fs_duration_input_layout.addWidget(self.fs_duration_label)
         fs_duration_input_layout.addWidget(self.fs_duration_spin)
 
+        fs_signal_buttons_input_layout = QHBoxLayout()
+        self.add_signal_button = QPushButton('Add signal', self)
+        self.edit_signal_button = QPushButton('Edit current signal', self)
+        fs_signal_buttons_input_layout.addWidget(self.add_signal_button)
+        fs_signal_buttons_input_layout.addWidget(self.edit_signal_button)
+
+        
         fs_params_layout.addLayout(fs_switch_layout)
+        fs_params_layout.addLayout(active_label_layout)
+        #fs_params_layout.addWidget(self.active_label)
         fs_params_layout.addLayout(fs_signal_form_layout)
         fs_params_layout.addLayout(fs_frequency_input_layout)
         fs_params_layout.addLayout(fs_amplitude_input_layout)
         fs_params_layout.addLayout(fs_sample_rate_input_layout)
         fs_params_layout.addLayout(fs_duration_input_layout)
+        fs_params_layout.addLayout(fs_signal_buttons_input_layout)
 
         """
         self.ss_params_label = QLabel('Second signal')
@@ -201,8 +218,6 @@ class MainWindow(QWidget):
         ss_params_layout.addLayout(ss_duration_input_layout)
         """
        
-
-        self.add_signal_button = QPushButton('Add signal', self)
         self.signals_label = QLabel('Список сигналов')
         self.signals_list = QComboBox(self)
         #self.signals_list.addItems(signal_types)
@@ -211,16 +226,21 @@ class MainWindow(QWidget):
         signals_list_layout = QHBoxLayout()
         signals_list_layout.addWidget(self.signals_label)
         signals_list_layout.addWidget(self.signals_list)
+        
+        ampl_layout = QVBoxLayout()
+        self.ampl_create_button = QPushButton('Create amplitude modulation')
+        self.ampl_create_button.setCheckable(True)
+        self.ampl_create_button.clicked.connect(self.click_event)
+        ampl_layout.addLayout(signals_list_layout)
+        ampl_layout.addWidget(self.ampl_create_button)
 
-        signals_layout = QVBoxLayout()
-        signals_layout.addLayout(signals_list_layout)
-        signals_layout.addWidget(self.add_signal_button)
 
         params_layout = QHBoxLayout()
         params_layout.addLayout(fs_params_layout)
-        params_layout.addLayout(signals_layout)
+        params_layout.addLayout(ampl_layout)
         #params_layout.addLayout(ss_params_layout)
 
+        
         plots_layout = QHBoxLayout()
         plots_layout.addWidget(self.signal_plot)
         plots_layout.addWidget(self.spectre_plot)
@@ -240,13 +260,13 @@ class MainWindow(QWidget):
         self.setLayout(main_layout)
         self.loadSignals()
         self.add_signal_button.clicked.connect(self.addSignal)
-        self.receive_button.clicked.connect(self.loadSignals)#self.receive_button.clicked.connect(self.receive_signal_safely)
+        self.receive_button.clicked.connect(self.receive_signal_safely)#self.receive_button.clicked.connect(self.loadSignals)#self.receive_button.clicked.connect(self.receive_signal_safely)
         self.stop_listening_button.clicked.connect(self.set_stop_safely)
         self.signals_list.currentIndexChanged.connect(self.showSignals)
+        self.edit_signal_button.clicked.connect(self.editSignal)
+        #self.fs_toggle_button.clicked.connect(self.changeSignalActivity)
 
         self.showMaximized()
-        
-
 
     def addSignal(self):
         form_name = self.fs_signal_form_combo.currentText()
@@ -254,7 +274,8 @@ class MainWindow(QWidget):
         frequency = self.fs_frequency_spin.value()
         sample_rate = self.fs_sample_rate_spin.value()
         duration = self.fs_duration_spin.value()
-        self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, sample_rate, duration))
+        self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, sample_rate, duration, False))
+        self.loadSignals()
     
     def loadSignals(self):  
         self.signals_list.clear()      
@@ -265,6 +286,25 @@ class MainWindow(QWidget):
             for i in range(len(data)):
                 self.signals_list.addItem('Signal ' + str(i + 1))
             self.signals_list.addItem('New signal')
+
+    def editSignal(self):
+        form_name = self.fs_signal_form_combo.currentText()
+        amplitude = self.fs_amplitude_spin.value()
+        frequency = self.fs_frequency_spin.value()
+        sample_rate = self.fs_sample_rate_spin.value()
+        duration = self.fs_duration_spin.value()
+        curInd = self.signals_list.currentIndex()
+        if ((curInd != self.signalDataArray.getArraySize()) 
+        and (curInd != -1)):
+            self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, sample_rate, duration), curInd)
+            self.loadSignals()
+
+    def changeSignalActivity(self):
+        curInd = self.signals_list.currentIndex()
+        if ((curInd != self.signalDataArray.getArraySize()) 
+        and (curInd != -1)):
+           self.signalDataArray.array[curInd].changeActivity() 
+            
     
     def showSignals(self):
         if ((self.signals_list.currentIndex() == 0 and self.signalDataArray.getArraySize() == 0)
@@ -280,10 +320,16 @@ class MainWindow(QWidget):
             self.fs_amplitude_spin.setValue(curSignal[1])
             self.fs_duration_spin.setValue(curSignal[4])
             self.fs_frequency_spin.setValue(curSignal[2])
-            self.fs_sample_rate_spin.setValue(curSignal[3])   
+            self.fs_sample_rate_spin.setValue(curSignal[3]) 
+            
+            if curSignal[5] == True:
+                self.active_label.setText("Signal is active") 
+            else:
+                self.active_label.setText("Signal is inactive")
+            
     
     def set_stop(self):
-        print('set stop')
+        #print('set stop')
         self.stop_flag = True
 
     def set_stop_safely(self):
@@ -297,6 +343,10 @@ class MainWindow(QWidget):
         else:
             self.stop_flag = False
             generator_name = self.serial_ports_combo.currentText()
+
+            self.signal_plot.clear()
+            self.spectre_plot.clear()
+
             print(generator_name)
 
             for port in self.serial_ports:
@@ -311,18 +361,26 @@ class MainWindow(QWidget):
 
                         data = []
 
-                        print('stop flag', self.stop_flag)
+                        #print('stop flag', self.stop_flag)
 
                         while not self.stop_flag: # чтение байтов с порта                          
-                            ser_bytes = generator_ser.readline()
-                            print('huint', ser_bytes, len(ser_bytes) )
+                            ser_bytes = generator_ser.read(4)
+                            # print('huint', ser_bytes, len(ser_bytes) )
                             if len(ser_bytes) != 0:
                                 try:
-                                    for i in range(0, len(ser_bytes)-1, 2):
-                                        data.append(int.from_bytes(ser_bytes[i:i+2], 'little'))
-                                    print(ser_bytes)
-                                except:
-                                    print('error')
+                                    data.append(struct.unpack('f', ser_bytes)[0])
+                                    # print(ser_bytes)
+                                except Exception as e:
+                                    print('error', str(e))
+                            self.signal_plot.axes.clear() # fixed
+                            self.signal_plot.axes.grid(True)
+                            self.spectre_plot.axes.magnitude_spectrum(data, color='#1f77b4')
+                            
+                            self.signal_plot.axes.plot(data, color='#1f77b4')
+                            self.signal_plot.view.draw()
+                            self.spectre_plot.view.draw()
+                            
+
                         else:
                             print("Stop flag:", self.stop_flag)
                             print("Data", data)
@@ -339,45 +397,99 @@ class MainWindow(QWidget):
 
     def receive_signal_safely(self):
         self.thread_manager.start(self.receive_signal)
-    
+
+    def ok_button_clicked(self):
+        ind_fs = self.amplitude_window.fs_signals_list.currentIndex()
+        ind_ss = self.amplitude_window.ss_signals_list.currentIndex()
+        signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
+        signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
+        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
+        self.spectre_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
+
+
+
+    def click_event(self):
+
+        self.amplitude_window = AmplitudeWindow(self.signalDataArray)
+        self.amplitude_window.show()
+        self.amplitude_window.ok_button.clicked.connect(self.ok_button_clicked)
+        
+
+        #self.amplitude_window.show()
+        #i = self.amplitude_window.getSignal_fs()
+        #print(i)
+        
+        
+        # if not self.ampl_create_button.isChecked():
+        #     self.signal_plot.clear()
+        #     self.spectre_plot.clear() 
+        #     return
+
+        # curInd = self.signals_list.currentIndex()
+        # if (not(curInd != self.signalDataArray.getArraySize()) 
+        # and not(curInd != -1)):
+        #     return
+
+        # fs_amplitude = self.fs_amplitude_spin.value()
+        # fs_frequency = self.fs_frequency_spin.value()
+        # fs_sample_rate = self.fs_sample_rate_spin.value()
+        # fs_duration = self.fs_duration_spin.value()
+
+        # ss_frequency = self.signalDataArray.array[curInd].frequency
+        # ss_amplitude= self.signalDataArray.array[curInd].amplitude
+
+
+        # self.signal_plot.modulate(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        # self.spectre_plot.modulate(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+
     def set_signal(self):
-        if not (self.fs_toggle_button.isChecked() or self.ss_toggle_button.isChecked()):
-            self.signal_plot.clear()
-            self.spectre_plot.clear()
-            return
+        self.signalDataArray.array[self.signals_list.currentIndex()].changeActivity()
+        if self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True:
+            self.active_label.setText("Signal is active")
+            """
+            if not (self.fs_toggle_button.isChecked()):# or self.ss_toggle_button.isChecked()):
+                self.signal_plot.clear()
+                self.spectre_plot.clear()
+                return
+            """
 
-        amplitude_sensitivity = self.amplitude_sensitivity_spin.value()
+            amplitude_sensitivity = self.amplitude_sensitivity_spin.value()
 
-        fs_form_name = self.fs_signal_form_combo.currentText()
-        fs_amplitude = self.fs_amplitude_spin.value()
-        fs_frequency = self.fs_frequency_spin.value()
-        fs_sample_rate = self.fs_sample_rate_spin.value()
-        fs_duration = self.fs_duration_spin.value()
-        """
-        ss_form_name = self.ss_signal_form_combo.currentText()
-        ss_amplitude = self.ss_amplitude_spin.value()
-        ss_frequency = self.ss_frequency_spin.value()
-        ss_sample_rate = self.ss_sample_rate_spin.value()
-        ss_duration = self.ss_duration_spin.value()
-        """
-        """
-        if self.fs_toggle_button.isChecked() and self.ss_toggle_button.isChecked():
-            # self.signal_plot.modulate(amplitude_sensitivity, fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate,
-            # fs_duration, ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-            # self.spectre_plot.modulate(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
-            #                            ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-            self.signal_plot.polyharmonic(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
-                                          ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-            self.spectre_plot.polyharmonic(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
-                                           ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-        elif self.ss_toggle_button.isChecked():
-            self.signal_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-            self.spectre_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
-         el"""   
-        if self.fs_toggle_button.isChecked():
+            fs_form_name = self.fs_signal_form_combo.currentText()
+            fs_amplitude = self.fs_amplitude_spin.value()
+            fs_frequency = self.fs_frequency_spin.value()
+            fs_sample_rate = self.fs_sample_rate_spin.value()
+            fs_duration = self.fs_duration_spin.value()
+            """
+            ss_form_name = self.ss_signal_form_combo.currentText()
+            ss_amplitude = self.ss_amplitude_spin.value()
+            ss_frequency = self.ss_frequency_spin.value()
+            ss_sample_rate = self.ss_sample_rate_spin.value()
+            ss_duration = self.ss_duration_spin.value()
+            """
+            """
+            if self.fs_toggle_button.isChecked() and self.ss_toggle_button.isChecked():
+                # self.signal_plot.modulate(amplitude_sensitivity, fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate,
+                # fs_duration, ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+                # self.spectre_plot.modulate(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+                #                            ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+                self.signal_plot.polyharmonic(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+                                            ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+                self.spectre_plot.polyharmonic(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+                                            ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+            elif self.ss_toggle_button.isChecked():
+                self.signal_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+                self.spectre_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+            el"""   
+            #if self.fs_toggle_button.isChecked():
             self.signal_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
             self.spectre_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
+        else:
+            self.active_label.setText("Signal is inactive")
 
+            #rewrite clear part
+            self.signal_plot.clear()
+            self.spectre_plot.clear()
         
 
 

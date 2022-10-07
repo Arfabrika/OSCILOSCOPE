@@ -11,7 +11,8 @@ from wave import (
     mod_generate_cosine_wave,
     mod_generate_triangle_wave,
     mod_generate_sawtooth_wave,
-    mod_generate_square_wave
+    mod_generate_square_wave,
+    specter_modulating
 )
 
 wave_generators = {
@@ -34,7 +35,7 @@ mod_wave_generators = {
 class SpectrePlotWidget(PlotWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-
+        self.event_loop = self
         self.axes.set_xlabel('Frequency, Hz')
         self.axes.set_ylabel('Magnitude')
         self.axes.grid(True)
@@ -67,18 +68,11 @@ class SpectrePlotWidget(PlotWidget):
 
         self.view.draw()
 
-    def modulate(self, modulation_sensitivity, fs_signal_name, fs_frequency, fs_sample_rate, fs_duration,
-                 ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration):
+    def modulate(self, fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
         self.clear()
 
-        if fs_signal_name == '-' or ss_signal_name == '-':
-            return
+        x, y = specter_modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
 
-        fx, fy = mod_wave_generators[fs_signal_name](fs_frequency, fs_sample_rate, fs_duration)
-        sx, sy = mod_wave_generators[ss_signal_name](ss_frequency, ss_sample_rate, ss_duration)
-
-        my = ss_amplitude * (1 + modulation_sensitivity * fy) * sy
-
-        self.axes.magnitude_spectrum(my, Fs=fs_sample_rate, color='#1f77b4')
+        self.axes.plot(x, y, color='#1f77b4')
 
         self.view.draw()

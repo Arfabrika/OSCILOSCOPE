@@ -70,3 +70,32 @@ def mod_generate_square_wave(freq, sample_rate, duration):
     frequencies = x * freq
     y = signal.square(frequencies * (2 * np.pi))
     return x, y
+
+
+def modulating (fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
+    x = np.linspace(0, fs_duration, fs_sample_rate * fs_duration, endpoint=False)
+    y = []
+
+    t1 = (2 * np.pi) / (1 / ss_frequency)
+    t2 = (2 * np.pi) / (1 / fs_frequency)
+
+    for point in x:
+        y.append((fs_amplitude + ss_amplitude * np.cos(t1 * point)) * np.cos(t2 * point))
+
+    return x, y
+
+def specter_modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
+    x = np.linspace(0, fs_duration, fs_sample_rate * fs_duration, endpoint=False)
+    y = []
+
+    t1 = (2 * np.pi) / (1 / ss_frequency)
+    t2 = (2 * np.pi) / (1 / fs_frequency)
+
+    for point in x:
+       y.append(0)
+    index = len(x) // 2
+
+    y[index] = fs_amplitude * np.cos(t2 * point)
+    y[index + len(x) // 6] = (fs_amplitude + (ss_amplitude/fs_amplitude) / 2) * np.cos((t2 + t1) * point)
+    y[index - len(x) // 6] = (fs_amplitude + (ss_amplitude / fs_amplitude) / 2) * np.cos((t2 - t1) * point)
+    return x, y

@@ -1,13 +1,20 @@
 class signalData:
-    def __init__(self, signalType, amplitude, frequency, sample_rate, duration):
+    def __init__(self, signalType, amplitude, frequency, sample_rate, duration, isActive = 1):
         self.signalType = signalType
         self.amplitude = amplitude
         self.frequency = frequency
         self.sample_rate = sample_rate
         self.duration = duration
+        self.isActive = isActive
 
     def getData(self):
-        return [self.signalType, self.amplitude, self.frequency, self.sample_rate, self.duration]
+        return [self.signalType, self.amplitude, self.frequency, self.sample_rate, self.duration, self.isActive]
+
+    def changeActivity(self):
+        self.isActive = not self.isActive
+
+    def getActivity(self):
+        return self.isActive
 
 
 class signalDataArray:
@@ -25,3 +32,6 @@ class signalDataArray:
 
     def getArray(self):
         return self.array
+
+    def editSignalByIndex(self, signal, index):
+        self.array[index] = signal
