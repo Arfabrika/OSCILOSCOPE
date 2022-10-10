@@ -22,7 +22,9 @@ from signalData import signalData, signalDataArray
 
 import serial.tools.list_ports
 
-signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
+from summationWindow import SummationWindow
+
+signal_types = ['-', 'sine', 'cos', 'triangle', 'sawtooth', 'square']
 
 class MainWindow(QWidget):
     def __init__(self, parent=None):
@@ -35,6 +37,8 @@ class MainWindow(QWidget):
         self.signalDataArray = signalDataArray([])
 
         self.amplitude_window = None
+
+        self.summation_window = None
         
         self.serial_ports_combo = QComboBox(self)
         self.serial_ports = serial.tools.list_ports.comports()
@@ -62,7 +66,7 @@ class MainWindow(QWidget):
         active_label_layout = QHBoxLayout()
         active_label_layout.setDirection(QHBoxLayout.RightToLeft)
         self.active_label = QLabel('Choose signal', self)
-        #self.active_label = QLabel('a', self)
+        #self.active_label = QLabel('a', self) крип, крипочек
         active_label_layout.addWidget(self.active_label)
 
         self.fs_signal_form_combo = QComboBox(self)
@@ -230,9 +234,13 @@ class MainWindow(QWidget):
         ampl_layout = QVBoxLayout()
         self.ampl_create_button = QPushButton('Create amplitude modulation')
         self.ampl_create_button.setCheckable(True)
-        self.ampl_create_button.clicked.connect(self.click_event)
+        self.ampl_create_button.clicked.connect(self.click_amplitude_event)
+        self.sum_create_button = QPushButton('Create summation modulation')
+        self.sum_create_button.setCheckable(True)
+        self.sum_create_button.clicked.connect(self.click_sum_event)
         ampl_layout.addLayout(signals_list_layout)
         ampl_layout.addWidget(self.ampl_create_button)
+        ampl_layout.addWidget(self.sum_create_button)
 
 
         params_layout = QHBoxLayout()
@@ -397,33 +405,24 @@ class MainWindow(QWidget):
 
     def receive_signal_safely(self):
         self.thread_manager.start(self.receive_signal)
-    
-    def click_event(self):
 
-        self.amplitude_window = AmplitudeWindow()
+    def ok_button_clicked(self):
+        ind_fs = self.amplitude_window.fs_signals_list.currentIndex()
+        ind_ss = self.amplitude_window.ss_signals_list.currentIndex()
+        signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
+        signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
+        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
+        self.spectre_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
+
+    def click_amplitude_event(self):
+        self.amplitude_window = AmplitudeWindow(self.signalDataArray)
         self.amplitude_window.show()
-        
-        # if not self.ampl_create_button.isChecked():
-        #     self.signal_plot.clear()
-        #     self.spectre_plot.clear() 
-        #     return
-
-        # curInd = self.signals_list.currentIndex()
-        # if (not(curInd != self.signalDataArray.getArraySize()) 
-        # and not(curInd != -1)):
-        #     return
-
-        # fs_amplitude = self.fs_amplitude_spin.value()
-        # fs_frequency = self.fs_frequency_spin.value()
-        # fs_sample_rate = self.fs_sample_rate_spin.value()
-        # fs_duration = self.fs_duration_spin.value()
-
-        # ss_frequency = self.signalDataArray.array[curInd].frequency
-        # ss_amplitude= self.signalDataArray.array[curInd].amplitude
-
-
-        # self.signal_plot.modulate(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
-        # self.spectre_plot.modulate(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        self.amplitude_window.ok_button.clicked.connect(self.ok_button_clicked)
+    
+    def click_sum_event(self):
+        self.summation_window = SummationWindow(self.signalDataArray)
+        self.summation_window.show()
+        self.summation_window.ok_button.clicked.connect(self.ok_button_clicked)
 
     def set_signal(self):
         self.signalDataArray.array[self.signals_list.currentIndex()].changeActivity()
@@ -481,3 +480,4 @@ if __name__ == "__main__":
     w = MainWindow()
     w.show()
     sys.exit(app.exec())
+
