@@ -3,17 +3,20 @@ from PySide6.QtWidgets import (
     QLabel,
     QComboBox,
     QVBoxLayout,
-    QHBoxLayout
+    QHBoxLayout,
+    QPushButton
 )
 
 class AmplitudeWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-
+    def __init__(self, signalDataArray, parent=None):
+        super().__init__(parent)
+        self.signalDataArray = signalDataArray
+        
         self.fs_signals_label = QLabel('Основной сигнал')
         self.fs_signals_list = QComboBox(self)
         #self.signals_list.addItems(signal_types)
         self.fs_signals_label.setBuddy(self.fs_signals_list)
+        self.fs_signals_list.currentIndexChanged.connect(self.showSignalInfo_fs)
 
         fs_signals_layout = QHBoxLayout()
         fs_signals_layout.addWidget(self.fs_signals_label)
@@ -71,6 +74,7 @@ class AmplitudeWindow(QWidget):
         self.ss_signals_list = QComboBox(self)
         #self.signals_list.addItems(signal_types)
         self.ss_signals_label.setBuddy(self.ss_signals_list)
+        self.ss_signals_list.currentIndexChanged.connect(self.showSignalInfo_ss)
 
         ss_signals_layout = QHBoxLayout()
         ss_signals_layout.addWidget(self.ss_signals_label)
@@ -124,10 +128,60 @@ class AmplitudeWindow(QWidget):
         ss_signal.addLayout(ss_sample_rate_layout)
         ss_signal.addLayout(ss_duration_layout)
 
-        main_window = QHBoxLayout()
+        self.ok_button = QPushButton('Create plots')
+        #self.ok_button.clicked.connect(self.ok_button_clicked)
 
-        main_window.addLayout(fs_signal)
-        main_window.addLayout(ss_signal)
+        signal_layout = QHBoxLayout()
 
-        self.setLayout(main_window)
+        signal_layout.addLayout(fs_signal)
+        signal_layout.addLayout(ss_signal)
+
+        main_layout = QVBoxLayout()
+
+        main_layout.addLayout(signal_layout)
+        main_layout.addWidget(self.ok_button)
+
+        self.setLayout(main_layout)
+        self.setSignals()
+
+    def setSignals(self):
+        data = self.signalDataArray.getArray()
+        if len(data) == 0:
+            self.fs_signals_list.addItem("No signals")
+            self.ss_signals_list.addItem("No signals")
+        else:
+            for i in range(len(data)):
+                self.fs_signals_list.addItem('Signal ' + str(i + 1))
+                self.ss_signals_list.addItem('Signal ' + str(i + 1))
+
+    def showSignalInfo_fs(self):
+       curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
+
+       self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
+       self.fs_duration_spin.setText(str(curSignal_fs[4]))
+       self.fs_frequency_spin.setText(str(curSignal_fs[2]))
+       self.fs_sample_rate_spin.setText(str(curSignal_fs[3]))
+       self.fs_signal_form_combo.setText(curSignal_fs[0])
+
+    def showSignalInfo_ss(self):
+       curSignal_ss = self.signalDataArray.getSignalByIndex(self.ss_signals_list.currentIndex()).getData() 
+
+       self.ss_amplitude_spin.setText(str(curSignal_ss[1]))
+       self.ss_duration_spin.setText(str(curSignal_ss[4]))
+       self.ss_frequency_spin.setText(str(curSignal_ss[2]))
+       self.ss_sample_rate_spin.setText(str(curSignal_ss[3]))
+       self.ss_signal_form_combo.setText(curSignal_ss[0])
+
+    def getSignal_ss(self):
+        return self.ss_signals_list.currentIndex()
+
+    def getSignal_fs(self):
+        return self.fs_signals_list.currentIndex()
+    """
+    def ok_button_clicked(self):
+        print("Ok clicked")
+        self.parent().signals_label.setText("AAA")
+    """
+
+
 
