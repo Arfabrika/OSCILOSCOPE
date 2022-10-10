@@ -96,6 +96,6 @@ def specter_modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, 
     index = len(x) // 2
 
     y[index] = fs_amplitude * np.cos(t2 * point)
-    y[index + len(x) // 6] = (fs_amplitude + (ss_amplitude/fs_amplitude) / 2) * np.cos((t2 + t1) * point)
-    y[index - len(x) // 6] = (fs_amplitude + (ss_amplitude / fs_amplitude) / 2) * np.cos((t2 - t1) * point)
+    y[index + len(x) // 6] = (fs_amplitude * (ss_amplitude / fs_amplitude) / 2) * np.cos((t2 + t1) * point)
+    y[index - len(x) // 6] = (fs_amplitude * (ss_amplitude / fs_amplitude) / 2) * np.cos((t2 - t1) * point)
     return x, y
