@@ -34,3 +34,4 @@ class PlotWidget(QWidget):
             self.axes.set_ylabel('U, V')
             self.axes.grid(True)         
             self.view.draw()
+
