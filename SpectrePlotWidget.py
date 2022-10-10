@@ -73,6 +73,19 @@ class SpectrePlotWidget(PlotWidget):
 
         x, y = specter_modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
 
-        self.axes.plot(x, y, color='#1f77b4')
+        i = 0
 
-        self.view.draw()
+        for point in x:
+
+            i += 1
+
+            if i % 40 == 0:
+                self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
+
+
+        # self.axes.plot(x, y, color='#1f77b4')
+
+        # self.view.draw()
+
