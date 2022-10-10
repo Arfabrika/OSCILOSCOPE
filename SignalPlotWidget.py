@@ -47,34 +47,26 @@ class SignalPlotWidget(PlotWidget):
         
         if signal_name == '-':
             return
-        #self.figure.set_size_inches(8, 6)
-        #self.view.set_size_inches(8, 6)
-        #self.axes.set_xlim(duration)
 
         x, y = wave_generators[signal_name](amplitude, frequency, sample_rate, duration)
 
         self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency, sample_rate, duration))
 
-        # x_points = []
-        # y_points = []
+        x_points = []
+        y_points = []
 
-        # i = 0
+        i = 0
 
-        # for point in x:
-        #     x_points.append(point)
-        #     y_points.append(y[i])
+        for point in x:
+            x_points.append(point)
+            y_points.append(y[i])
 
-        #     i += 1
+            i += 1
 
-        #     self.axes.plot(x_points, y_points, color='#1f77b4')
-        #     self.view.draw()
-        #     self.view.flush_events()
-
-        
-        self.axes.plot(x, y, color='#1f77b4')
-        
-        self.view.draw()
-        self.view.flush_events()
+            if i % 40 == 0:
+                self.axes.plot(x_points, y_points, color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
         
 
     def generate_formula(self, fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
@@ -91,6 +83,7 @@ class SignalPlotWidget(PlotWidget):
             form += r'$\frac{8\cdot'+ str(fs_amplitude) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(fs_frequency) + r'\cdot t)}{k^{2}}$'
         else:
             form += r'$\frac{' + str(fs_amplitude) + r'}{2} - \frac{'+ str(fs_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(fs_frequency) +  r'\cdot t)$'
+        
         if (ss_form_name != '-'):
             form += ' + '
             if (ss_form_name == 'sine'):
@@ -102,9 +95,10 @@ class SignalPlotWidget(PlotWidget):
             elif (ss_form_name == 'triangle'):
                 form += r'$\frac{8\cdot'+ str(ss_amplitude) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(ss_frequency) + r'\cdot t)}{k^{2}}$'
             else:
-                form += r'$\frac{' + str(ss_amplitude) + r'}{2} - \frac{'+ str(ss_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(ss_frequency) +  r'\cdot t)$'
-              
+                form += r'$\frac{' + str(ss_amplitude) + r'}{2} - \frac{'+ str(ss_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(ss_frequency) +  r'\cdot t)$'            
+        
         return form
+
 
     def polyharmonic(self, fs_signal_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
                      ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration):
@@ -127,11 +121,18 @@ class SignalPlotWidget(PlotWidget):
 
         self.view.draw()
 
+
     def modulate(self, fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
         self.clear()
 
         x, y = modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        i = 0
 
-        self.axes.plot(x, y, color='#1f77b4')
+        for point in x:
 
-        self.view.draw()
+            i += 1
+
+            if i % 40 == 0:
+                self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
