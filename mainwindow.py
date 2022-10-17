@@ -24,7 +24,7 @@ import serial.tools.list_ports
 
 from summationWindow import SummationWindow
 
-signal_types = ['-', 'sine', 'cos', 'triangle', 'sawtooth', 'square']
+signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
 
 class MainWindow(QWidget):
     def __init__(self, parent=None):
@@ -235,7 +235,7 @@ class MainWindow(QWidget):
         self.ampl_create_button = QPushButton('Create amplitude modulation')
         self.ampl_create_button.setCheckable(True)
         self.ampl_create_button.clicked.connect(self.click_amplitude_event)
-        self.sum_create_button = QPushButton('Create summation modulation')
+        self.sum_create_button = QPushButton('Create summation plots')
         self.sum_create_button.setCheckable(True)
         self.sum_create_button.clicked.connect(self.click_sum_event)
         ampl_layout.addLayout(signals_list_layout)
@@ -248,15 +248,42 @@ class MainWindow(QWidget):
         params_layout.addLayout(ampl_layout)
         #params_layout.addLayout(ss_params_layout)
 
-        
+        plot_params_layout = QVBoxLayout()
+        plot_params_scale_x = QVBoxLayout()
+        self.scale_x = QComboBox()
+        self.scale_x.addItems(['0.001', '0.01', '0.1', '1', '10', '100', '1000'])
+        self.scale_x.setCurrentIndex(3)
+        self.scale_x_label = QLabel("Max x scale")
+
+        plot_params_scale_x.addWidget(self.scale_x_label)
+        plot_params_scale_x.addWidget(self.scale_x)
+
+        plot_params_scale_y = QVBoxLayout()
+        self.scale_y = QComboBox()
+        self.scale_y.addItems(['0.001', '0.01', '0.1', '1', '10', '100', '1000'])
+        self.scale_y.setCurrentIndex(3)
+        self.scale_y_label = QLabel("Max y scale")
+
+        plot_params_scale_y.addWidget(self.scale_y_label)
+        plot_params_scale_y.addWidget(self.scale_y)
+
+        plot_params_layout.addLayout(plot_params_scale_x)
+        plot_params_layout.addLayout(plot_params_scale_y)
+        plot_params_layout.addStretch()
+        self.scale_x.currentIndexChanged.connect(self.editScale)
+        self.scale_y.currentIndexChanged.connect(self.editScale)
+
         plots_layout = QHBoxLayout()
+        plots_layout.addLayout(plot_params_layout)
         plots_layout.addWidget(self.signal_plot)
         plots_layout.addWidget(self.spectre_plot)
+        
 
         self.com_error_message = QErrorMessage()
         self.receive_button = QPushButton('Receive')
         self.stop_listening_button = QPushButton('Stop')
 
+        
         main_layout = QVBoxLayout()
         main_layout.addLayout(serial_ports_layout)
         main_layout.addLayout(amplitude_sensitivity_layout)
@@ -268,11 +295,13 @@ class MainWindow(QWidget):
         self.setLayout(main_layout)
         self.loadSignals()
         self.add_signal_button.clicked.connect(self.addSignal)
-        self.receive_button.clicked.connect(self.receive_signal_safely)#self.receive_button.clicked.connect(self.loadSignals)#self.receive_button.clicked.connect(self.receive_signal_safely)
+        self.receive_button.clicked.connect(self.receive_signal_safely)
         self.stop_listening_button.clicked.connect(self.set_stop_safely)
         self.signals_list.currentIndexChanged.connect(self.showSignals)
         self.edit_signal_button.clicked.connect(self.editSignal)
         #self.fs_toggle_button.clicked.connect(self.changeSignalActivity)
+        self.x_scale_value = 1
+        self.y_scale_value = 1
 
         self.showMaximized()
 
@@ -334,6 +363,22 @@ class MainWindow(QWidget):
                 self.active_label.setText("Signal is active") 
             else:
                 self.active_label.setText("Signal is inactive")
+
+    def editScale(self):
+        self.x_scale_value = float(self.scale_x.currentText())
+        self.y_scale_value = float(self.scale_y.currentText())
+        self.signal_plot.clear()
+        self.spectre_plot.clear()
+        #self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
+
+        if self.amplitude_window.isVisible():
+            self.ok_button_clicked()
+            print("in ampl")
+        else:
+            self.signalDataArray.array[self.signals_list.currentIndex()].changeActivity()
+            self.set_signal()
+            print("in common")
+    
             
     
     def set_stop(self):
@@ -400,8 +445,7 @@ class MainWindow(QWidget):
                             return
                     else:
                         self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
-                        return
-                        
+                        return                  
 
     def receive_signal_safely(self):
         self.thread_manager.start(self.receive_signal)
@@ -411,7 +455,7 @@ class MainWindow(QWidget):
         ind_ss = self.amplitude_window.ss_signals_list.currentIndex()
         signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
         signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
+        self.signal_plot.modulate(signal_fs[2], signal_fs[3], self.x_scale_value, signal_ss[1], signal_ss[2], signal_fs[1], self.y_scale_value)
         self.spectre_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
 
     def click_amplitude_event(self):
@@ -425,6 +469,8 @@ class MainWindow(QWidget):
         self.summation_window.ok_button.clicked.connect(self.ok_button_clicked)
 
     def set_signal(self):
+        if self.signalDataArray.getArraySize == 0:
+            return
         self.signalDataArray.array[self.signals_list.currentIndex()].changeActivity()
         if self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True:
             self.active_label.setText("Signal is active")
@@ -463,8 +509,9 @@ class MainWindow(QWidget):
                 self.signal_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
                 self.spectre_plot.plot(ss_form_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
             el"""   
-            #if self.fs_toggle_button.isChecked():
-            self.signal_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
+        #if self.fs_toggle_button.isChecked():
+            self.signal_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate,
+             fs_duration, self.x_scale_value, self.y_scale_value)
             self.spectre_plot.plot(fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
         else:
             self.active_label.setText("Signal is inactive")
@@ -480,4 +527,5 @@ if __name__ == "__main__":
     w = MainWindow()
     w.show()
     sys.exit(app.exec())
+
 
