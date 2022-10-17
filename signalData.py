@@ -13,6 +13,21 @@ class signalData:
     def changeActivity(self):
         self.isActive = not self.isActive
 
+    def getSignaType(self):
+        return self.signalType
+
+    def getAmplitude(self):
+        return self.amplitude
+
+    def getFrequency(self):
+        return self.frequency
+
+    def getSampleRate(self):
+        return self.sample_rate
+
+    def getDuration(self):
+        return self.duration
+
     def getActivity(self):
         return self.isActive
 
