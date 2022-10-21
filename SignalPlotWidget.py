@@ -38,44 +38,54 @@ class SignalPlotWidget(PlotWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.arrays = []
+
         self.axes.set_xlabel('Time, s')
         self.axes.set_ylabel('U, V')
         self.axes.grid(True)
 
-    def plot(self, signal_name, amplitude, frequency, sample_rate, duration):
+    def plot(self, signal_name, amplitude, frequency, sample_rate, duration, x_scale_value = 1, y_scale_value = 1, x_scale_type = 0, y_scale_type = 0):
         self.clear()
-        
+        self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency, sample_rate, duration))
         if signal_name == '-':
             return
-        #self.figure.set_size_inches(8, 6)
-        #self.view.set_size_inches(8, 6)
-        #self.axes.set_xlim(duration)
-
-        x, y = wave_generators[signal_name](amplitude, frequency, sample_rate, duration)
-
-        self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency, sample_rate, duration))
-
-        # x_points = []
-        # y_points = []
-
-        # i = 0
-
-        # for point in x:
-        #     x_points.append(point)
-        #     y_points.append(y[i])
-
-        #     i += 1
-
-        #     self.axes.plot(x_points, y_points, color='#1f77b4')
-        #     self.view.draw()
-        #     self.view.flush_events()
-
         
-        self.axes.plot(x, y, color='#1f77b4')
+        # x scale
+        if x_scale_type == 2:
+            frequency /= 1000000
+            self.axes.set_xlabel('Time, µs')
+        elif x_scale_type == 1:
+            frequency /= 1000
+            self.axes.set_xlabel('Time, ms')
+       
+        # y scale
+        if y_scale_type == 2:
+            amplitude /= 1000000
+            self.axes.set_ylabel('U, µV')
+        elif y_scale_type == 1:
+            amplitude /= 1000
+            self.axes.set_ylabel('U, mV')
         
-        self.view.draw()
-        self.view.flush_events()
-        
+        x, y = wave_generators[signal_name](amplitude, frequency, sample_rate, x_scale_value)     
+
+        x_points = []
+        y_points = []
+        #self.axes.plot(x, y, color='#1f77b4')
+        self.axes.set_xlim(-x_scale_value, x_scale_value)
+        self.axes.set_ylim(-y_scale_value, y_scale_value)
+        #self.view.draw()
+        i = 0
+        checkvalue = len(x) / 20 
+        for point in x:
+            x_points.append(point)
+            y_points.append(y[i])
+            
+            i += 1
+
+            if i % (checkvalue) == 0:
+                self.axes.plot(x_points, y_points, color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()      
 
     def generate_formula(self, fs_form_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
                                ss_form_name = '-', ss_amplitude =1, ss_frequency=1, ss_sample_rate=1, ss_duration=1):
@@ -91,6 +101,7 @@ class SignalPlotWidget(PlotWidget):
             form += r'$\frac{8\cdot'+ str(fs_amplitude) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(fs_frequency) + r'\cdot t)}{k^{2}}$'
         else:
             form += r'$\frac{' + str(fs_amplitude) + r'}{2} - \frac{'+ str(fs_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(fs_frequency) +  r'\cdot t)$'
+        
         if (ss_form_name != '-'):
             form += ' + '
             if (ss_form_name == 'sine'):
@@ -102,36 +113,132 @@ class SignalPlotWidget(PlotWidget):
             elif (ss_form_name == 'triangle'):
                 form += r'$\frac{8\cdot'+ str(ss_amplitude) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(ss_frequency) + r'\cdot t)}{k^{2}}$'
             else:
-                form += r'$\frac{' + str(ss_amplitude) + r'}{2} - \frac{'+ str(ss_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(ss_frequency) +  r'\cdot t)$'
-              
+                form += r'$\frac{' + str(ss_amplitude) + r'}{2} - \frac{'+ str(ss_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(ss_frequency) +  r'\cdot t)$'            
+        
         return form
 
+
     def polyharmonic(self, fs_signal_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
-                     ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration):
+                     ss_signal_name='', ss_amplitude=1, ss_frequency=1, ss_sample_rate=1, ss_duration=1, fs_x_scale_type = 0, fs_y_scale_type = 0, ss_x_scale_type = 0, ss_y_scale_type = 0):
         self.clear()
 
         if fs_signal_name == '-' or ss_signal_name == '-':
             return
 
+        # x scale
+        x_scale_type = max(fs_x_scale_type, ss_x_scale_type)
+        y_scale_type = max(fs_y_scale_type, ss_y_scale_type)
+        if x_scale_type == 2:
+            fs_frequency /= 1000000
+            ss_frequency /= 1000000
+            self.axes.set_xlabel('Time, µs')
+        elif x_scale_type == 1:
+            fs_frequency /= 1000
+            ss_frequency /= 1000
+            self.axes.set_xlabel('Time, ms')
+       
+        # y scale
+        if y_scale_type == 2:
+            fs_amplitude /= 1000000
+            ss_amplitude /= 1000000
+            self.axes.set_ylabel('U, µV')
+        elif y_scale_type == 1:
+            fs_amplitude /= 1000
+            ss_amplitude /= 1000
+            self.axes.set_ylabel('U, mV')
+
+        self.axes.set_title(self.generate_formula(fs_signal_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+                     ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration))
         fx, fy = wave_generators[fs_signal_name](fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
-        sx, sy = wave_generators[ss_signal_name](ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+        
+        if len(self.arrays) == 0:
+            sx, sy = wave_generators[ss_signal_name](ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
+            py = fy + sy
+            self.arrays.append([sx, sy])
+            self.arrays.append([fx, py])
+        else:
+            py = fy + self.arrays[len(self.arrays) - 1][1]
+            self.arrays.append([fx, py])
 
-        py = fy + sy
+        x_points = []
+        y_points = []
+        i = 0
 
-        self.axes.plot(fx, py, color='#1f77b4')
+        for point in fx:
+            x_points.append(point)
+            y_points.append(py[i])
+
+            i += 1
+
+            if i % (len(fx) / 20) == 0:
+                self.axes.plot(x_points, y_points, color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
+
+
         self.axes.axis('tight')
         self.axes.set_aspect('equal')
         self.axes.autoscale(enable=True)
-        self.axes.set_title(self.generate_formula(fs_signal_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
-                     ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration))
+       
 
         self.view.draw()
 
-    def modulate(self, fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
+
+    def modulate(self, fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, y_scale = 1, fs_x_scale_type = 0, fs_y_scale_type = 0, ss_x_scale_type = 0, ss_y_scale_type = 0):
         self.clear()
 
+         # x scale
+        x_scale_type = max(fs_x_scale_type, ss_x_scale_type)
+        y_scale_type = max(fs_y_scale_type, ss_y_scale_type)
+        if x_scale_type == 2:
+            fs_frequency /= 1000000
+            ss_frequency /= 1000000
+            self.axes.set_xlabel('Time, µs')
+        elif x_scale_type == 1:
+            fs_frequency /= 1000
+            ss_frequency /= 1000
+            self.axes.set_xlabel('Time, ms')
+       
+        # y scale
+        if y_scale_type == 2:
+            fs_amplitude /= 1000000
+            ss_amplitude /= 1000000
+            self.axes.set_ylabel('U, µV')
+        elif y_scale_type == 1:
+            fs_amplitude /= 1000
+            ss_amplitude /= 1000
+            self.axes.set_ylabel('U, mV')
+
         x, y = modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        i = 0
+        self.axes.set_xlim(-fs_duration, fs_duration)
+        self.axes.set_ylim(-y_scale, y_scale)
 
-        self.axes.plot(x, y, color='#1f77b4')
+        for point in x:
 
-        self.view.draw()
+            i += 1
+
+            if i % 40 == 0:
+                self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
+
+    def remove_last_points(self, x_scale = 0, y_scale = 0):
+        self.clear(x_scale, y_scale) 
+
+        if len(self.arrays) != 0:
+            self.arrays.pop()
+            
+            xy = self.arrays[-1]
+            x = xy[0] 
+            y = xy[1] 
+
+            i = 0
+            for point in x:
+
+                i += 1
+
+                if i % 40 == 0:
+                    self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+                    self.view.draw()
+                    self.view.flush_events()
