@@ -27,9 +27,14 @@ class PlotWidget(QWidget):
         vlayout.addWidget(self.view)
         self.setLayout(vlayout)
 
-    def clear(self):
+    def clear(self, x_scale = 0, y_scale = 0):
         if len(self.axes.lines):
             self.axes.clear()
+            if (x_scale != 0):
+                self.axes.set_xlim(-x_scale, x_scale)
+            if y_scale != 0:
+                self.axes.set_ylim(-y_scale, y_scale)
+            
             self.axes.set_xlabel('Time, s')
             self.axes.set_ylabel('U, V')
             self.axes.grid(True)         
