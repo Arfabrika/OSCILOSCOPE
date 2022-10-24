@@ -7,6 +7,9 @@ from PySide6.QtWidgets import (
     QPushButton
 )
 
+from SignalPlotWidget import SignalPlotWidget
+from SpectrePlotWidget import SpectrePlotWidget
+
 class AmplitudeWindow(QWidget):
     def __init__(self, signalDataArray, parent=None):
         super().__init__(parent)
@@ -14,7 +17,6 @@ class AmplitudeWindow(QWidget):
         
         self.fs_signals_label = QLabel('Основной сигнал')
         self.fs_signals_list = QComboBox(self)
-        #self.signals_list.addItems(signal_types)
         self.fs_signals_label.setBuddy(self.fs_signals_list)
         self.fs_signals_list.currentIndexChanged.connect(self.showSignalInfo_fs)
 
@@ -62,6 +64,11 @@ class AmplitudeWindow(QWidget):
         fs_duration_layout.addWidget(self.fs_duration_label)
         fs_duration_layout.addWidget(self.fs_duration_spin)
 
+        self.plot1 = SignalPlotWidget()
+        self.plot1.setFixedSize(350, 250)
+
+        self.signal_plot = SignalPlotWidget()
+
         fs_signal = QVBoxLayout()
         fs_signal.addLayout(fs_signals_layout)
         fs_signal.addLayout(fs_signals_form_layout)
@@ -69,10 +76,11 @@ class AmplitudeWindow(QWidget):
         fs_signal.addLayout(fs_amplitude_layout)
         fs_signal.addLayout(fs_sample_rate_layout)
         fs_signal.addLayout(fs_duration_layout)
+        fs_signal.addWidget(self.plot1)
+        fs_signal.addWidget(self.signal_plot)
 
         self.ss_signals_label = QLabel('Модулирующий сигнал')
         self.ss_signals_list = QComboBox(self)
-        #self.signals_list.addItems(signal_types)
         self.ss_signals_label.setBuddy(self.ss_signals_list)
         self.ss_signals_list.currentIndexChanged.connect(self.showSignalInfo_ss)
 
@@ -120,6 +128,11 @@ class AmplitudeWindow(QWidget):
         ss_duration_layout.addWidget(self.ss_duration_label)
         ss_duration_layout.addWidget(self.ss_duration_spin)
 
+        self.plot2 = SignalPlotWidget()
+        self.plot2.setFixedSize(350, 250)
+
+        self.specter_plot = SpectrePlotWidget()
+
         ss_signal = QVBoxLayout()
         ss_signal.addLayout(ss_signals_layout)
         ss_signal.addLayout(ss_signals_form_layout)
@@ -127,9 +140,11 @@ class AmplitudeWindow(QWidget):
         ss_signal.addLayout(ss_amplitude_layout)
         ss_signal.addLayout(ss_sample_rate_layout)
         ss_signal.addLayout(ss_duration_layout)
+        ss_signal.addWidget(self.plot2)
+        ss_signal.addWidget(self.specter_plot)
 
         self.ok_button = QPushButton('Create plots')
-        #self.ok_button.clicked.connect(self.ok_button_clicked)
+        self.ok_button.clicked.connect(self.ok_button_clicked)
 
         signal_layout = QHBoxLayout()
 
@@ -141,10 +156,22 @@ class AmplitudeWindow(QWidget):
         main_layout.addLayout(signal_layout)
         main_layout.addWidget(self.ok_button)
 
+        self.is_ampl_signal_draw = 0
+
         self.setLayout(main_layout)
+        self.setFixedSize(1100, 1000)
+
+    def updateSignalData(self, signalDataArray):
+        self.signalDataArray = signalDataArray
         self.setSignals()
 
+    def closeEvent(self, event):
+        self.is_ampl_signal_draw = 0
+        event.accept()
+
     def setSignals(self):
+        self.fs_signals_list.clear()
+        self.ss_signals_list.clear()
         data = self.signalDataArray.getArray()
         if len(data) == 0:
             self.fs_signals_list.addItem("No signals")
@@ -155,33 +182,36 @@ class AmplitudeWindow(QWidget):
                 self.ss_signals_list.addItem('Signal ' + str(i + 1))
 
     def showSignalInfo_fs(self):
-       curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
+        if len(self.signalDataArray.getArray()) > 0:
+            curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
-       self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
-       self.fs_duration_spin.setText(str(curSignal_fs[4]))
-       self.fs_frequency_spin.setText(str(curSignal_fs[2]))
-       self.fs_sample_rate_spin.setText(str(curSignal_fs[3]))
-       self.fs_signal_form_combo.setText(curSignal_fs[0])
+            self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
+            self.fs_duration_spin.setText(str(curSignal_fs[4]))
+            self.fs_frequency_spin.setText(str(curSignal_fs[2]))
+            self.fs_sample_rate_spin.setText(str(curSignal_fs[3]))
+            self.fs_signal_form_combo.setText(curSignal_fs[0])
+
+            self.plot1.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], curSignal_fs[4], flag=0)
 
     def showSignalInfo_ss(self):
-       curSignal_ss = self.signalDataArray.getSignalByIndex(self.ss_signals_list.currentIndex()).getData() 
+        if len(self.signalDataArray.getArray()) > 0:
+            curSignal_ss = self.signalDataArray.getSignalByIndex(self.ss_signals_list.currentIndex()).getData() 
 
-       self.ss_amplitude_spin.setText(str(curSignal_ss[1]))
-       self.ss_duration_spin.setText(str(curSignal_ss[4]))
-       self.ss_frequency_spin.setText(str(curSignal_ss[2]))
-       self.ss_sample_rate_spin.setText(str(curSignal_ss[3]))
-       self.ss_signal_form_combo.setText(curSignal_ss[0])
+            self.ss_amplitude_spin.setText(str(curSignal_ss[1]))
+            self.ss_duration_spin.setText(str(curSignal_ss[4]))
+            self.ss_frequency_spin.setText(str(curSignal_ss[2]))
+            self.ss_sample_rate_spin.setText(str(curSignal_ss[3]))
+            self.ss_signal_form_combo.setText(curSignal_ss[0])
 
-    def getSignal_ss(self):
-        return self.ss_signals_list.currentIndex()
+            self.plot2.plot(curSignal_ss[0], curSignal_ss[2], curSignal_ss[3], curSignal_ss[1], curSignal_ss[4], flag=0)
 
-    def getSignal_fs(self):
-        return self.fs_signals_list.currentIndex()
-    """
     def ok_button_clicked(self):
-        print("Ok clicked")
-        self.parent().signals_label.setText("AAA")
-    """
+        ind_fs = self.fs_signals_list.currentIndex()
+        ind_ss = self.ss_signals_list.currentIndex()
+        signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
+        signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
+        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1], flag = 0)
+        self.specter_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
 
 
 
