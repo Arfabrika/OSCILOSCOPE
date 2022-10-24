@@ -89,35 +89,74 @@ class SummationWindow(QWidget):
 
         main_layout = QVBoxLayout()
 
+        plot_params_layout = QVBoxLayout()
+        plot_params_scale_x = QVBoxLayout()
+        self.scale_x = QComboBox()
+        self.scale_x.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
+        self.scale_x.setCurrentIndex(6)
+        self.scale_x_label = QLabel("Max x scale")
+
+        plot_params_scale_x.addWidget(self.scale_x_label)
+        plot_params_scale_x.addWidget(self.scale_x)
+
+        plot_params_scale_y = QVBoxLayout()
+        self.scale_y = QComboBox()
+        self.scale_y.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
+        self.scale_y.setCurrentIndex(6)
+        self.scale_y_label = QLabel("Max y scale")
+
+        plot_params_scale_y.addWidget(self.scale_y_label)
+        plot_params_scale_y.addWidget(self.scale_y)
+
+        plot_params_layout.addLayout(plot_params_scale_x)
+        plot_params_layout.addLayout(plot_params_scale_y)
+        plot_params_layout.addStretch()
+        self.scale_x.currentIndexChanged.connect(self.editScale)
+        self.scale_y.currentIndexChanged.connect(self.editScale)
+
+        plot_layout = QHBoxLayout()
+        plot_layout.addLayout(plot_params_layout)
+        plot_layout.addWidget(self.plot)
+
         main_layout.addLayout(signal_layout)
         main_layout.addWidget(self.ok_button)
         main_layout.addWidget(self.step_out_button)
-        main_layout.addWidget(self.plot)
+        main_layout.addLayout(plot_layout)
 
         self.setLayout(main_layout)
         self.setSignals()
+
+    def editScale(self):
+        self.x_scale_value = float(self.scale_x.currentText())* 1.1
+        self.y_scale_value = float(self.scale_y.currentText())* 1.1
+
+        self.plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
+        self.plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
+
+        self.button_clicked()
+ 
 
     def setSignals(self):
         data = self.signalDataArray.getArray()
         if len(data) == 0:
             self.fs_signals_list.addItem("No signals")
-        else:
+        else:   
             for i in range(len(data)):
                 self.fs_signals_list.addItem('Signal ' + str(i + 1))
-
     
     def button_clicked(self):
         curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
        
         if self.signalsOnPlot.getArraySize() == 0:
-            self.plot.plot(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], 1, 1)
+            self.plot.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], 1, 1)
             self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
         elif self.signalsOnPlot.getArraySize() == 1:
             ss_signal = self.signalsOnPlot.getSignalByIndex(self.signalsOnPlot.getArraySize() - 1)
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getSampleRate(), ss_signal.getDuration())
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1],  curSignal_fs[4],
+                     ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getSampleRate(), ss_signal.getDuration())
             self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
         else:
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4])
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3])
     
     def showSignalInfo_fs(self):
        curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
@@ -129,7 +168,12 @@ class SummationWindow(QWidget):
        self.fs_signal_form_combo.setText(curSignal_fs[0])
     
     def step_back(self):
-        self.plot.remove_last_points()
+        lastSigData = self.signalsOnPlot.getLastSignal().getData()
+        self.plot.remove_last_points(lastSigData[6], lastSigData[7])
+        self.signalsOnPlot.removeLast()
        # bashkoff
+
+
+
 
 
