@@ -159,7 +159,7 @@ class AmplitudeWindow(QWidget):
         self.is_ampl_signal_draw = 0
 
         self.setLayout(main_layout)
-        self.setFixedSize(1100, 1000)
+        self.setFixedSize(1920, 1000)
 
     def updateSignalData(self, signalDataArray):
         self.signalDataArray = signalDataArray
@@ -212,6 +212,3 @@ class AmplitudeWindow(QWidget):
         signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
         self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1], flag = 0)
         self.specter_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
-
-
-
