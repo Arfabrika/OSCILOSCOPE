@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 from amplitudeWindow import AmplitudeWindow
+from frequencyWindow import FrequencyWindow
 from signalData import signalData, signalDataArray
 
 import serial.tools.list_ports
@@ -162,11 +163,15 @@ class MainWindow(QWidget):
         self.ampl_create_button = QPushButton('Create amplitude modulation')
         self.ampl_create_button.setCheckable(True)
         self.ampl_create_button.clicked.connect(self.click_amplitude_event)
+        self.freq_create_button = QPushButton('Create frequency modulation')
+        self.freq_create_button.setCheckable(True)
+        self.freq_create_button.clicked.connect(self.click_frequency_event)
         self.sum_create_button = QPushButton('Create summation plots')
         self.sum_create_button.setCheckable(True)
         self.sum_create_button.clicked.connect(self.click_sum_event)
         ampl_layout.addLayout(signals_list_layout)
         ampl_layout.addWidget(self.ampl_create_button)
+        ampl_layout.addWidget(self.freq_create_button)
         ampl_layout.addWidget(self.sum_create_button)
 
         params_layout = QHBoxLayout()
@@ -228,6 +233,7 @@ class MainWindow(QWidget):
         self.y_scale_value = 1.1
 
         self.amplitude_window = AmplitudeWindow(self.signalDataArray)
+        self.frequency_window = FrequencyWindow(self.signalDataArray)
         #self.summation_window = SummationWindow(self.signalDataArray)
 
         self.showMaximized()
@@ -391,24 +397,19 @@ class MainWindow(QWidget):
     def receive_signal_safely(self):
         self.thread_manager.start(self.receive_signal)
 
-    # def ok_button_clicked(self):
-    #     ind_fs = self.amplitude_window.fs_signals_list.currentIndex()
-    #     ind_ss = self.amplitude_window.ss_signals_list.currentIndex()
-    #     signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
-    #     signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-    #     self.signal_plot.modulate(signal_fs[2], signal_fs[3], self.x_scale_value, signal_ss[1], signal_ss[2], signal_fs[1], self.y_scale_value, signal_fs[6], signal_fs[7], signal_ss[6], signal_ss[7])
-    #     self.spectre_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
 
     def click_amplitude_event(self):
         self.amplitude_window.show()
         self.amplitude_window.updateSignalData(self.signalDataArray)
         self.amplitude_window.is_ampl_signal_draw = 1
-        # self.amplitude_window.ok_button.clicked.connect(self.ok_button_clicked)
          
     def click_sum_event(self):
         self.summation_window = SummationWindow(self.signalDataArray)
         self.summation_window.show()
 
+    def click_frequency_event(self):
+        self.frequency_window.show()
+        self.frequency_window.updateSignalData(self.signalDataArray)
     def set_signal(self):
         if self.signalDataArray.getArraySize == 0:
             return
@@ -426,13 +427,7 @@ class MainWindow(QWidget):
     def drawSignal(self):
         ind = self.signals_list.currentIndex()
         sigData = self.signalDataArray.getSignalByIndex(ind).getData()
-        """
-        fs_form_name = self.fs_signal_form_combo.currentText()
-        fs_amplitude = self.fs_amplitude_spin.value()
-        fs_frequency = self.fs_frequency_spin.value()
-        fs_sample_rate = self.fs_sample_rate_spin.value()
-        fs_duration = self.fs_duration_spin.value()  
-        """  
+
         self.signal_plot.plot(sigData[0], sigData[2], sigData[3], sigData[1],
         sigData[4], self.x_scale_value, self.y_scale_value, sigData[6], sigData[7])
         self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[3], sigData[4])
