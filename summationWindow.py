@@ -148,7 +148,7 @@ class SummationWindow(QWidget):
         curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
        
         if self.signalsOnPlot.getArraySize() == 0:
-            self.plot.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], 1, 1)
+            self.plot.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], 1)
             self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
         elif self.signalsOnPlot.getArraySize() == 1:
             ss_signal = self.signalsOnPlot.getSignalByIndex(self.signalsOnPlot.getArraySize() - 1)
@@ -156,7 +156,7 @@ class SummationWindow(QWidget):
                      ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getSampleRate(), ss_signal.getDuration())
             self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
         else:
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3])
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], curSignal_fs[4])
     
     def showSignalInfo_fs(self):
        curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
@@ -169,9 +169,17 @@ class SummationWindow(QWidget):
     
     def step_back(self):
         lastSigData = self.signalsOnPlot.getLastSignal().getData()
+        
+        if lastSigData[1] == 0 or self.signalsOnPlot.getArraySize() == 1:
+            self.signalsOnPlot.clear()
+            self.plot.clear()
+            return
+        
         self.plot.remove_last_points(lastSigData[6], lastSigData[7])
         self.signalsOnPlot.removeLast()
-       # bashkoff
+       #bashkoff
+
+
 
 
 
