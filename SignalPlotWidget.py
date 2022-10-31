@@ -14,7 +14,8 @@ from wave import (
     mod_generate_triangle_wave,
     mod_generate_sawtooth_wave,
     mod_generate_square_wave,
-    modulating
+    modulating,
+    freq_modulating
 )
 
 wave_generators = {
@@ -47,7 +48,7 @@ class SignalPlotWidget(PlotWidget):
     def plot(self, signal_name, frequency, sample_rate, amplitude=1, duration=1, x_scale_value = 1, y_scale_value = 1, x_scale_type = 0, y_scale_type = 0, flag = 1):
         self.clear()
         if flag == 1:
-            self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency, sample_rate, duration))
+            self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency))
         if signal_name == '-':
             return
         
@@ -247,6 +248,48 @@ class SignalPlotWidget(PlotWidget):
                 self.view.draw()
                 self.view.flush_events()
 
+    def freq_modulate(self, fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, y_scale = 1, fs_x_scale_type = 0, fs_y_scale_type = 0, ss_x_scale_type = 0, ss_y_scale_type = 0, flag = 1):
+        self.clear()
+
+         # x scale
+        if flag == 1:
+            x_scale_type = max(fs_x_scale_type, ss_x_scale_type)
+            y_scale_type = max(fs_y_scale_type, ss_y_scale_type)
+            if x_scale_type == 2:
+                fs_frequency /= 1000000
+                ss_frequency /= 1000000
+                self.axes.set_xlabel('Time, µs')
+            elif x_scale_type == 1:
+                fs_frequency /= 1000
+                ss_frequency /= 1000
+                self.axes.set_xlabel('Time, ms')
+       
+            # y scale
+            if y_scale_type == 2:
+                fs_amplitude /= 1000000
+                ss_amplitude /= 1000000
+                self.axes.set_ylabel('U, µV')
+            elif y_scale_type == 1:
+                fs_amplitude /= 1000
+                ss_amplitude /= 1000
+                self.axes.set_ylabel('U, mV')
+
+        x, y = freq_modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        i = 0
+
+        #if flag == 1:
+        self.axes.set_xlim(-fs_duration, fs_duration )
+        self.axes.set_ylim(-y_scale -3 , y_scale + 3)
+
+        for point in x:
+
+            i += 1
+
+            if i % 40 == 0:
+                self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
+
     def remove_last_points(self, x_scale = 0, y_scale = 0):
         self.clear(x_scale, y_scale) 
         self.arrays.pop()
@@ -266,5 +309,6 @@ class SignalPlotWidget(PlotWidget):
                         self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
                         self.view.draw()
                         self.view.flush_events()
+
 
 
