@@ -73,7 +73,10 @@ class signalDataArray:
         self.array.clear()
 
     def getLastSignal(self):
-        return self.array[len(self.array) - 1]
+        if len(self.array) != 0:
+            return self.array[len(self.array) - 1]
+        else:
+            return signalData("", 0, 0, 0, 0)
 
     def removeLast(self):
         self.array.pop()
