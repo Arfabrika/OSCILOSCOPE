@@ -79,13 +79,19 @@ class SpectrePlotWidget(PlotWidget):
 
             i += 1
 
-            if i % 40 == 0:
+            if i % 40 == 0 and len(x) > 40:
                 self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
                 self.view.draw()
                 self.view.flush_events()
+            else:
+                self.axes.bar(x, y, color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
+                break
 
 
         # self.axes.plot(x, y, color='#1f77b4')
 
         # self.view.draw()
+
 
