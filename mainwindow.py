@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
     QComboBox,
     QLabel,
     QSpinBox,
-    QPushButton
+    QPushButton,
+    QDial
 )
 
 from SignalPlotWidget import SignalPlotWidget
@@ -197,8 +198,26 @@ class MainWindow(QWidget):
         plot_params_scale_y.addWidget(self.scale_y_label)
         plot_params_scale_y.addWidget(self.scale_y)
 
+        mechanical_slider_amplitude_layout = QVBoxLayout()
+        self.amplitude_lable = QLabel("amplitude")
+        self.mechanical_slider_amplitude = QDial()
+        self.mechanical_slider_amplitude.setRange(0, 50)
+        mechanical_slider_amplitude_layout.addWidget(self.amplitude_lable)
+        mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude)
+        self.mechanical_slider_amplitude.valueChanged.connect(self.slider_amplitude_move)
+        
+        mechanical_slider_frequency_layout = QVBoxLayout()
+        self.frequency_lable = QLabel("frequency")
+        self.mechanical_slider_frequency = QDial()
+        self.mechanical_slider_frequency.setRange(0, 50)
+        mechanical_slider_frequency_layout.addWidget(self.frequency_lable)
+        mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency)
+        self.mechanical_slider_frequency.valueChanged.connect(self.slider_frequency_move)
+
         plot_params_layout.addLayout(plot_params_scale_x)
         plot_params_layout.addLayout(plot_params_scale_y)
+        plot_params_layout.addLayout(mechanical_slider_amplitude_layout)
+        plot_params_layout.addLayout(mechanical_slider_frequency_layout)
         plot_params_layout.addStretch()
         self.scale_x.currentIndexChanged.connect(self.editScale)
         self.scale_y.currentIndexChanged.connect(self.editScale)
@@ -239,11 +258,18 @@ class MainWindow(QWidget):
         self.showMaximized()
 
     def addSignal(self):
+        if self.fs_signal_form_combo.currentText() == "-":
+            return 
+
         form_name = self.fs_signal_form_combo.currentText()
         amplitude = self.fs_amplitude_spin.value()
         frequency = self.fs_frequency_spin.value()
         sample_rate = self.fs_sample_rate_spin.value()
         duration = self.fs_duration_spin.value()
+
+        self.mechanical_slider_frequency.setValue(self.fs_frequency_spin.value())
+        self.mechanical_slider_amplitude.setValue(self.fs_amplitude_spin.value())
+
         xscale = 0
         if (frequency >= 10000):
             xscale = 2
@@ -313,6 +339,9 @@ class MainWindow(QWidget):
             self.fs_duration_spin.setValue(curSignal[4])
             self.fs_frequency_spin.setValue(curSignal[2])
             self.fs_sample_rate_spin.setValue(curSignal[3]) 
+
+            self.mechanical_slider_frequency.setValue(curSignal[2])
+            self.mechanical_slider_amplitude.setValue(curSignal[1])
             
             if curSignal[5] == True:
                 self.active_label.setText("Signal is active") 
@@ -428,9 +457,45 @@ class MainWindow(QWidget):
         ind = self.signals_list.currentIndex()
         sigData = self.signalDataArray.getSignalByIndex(ind).getData()
 
-        self.signal_plot.plot(sigData[0], sigData[2], sigData[3], sigData[1],
+        self.signal_plot.plot(sigData[0], self.mechanical_slider_frequency.value(), sigData[3], self.mechanical_slider_amplitude.value(),
         sigData[4], self.x_scale_value, self.y_scale_value, sigData[6], sigData[7])
-        self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[3], sigData[4])
+
+        self.spectre_plot.plot(sigData[0], self.mechanical_slider_amplitude.value(), self.mechanical_slider_frequency.value(), sigData[3], sigData[4])
+    
+    def slider_frequency_move(self):
+
+        if self.signals_list.currentText() == "New signal" or self.fs_toggle_button.isChecked() == False:
+            return
+
+        self.signal_plot.clear()
+        
+        ind = self.signals_list.currentIndex()
+        sigData = self.signalDataArray.getSignalByIndex(ind).getData()
+
+        self.signal_plot.plot(sigData[0], self.mechanical_slider_frequency.value(), sigData[3], sigData[1],
+        sigData[4], self.x_scale_value, self.y_scale_value, sigData[6], sigData[7], flag_slider = 1)
+
+        self.spectre_plot.plot(sigData[0], sigData[1], self.mechanical_slider_frequency.value(), sigData[3], sigData[4])
+        self.fs_frequency_spin.setValue(self.mechanical_slider_frequency.value())
+
+    
+    def slider_amplitude_move(self):
+        if self.signals_list.currentText() == "New signal" or self.fs_toggle_button.isChecked() == False:
+            return
+        
+        self.signal_plot.clear()
+
+        ind = self.signals_list.currentIndex()
+        sigData = self.signalDataArray.getSignalByIndex(ind).getData()
+
+        self.signal_plot.plot(sigData[0], sigData[2], sigData[3], self.mechanical_slider_amplitude.value(),
+        sigData[4], self.x_scale_value, self.y_scale_value, sigData[6], sigData[7], flag_slider = 1)
+
+        self.spectre_plot.plot(sigData[0], self.mechanical_slider_amplitude.value(), sigData[2], sigData[3], sigData[4])
+        self.fs_amplitude_spin.setValue(self.mechanical_slider_amplitude.value())
+        
+
+
 
 
 if __name__ == "__main__":
@@ -438,6 +503,5 @@ if __name__ == "__main__":
     w = MainWindow()
     w.show()
     sys.exit(app.exec())
-
 
 
