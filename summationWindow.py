@@ -11,9 +11,10 @@ from SignalPlotWidget import SignalPlotWidget
 from signalData import signalData, signalDataArray
 
 class SummationWindow(QWidget):
-    def __init__(self, DataArray, parent=None):
+    def __init__(self, DataArray, animation_flag = 1, parent=None):
         super().__init__(parent)
         self.signalDataArray = DataArray
+        self.animation_flag = animation_flag
         self.signalsOnPlot = signalDataArray([])
         
         self.fs_signals_label = QLabel('Основной сигнал')
@@ -134,41 +135,56 @@ class SummationWindow(QWidget):
         self.plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
 
         self.button_clicked()
- 
+
+    def updateSignalData(self, signalDataArray, animation_flag):
+        self.signalDataArray = signalDataArray
+        self.animation_flag = animation_flag
+        self.setSignals() 
 
     def setSignals(self):
+        self.fs_signals_list.clear()
         data = self.signalDataArray.getArray()
         if len(data) == 0:
             self.fs_signals_list.addItem("No signals")
         else:   
             for i in range(len(data)):
                 self.fs_signals_list.addItem('Signal ' + str(i + 1))
+            self.showSignalInfo_fs()
     
     def button_clicked(self):
         curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
        
         if self.signalsOnPlot.getArraySize() == 0:
-            self.plot.plot(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], 1, 1)
+            self.plot.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], 1, animation_flag=self.animation_flag)
             self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
         elif self.signalsOnPlot.getArraySize() == 1:
             ss_signal = self.signalsOnPlot.getSignalByIndex(self.signalsOnPlot.getArraySize() - 1)
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getSampleRate(), ss_signal.getDuration())
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1],  curSignal_fs[4],
+                     ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getSampleRate(), ss_signal.getDuration(), animation_flag=self.animation_flag)
             self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
         else:
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4])
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], curSignal_fs[4], animation_flag=self.animation_flag)
     
     def showSignalInfo_fs(self):
-       curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
+        if (self.signalDataArray.getArraySize() > 0):
+            curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
-       self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
-       self.fs_duration_spin.setText(str(curSignal_fs[4]))
-       self.fs_frequency_spin.setText(str(curSignal_fs[2]))
-       self.fs_sample_rate_spin.setText(str(curSignal_fs[3]))
-       self.fs_signal_form_combo.setText(curSignal_fs[0])
+            self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
+            self.fs_duration_spin.setText(str(curSignal_fs[4]))
+            self.fs_frequency_spin.setText(str(curSignal_fs[2]))
+            self.fs_sample_rate_spin.setText(str(curSignal_fs[3]))
+            self.fs_signal_form_combo.setText(curSignal_fs[0])
     
     def step_back(self):
         lastSigData = self.signalsOnPlot.getLastSignal().getData()
+        
+        if lastSigData[1] == 0 or self.signalsOnPlot.getArraySize() == 1:
+            self.signalsOnPlot.clear()
+            self.plot.clear()
+            return
+        
         self.plot.remove_last_points(lastSigData[6], lastSigData[7])
-       # bashkoff
+        self.signalsOnPlot.removeLast()
+       #bashkoff
 
 

@@ -12,7 +12,8 @@ from wave import (
     mod_generate_triangle_wave,
     mod_generate_sawtooth_wave,
     mod_generate_square_wave,
-    specter_modulating
+    specter_modulating,
+    freq_modulating_specter
 )
 
 wave_generators = {
@@ -72,19 +73,28 @@ class SpectrePlotWidget(PlotWidget):
         self.clear()
 
         x, y = specter_modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
-
+        """
         i = 0
 
         for point in x:
 
             i += 1
 
-            if i % 40 == 0:
+            if i % 40 == 0 and len(x) > 40:
                 self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
                 self.view.draw()
                 self.view.flush_events()
+            else:
+                self.axes.bar(x, y, color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
+                break
+        """
+        self.axes.plot(x, y, color='#1f77b4')
+        self.view.draw()
 
-
-        # self.axes.plot(x, y, color='#1f77b4')
-
-        # self.view.draw()
+    def freq_modulate(self, fs_frequency, ss_frequency, freq_dev):
+        self.clear()
+        x, y = freq_modulating_specter(fs_frequency, ss_frequency, freq_dev)
+        self.axes.plot(x,y,color='#1f77b4')
+        self.view.draw()

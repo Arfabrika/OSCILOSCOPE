@@ -12,19 +12,47 @@ from PySide6.QtWidgets import (
     QComboBox,
     QLabel,
     QSpinBox,
-    QPushButton
+    QPushButton,
+    QDial,
+    QCheckBox
 )
 
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 from amplitudeWindow import AmplitudeWindow
+from frequencyWindow import FrequencyWindow
 from signalData import signalData, signalDataArray
+from scalefuncs import getScaleType
 
 import serial.tools.list_ports
 
 from summationWindow import SummationWindow
 
 signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
+import time
+from functools import partial, wraps
+
+class CoolDownDecorator(object):
+  def __init__(self,func,interval):
+    self.func = func
+    self.interval = interval
+    self.last_run = 0
+  def __get__(self,obj,objtype=None):
+    if obj is None:
+      return self.func
+    return partial(self,obj)
+  def __call__(self,*args,**kwargs):
+    now = time.time()
+    if now - self.last_run > self.interval:
+      self.last_run = now
+      return self.func(*args,**kwargs)
+
+# function for filtering data from controller
+def CoolDown(interval):
+  def applyDecorator(func):
+    decorator = CoolDownDecorator(func=func,interval=interval)
+    return wraps(func)(decorator)
+  return applyDecorator
 
 class MainWindow(QWidget):
     def __init__(self, parent=None):
@@ -43,13 +71,10 @@ class MainWindow(QWidget):
         self.serial_ports_combo = QComboBox(self)
         self.serial_ports = serial.tools.list_ports.comports()
         serial_ports_desc = [port.name for port in self.serial_ports]
-        serial_ports_desc.reverse()
-        # serial_ports_desc.insert(0, '-')
+        # serial_ports_desc.reverse()
         self.serial_ports_combo.addItems(serial_ports_desc)
         self.serial_ports_combo_label = QLabel('Select port', self)
-        self.serial_ports_combo_label.setBuddy(self.serial_ports_combo)
-        
-        
+        self.serial_ports_combo_label.setBuddy(self.serial_ports_combo)        
         
         self.amplitude_sensitivity_label = QLabel('Amplitude sensitivity', self)
         self.amplitude_sensitivity_spin = QSpinBox()
@@ -162,12 +187,21 @@ class MainWindow(QWidget):
         self.ampl_create_button = QPushButton('Create amplitude modulation')
         self.ampl_create_button.setCheckable(True)
         self.ampl_create_button.clicked.connect(self.click_amplitude_event)
+        self.freq_create_button = QPushButton('Create frequency modulation')
+        self.freq_create_button.setCheckable(True)
+        self.freq_create_button.clicked.connect(self.click_frequency_event)
         self.sum_create_button = QPushButton('Create summation plots')
         self.sum_create_button.setCheckable(True)
         self.sum_create_button.clicked.connect(self.click_sum_event)
+
+        self.anim_checkbox = QCheckBox("Toggle animation")
+        
+
         ampl_layout.addLayout(signals_list_layout)
         ampl_layout.addWidget(self.ampl_create_button)
+        ampl_layout.addWidget(self.freq_create_button)
         ampl_layout.addWidget(self.sum_create_button)
+        ampl_layout.addWidget(self.anim_checkbox)
 
         params_layout = QHBoxLayout()
         params_layout.addLayout(fs_params_layout)
@@ -192,8 +226,32 @@ class MainWindow(QWidget):
         plot_params_scale_y.addWidget(self.scale_y_label)
         plot_params_scale_y.addWidget(self.scale_y)
 
+        mechanical_slider_amplitude_layout = QVBoxLayout()
+        self.amplitude_lable = QLabel("amplitude")
+        self.mechanical_slider_amplitude = QDial()
+        self.mechanical_slider_amplitude.setRange(0, 50)
+        mechanical_slider_amplitude_layout.addWidget(self.amplitude_lable)
+        mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude)
+        self.mechanical_slider_amplitude.valueChanged.connect(self.slider_amplitude_move)
+        self.mechanical_slider_amplitude_checkbox = QCheckBox("Enabled")
+        self.mechanical_slider_amplitude_checkbox.setChecked(True)
+        mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude_checkbox)        
+        
+        mechanical_slider_frequency_layout = QVBoxLayout()
+        self.frequency_lable = QLabel("frequency")
+        self.mechanical_slider_frequency = QDial()
+        self.mechanical_slider_frequency.setRange(0, 50)
+        mechanical_slider_frequency_layout.addWidget(self.frequency_lable)
+        mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency)
+        self.mechanical_slider_frequency.valueChanged.connect(self.slider_frequency_move)
+        self.mechanical_slider_frequency_checkbox = QCheckBox("Enabled")
+        self.mechanical_slider_frequency_checkbox.setChecked(True)
+        mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency_checkbox)
+
         plot_params_layout.addLayout(plot_params_scale_x)
         plot_params_layout.addLayout(plot_params_scale_y)
+        plot_params_layout.addLayout(mechanical_slider_amplitude_layout)
+        plot_params_layout.addLayout(mechanical_slider_frequency_layout)
         plot_params_layout.addStretch()
         self.scale_x.currentIndexChanged.connect(self.editScale)
         self.scale_y.currentIndexChanged.connect(self.editScale)
@@ -201,13 +259,11 @@ class MainWindow(QWidget):
         plots_layout = QHBoxLayout()
         plots_layout.addLayout(plot_params_layout)
         plots_layout.addWidget(self.signal_plot)
-        plots_layout.addWidget(self.spectre_plot)
-        
+        plots_layout.addWidget(self.spectre_plot)        
 
         self.com_error_message = QErrorMessage()
         self.receive_button = QPushButton('Receive')
         self.stop_listening_button = QPushButton('Stop')
-
         
         main_layout = QVBoxLayout()
         main_layout.addLayout(serial_ports_layout)
@@ -224,33 +280,40 @@ class MainWindow(QWidget):
         self.stop_listening_button.clicked.connect(self.set_stop_safely)
         self.signals_list.currentIndexChanged.connect(self.showSignals)
         self.edit_signal_button.clicked.connect(self.editSignal)
+        self.anim_checkbox.toggled.connect(self.changed_animation_checkbox_event)
+        self.mechanical_slider_amplitude_checkbox.toggled.connect(self.change_amplitude_slider_event)
+        self.mechanical_slider_frequency_checkbox.toggled.connect(self.change_frequency_slider_event)
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
+        self.animation_flag = 0
+        self.amplitude_slider_enabled = True
+        self.frequency_slider_enabled = True
 
-        self.amplitude_window = AmplitudeWindow(self.signalDataArray)
-        #self.summation_window = SummationWindow(self.signalDataArray)
-
+        self.amplitude_window = AmplitudeWindow(self.signalDataArray, self.animation_flag)
+        self.frequency_window = FrequencyWindow(self.signalDataArray, self.animation_flag)
+        self.summation_window = SummationWindow(self.signalDataArray, self.animation_flag)   
         self.showMaximized()
 
+    def change_amplitude_slider_event(self):
+        self.amplitude_slider_enabled = not self.amplitude_slider_enabled
+
+    def change_frequency_slider_event(self):
+        self.frequency_slider_enabled = not self.frequency_slider_enabled
+
     def addSignal(self):
+        if self.fs_signal_form_combo.currentText() == "-":
+            return 
+
         form_name = self.fs_signal_form_combo.currentText()
         amplitude = self.fs_amplitude_spin.value()
         frequency = self.fs_frequency_spin.value()
         sample_rate = self.fs_sample_rate_spin.value()
         duration = self.fs_duration_spin.value()
-        xscale = 0
-        if (frequency >= 10000):
-            xscale = 2
-        elif (frequency >= 100):
-            xscale = 1
 
-        yscale = 0
-        if (amplitude >= 10000):
-            yscale = 2
-        elif (amplitude >= 100):
-            yscale = 1
+        self.mechanical_slider_frequency.setValue(self.fs_frequency_spin.value())
+        self.mechanical_slider_amplitude.setValue(self.fs_amplitude_spin.value())
         
-        self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, sample_rate, duration, False, xscale, yscale))
+        self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, sample_rate, duration, False))
         self.loadSignals()
     
     def loadSignals(self):  
@@ -269,20 +332,10 @@ class MainWindow(QWidget):
         frequency = self.fs_frequency_spin.value()
         sample_rate = self.fs_sample_rate_spin.value()
         duration = self.fs_duration_spin.value()
-        xscale = 0
-        if (frequency >= 10000):
-            xscale = 2
-        elif (frequency >= 100):
-            xscale = 1
-        yscale = 0
-        if (amplitude >= 10000):
-            yscale = 2
-        elif (amplitude >= 100):
-            yscale = 1
         curInd = self.signals_list.currentIndex()
         if ((curInd != self.signalDataArray.getArraySize()) 
         and (curInd != -1)):
-            self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, sample_rate, duration, 1, xscale, yscale), curInd)
+            self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, sample_rate, duration, 1), curInd)
             self.loadSignals()
 
     def changeSignalActivity(self):
@@ -307,6 +360,9 @@ class MainWindow(QWidget):
             self.fs_duration_spin.setValue(curSignal[4])
             self.fs_frequency_spin.setValue(curSignal[2])
             self.fs_sample_rate_spin.setValue(curSignal[3]) 
+
+            self.mechanical_slider_frequency.setValue(curSignal[2])
+            self.mechanical_slider_amplitude.setValue(curSignal[1])
             
             if curSignal[5] == True:
                 self.active_label.setText("Signal is active") 
@@ -329,8 +385,25 @@ class MainWindow(QWidget):
         self.stop_flag = True
 
     def set_stop_safely(self):
-        self.thread_manager.start(self.set_stop)  
-    
+        self.thread_manager.start(self.set_stop)
+
+    @CoolDown(0.1)
+    # function for drawing data from controller
+    def reDraw(self, data):
+        self.signal_plot.axes.clear() # fixed
+        self.signal_plot.axes.grid(True)
+
+        self.x_scale_value = float(self.scale_x.currentText())
+        self.y_scale_value = float(self.scale_y.currentText())* 1.1
+
+        self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
+        self.signal_plot.axes.set_xlim(0, self.x_scale_value)
+        # self.spectre_plot.axes.magnitude_spectrum(data, color='#1f77b4')
+        
+        self.signal_plot.axes.plot(data, color='#1f77b4')
+        self.signal_plot.view.draw()
+        # self.spectre_plot.view.draw()
+
     def receive_signal(self):
         if self.serial_ports_combo.currentText() == '-':
             return         
@@ -341,17 +414,18 @@ class MainWindow(QWidget):
             self.signal_plot.clear()
             self.spectre_plot.clear()
 
-            print(generator_name)
+            #print(generator_name)
 
             for port in self.serial_ports:
                 if generator_name == port.name:
-                    print("Found serial port")
+                    #print("Found serial port")
                     if 'serial' in port.description.lower() or 'VCP' in port.description.lower():
                         # init serial port and bound
                         # bound rate on two ports must be the same
-                        generator_ser = serial.Serial(generator_name, 9600, timeout=1)
+                        #was 9600
+                        generator_ser = serial.Serial(generator_name, 115200, timeout=1)
                         generator_ser.flushInput()
-                        print(generator_ser.portstr)
+                        #print(generator_ser.portstr)
 
                         data = []
 
@@ -366,18 +440,12 @@ class MainWindow(QWidget):
                                     # print(ser_bytes)
                                 except Exception as e:
                                     print('error', str(e))
-                            self.signal_plot.axes.clear() # fixed
-                            self.signal_plot.axes.grid(True)
-                            self.spectre_plot.axes.magnitude_spectrum(data, color='#1f77b4')
                             
-                            self.signal_plot.axes.plot(data, color='#1f77b4')
-                            self.signal_plot.view.draw()
-                            self.spectre_plot.view.draw()
-                            
+                            self.reDraw(data[-50:])
 
                         else:
-                            print("Stop flag:", self.stop_flag)
-                            print("Data", data)
+                            #print("Stop flag:", self.stop_flag)
+                            #print("Data", data)
                             self.signal_plot.clear()
                             self.spectre_plot.clear()
                             self.spectre_plot.axes.magnitude_spectrum(data, color='#1f77b4')
@@ -391,23 +459,25 @@ class MainWindow(QWidget):
     def receive_signal_safely(self):
         self.thread_manager.start(self.receive_signal)
 
-    def ok_button_clicked(self):
-        ind_fs = self.amplitude_window.fs_signals_list.currentIndex()
-        ind_ss = self.amplitude_window.ss_signals_list.currentIndex()
-        signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
-        signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], self.x_scale_value, signal_ss[1], signal_ss[2], signal_fs[1], self.y_scale_value, signal_fs[6], signal_fs[7], signal_ss[6], signal_ss[7])
-        self.spectre_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
 
     def click_amplitude_event(self):
         self.amplitude_window.show()
-        self.amplitude_window.updateSignalData(self.signalDataArray)
+        self.amplitude_window.updateSignalData(self.signalDataArray, self.animation_flag)
         self.amplitude_window.is_ampl_signal_draw = 1
-        self.amplitude_window.ok_button.clicked.connect(self.ok_button_clicked)
          
     def click_sum_event(self):
-        self.summation_window = SummationWindow(self.signalDataArray)
+        self.summation_window.updateSignalData(self.signalDataArray, self.animation_flag)
         self.summation_window.show()
+
+    def click_frequency_event(self):
+        self.frequency_window.show()
+        self.frequency_window.updateSignalData(self.signalDataArray, self.animation_flag)
+
+    def changed_animation_checkbox_event(self):
+        if (self.anim_checkbox.isChecked()):
+            self.animation_flag = 1
+        else:
+            self.animation_flag = 0
 
     def set_signal(self):
         if self.signalDataArray.getArraySize == 0:
@@ -426,18 +496,51 @@ class MainWindow(QWidget):
     def drawSignal(self):
         ind = self.signals_list.currentIndex()
         sigData = self.signalDataArray.getSignalByIndex(ind).getData()
-        """
-        fs_form_name = self.fs_signal_form_combo.currentText()
-        fs_amplitude = self.fs_amplitude_spin.value()
-        fs_frequency = self.fs_frequency_spin.value()
-        fs_sample_rate = self.fs_sample_rate_spin.value()
-        fs_duration = self.fs_duration_spin.value()  
-        """  
-        self.signal_plot.plot(sigData[0], sigData[1], sigData[2], sigData[3],
-        sigData[4], self.x_scale_value, self.y_scale_value, sigData[6], sigData[7])
-        self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[3], sigData[4])
+        if (self.frequency_slider_enabled):
+            freq = self.mechanical_slider_frequency.value()
+        else:
+            freq =  sigData[2]
+        if (self.amplitude_slider_enabled):
+            ampl = self.mechanical_slider_amplitude.value()
+        else:
+            ampl = sigData[1]
+        self.signal_plot.plot(sigData[0], freq, sigData[3], ampl,
+        self.x_scale_value, self.y_scale_value, animation_flag=self.animation_flag)
 
+        self.spectre_plot.plot(sigData[0], self.mechanical_slider_amplitude.value(), self.mechanical_slider_frequency.value(), sigData[3], sigData[4])
+    
+    def slider_frequency_move(self):
 
+        if self.signals_list.currentText() == "New signal" or self.fs_toggle_button.isChecked() == False or self.frequency_slider_enabled == False:
+            return
+
+        self.signal_plot.clear()
+        
+        ind = self.signals_list.currentIndex()
+        sigData = self.signalDataArray.getSignalByIndex(ind).getData()
+
+        self.signal_plot.plot(sigData[0], self.mechanical_slider_frequency.value(), sigData[3], sigData[1],
+        self.x_scale_value, self.y_scale_value, animation_flag=0)
+
+        self.spectre_plot.plot(sigData[0], sigData[1], self.mechanical_slider_frequency.value(), sigData[3], sigData[4])
+        self.fs_frequency_spin.setValue(self.mechanical_slider_frequency.value())
+
+    
+    def slider_amplitude_move(self):
+        if self.signals_list.currentText() == "New signal" or self.fs_toggle_button.isChecked() == False or self.amplitude_slider_enabled == False:
+            return
+        
+        self.signal_plot.clear()
+
+        ind = self.signals_list.currentIndex()
+        sigData = self.signalDataArray.getSignalByIndex(ind).getData()
+
+        self.signal_plot.plot(sigData[0], sigData[2], sigData[3], self.mechanical_slider_amplitude.value(),
+        self.x_scale_value, self.y_scale_value, animation_flag=0)
+
+        self.spectre_plot.plot(sigData[0], self.mechanical_slider_amplitude.value(), sigData[2], sigData[3], sigData[4])
+        self.fs_amplitude_spin.setValue(self.mechanical_slider_amplitude.value())
+        
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     w = MainWindow()

@@ -4,14 +4,16 @@ from PySide6.QtWidgets import (
     QComboBox,
     QVBoxLayout,
     QHBoxLayout,
-    QPushButton
+    QPushButton,
+    QSpinBox
 )
 
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
+from scalefuncs import *
 
-class AmplitudeWindow(QWidget):
-    def __init__(self, signalDataArray, animation_flag, parent=None):
+class FrequencyWindow(QWidget):
+    def __init__(self, signalDataArray, animation_flag = 1, parent=None):
         super().__init__(parent)
         self.signalDataArray = signalDataArray
         self.animation_flag = animation_flag
@@ -65,7 +67,7 @@ class AmplitudeWindow(QWidget):
         fs_duration_layout.addWidget(self.fs_duration_label)
         fs_duration_layout.addWidget(self.fs_duration_spin)
 
-        self.plot1 = SignalPlotWidget()
+        self.plot1 = SignalPlotWidget(animation_flag=0)
         self.plot1.setFixedSize(350, 250)
 
         self.signal_plot = SignalPlotWidget()
@@ -77,6 +79,13 @@ class AmplitudeWindow(QWidget):
         fs_signal.addLayout(fs_amplitude_layout)
         fs_signal.addLayout(fs_sample_rate_layout)
         fs_signal.addLayout(fs_duration_layout)
+
+        deviation_layout = QHBoxLayout()
+        self.deviation_label = QLabel("Deviation value:")
+        self.deviation_input = QSpinBox()
+        deviation_layout.addWidget(self.deviation_label)
+        deviation_layout.addWidget(self.deviation_input)
+        fs_signal.addLayout(deviation_layout)
         fs_signal.addWidget(self.plot1)
         fs_signal.addWidget(self.signal_plot)
 
@@ -129,10 +138,12 @@ class AmplitudeWindow(QWidget):
         ss_duration_layout.addWidget(self.ss_duration_label)
         ss_duration_layout.addWidget(self.ss_duration_spin)
 
-        self.plot2 = SignalPlotWidget()
+        self.plot2 = SignalPlotWidget(animation_flag=0)
         self.plot2.setFixedSize(350, 250)
 
         self.specter_plot = SpectrePlotWidget()
+
+        self.ss_empty = QLabel(" ")
 
         ss_signal = QVBoxLayout()
         ss_signal.addLayout(ss_signals_layout)
@@ -141,26 +152,57 @@ class AmplitudeWindow(QWidget):
         ss_signal.addLayout(ss_amplitude_layout)
         ss_signal.addLayout(ss_sample_rate_layout)
         ss_signal.addLayout(ss_duration_layout)
+        ss_signal.addWidget(self.ss_empty)
         ss_signal.addWidget(self.plot2)
         ss_signal.addWidget(self.specter_plot)
 
         self.ok_button = QPushButton('Create plots')
         self.ok_button.clicked.connect(self.ok_button_clicked)
 
-        signal_layout = QHBoxLayout()
+        signal_layout = QHBoxLayout()        
+        
+        plot_params_layout = QVBoxLayout()
+        plot_params_scale_x = QVBoxLayout()
+        self.scale_x = QComboBox()
+        self.scale_x.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
+        self.scale_x.setCurrentIndex(6)
+        self.scale_x_label = QLabel("Max x scale")
 
+        plot_params_scale_x.addWidget(self.scale_x_label)
+        plot_params_scale_x.addWidget(self.scale_x)
+
+        plot_params_scale_y = QVBoxLayout()
+        self.scale_y = QComboBox()
+        self.scale_y.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
+        self.scale_y.setCurrentIndex(6)
+        self.scale_y_label = QLabel("Max y scale")
+
+        plot_params_scale_y.addWidget(self.scale_y_label)
+        plot_params_scale_y.addWidget(self.scale_y)
+
+        plot_params_layout.addLayout(plot_params_scale_x)
+        plot_params_layout.addLayout(plot_params_scale_y)
+        plot_params_layout.addStretch()
+        self.scale_x.currentIndexChanged.connect(self.editScale)
+        self.scale_y.currentIndexChanged.connect(self.editScale)
+        main_layout = QVBoxLayout()
+
+        signal_layout.addLayout(plot_params_layout)
         signal_layout.addLayout(fs_signal)
         signal_layout.addLayout(ss_signal)
 
-        main_layout = QVBoxLayout()
+        main_layout.addLayout(signal_layout)       
 
-        main_layout.addLayout(signal_layout)
         main_layout.addWidget(self.ok_button)
 
-        self.is_ampl_signal_draw = 0
+        self.x_scale_value = 1
+        self.y_scale_value = 1
+        self.x_scale_type = 0
+        self.y_scale_type = 0
 
+        self.deviation_input.setValue(10)
         self.setLayout(main_layout)
-        self.setFixedSize(1920, 1000)
+        self.setFixedSize(1100, 1000)
 
     def updateSignalData(self, signalDataArray, animation_flag):
         self.signalDataArray = signalDataArray
@@ -168,9 +210,16 @@ class AmplitudeWindow(QWidget):
         self.setSignals()
 
     def closeEvent(self, event):
-        self.is_ampl_signal_draw = 0
         event.accept()
 
+    def editScale(self):
+        cur_x_scale = float(self.scale_x.currentText())
+        cur_y_scale = float(self.scale_y.currentText())
+        self.x_scale_value = cur_x_scale * 1.1
+        self.y_scale_value = cur_y_scale * 1.1                
+
+        self.ok_button_clicked()
+       
     def setSignals(self):
         self.fs_signals_list.clear()
         self.ss_signals_list.clear()
@@ -193,7 +242,7 @@ class AmplitudeWindow(QWidget):
             self.fs_sample_rate_spin.setText(str(curSignal_fs[3]))
             self.fs_signal_form_combo.setText(curSignal_fs[0])
 
-            self.plot1.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], curSignal_fs[4], flag=0)
+            self.plot1.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], curSignal_fs[4], flag=0, animation_flag=0)
 
     def showSignalInfo_ss(self):
         if len(self.signalDataArray.getArray()) > 0:
@@ -204,13 +253,14 @@ class AmplitudeWindow(QWidget):
             self.ss_frequency_spin.setText(str(curSignal_ss[2]))
             self.ss_sample_rate_spin.setText(str(curSignal_ss[3]))
             self.ss_signal_form_combo.setText(curSignal_ss[0])
-
-            self.plot2.plot(curSignal_ss[0], curSignal_ss[2], curSignal_ss[3], curSignal_ss[1], curSignal_ss[4], flag=0)
+            self.plot2.plot(curSignal_ss[0], curSignal_ss[2], curSignal_ss[3], curSignal_ss[1], curSignal_ss[4], flag=0, animation_flag=0)
 
     def ok_button_clicked(self):
         ind_fs = self.fs_signals_list.currentIndex()
         ind_ss = self.ss_signals_list.currentIndex()
         signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
         signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1], flag = 0, animation_flag=self.animation_flag)
-        self.specter_plot.modulate(signal_fs[2], signal_fs[3], signal_fs[4], signal_ss[1], signal_ss[2], signal_fs[1])
+        freq_dev = self.deviation_input.value()
+        self.signal_plot.freq_modulate(signal_fs[2], self.x_scale_value, signal_ss[1], signal_ss[2], 
+        signal_fs[1], self.y_scale_value, self.animation_flag, freq_dev)
+        self.specter_plot.freq_modulate(signal_fs[2], signal_ss[2], freq_dev)

@@ -1,7 +1,6 @@
 import numpy as np
 from scipy import signal
 
-
 def generate_sine_wave(amplitude, freq, sample_rate, duration):
     x = np.linspace(-duration, duration, sample_rate * int(10 / duration) if 10 / duration > 1 else int(sample_rate * duration), endpoint=False)
     frequencies = x * freq
@@ -98,4 +97,35 @@ def specter_modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, 
     y[index] = fs_amplitude * np.cos(t2 * point)
     y[index + len(x) // 6] = (fs_amplitude * (ss_amplitude / fs_amplitude) / 2) * np.cos((t2 + t1) * point)
     y[index - len(x) // 6] = (fs_amplitude * (ss_amplitude / fs_amplitude) / 2) * np.cos((t2 - t1) * point)
+    return x, y
+
+def freq_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, freq_dev):
+    # enough points?
+    x = np.linspace(-fs_duration, fs_duration, int(fs_duration * 40 * int((ss_frequency + fs_frequency))), endpoint=False)
+    y = []
+    
+    twopi = 2 * np.pi
+    for point in x:
+        y.append(ss_amplitude * np.cos(ss_frequency * twopi * point + freq_dev * np.sin(fs_frequency * point * twopi)))
+    return x, y
+
+def freq_modulating_specter(fs_frequency, ss_frequency, freq_dev):
+    beta = freq_dev / fs_frequency
+    left = ss_frequency -  (beta + 1) * fs_frequency
+    right = ss_frequency +  (beta + 1) * fs_frequency
+    x = np.linspace(left, right, int((right - left) * (ss_frequency + fs_frequency) / 4), endpoint=False)
+    y = []
+    for point in x:
+       y.append(0)
+    index = len(x) // 2
+    i = 0.5
+    n = 1
+    y[index] = 1
+    ind1 = fs_frequency * n * (ss_frequency + fs_frequency) / 4
+    while (int(index - ind1) >= 0 and int(index + ind1) <= len(x)):
+        y[int(index - ind1)] = i
+        y[int(index + ind1)] = i
+        i /= 2
+        n += 1
+        ind1 = fs_frequency * n * (ss_frequency + fs_frequency) / 4
     return x, y
