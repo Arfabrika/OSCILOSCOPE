@@ -4,9 +4,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QVBoxLayout,
     QHBoxLayout,
-    QPushButton,
-    QDial,
-    QCheckBox
+    QPushButton
 )
 
 from SignalPlotWidget import SignalPlotWidget
@@ -31,7 +29,7 @@ class SummationWindow(QWidget):
         fs_signals_layout.addWidget(self.fs_signals_list)
 
         self.fs_signal_form_combo = QLabel(self)
-        self.fs_signal_form_combo_label = QLabel('Signal form', self)
+        self.fs_signal_form_combo_label = QLabel('Форма сигнала', self)
         self.fs_signal_form_combo_label.setBuddy(self.fs_signal_form_combo)
 
         fs_signals_form_layout = QHBoxLayout()
@@ -39,7 +37,7 @@ class SummationWindow(QWidget):
         fs_signals_form_layout.addWidget(self.fs_signal_form_combo)
 
         self.fs_frequency_spin = QLabel()
-        self.fs_frequency_label = QLabel('Frequency')
+        self.fs_frequency_label = QLabel('Частота')
         self.fs_frequency_label.setBuddy(self.fs_frequency_spin)
 
         fs_frequency_layout = QHBoxLayout()
@@ -47,23 +45,15 @@ class SummationWindow(QWidget):
         fs_frequency_layout.addWidget(self.fs_frequency_spin)
 
         self.fs_amplitude_spin = QLabel()
-        self.fs_amplitude_label = QLabel('Amplitude')
+        self.fs_amplitude_label = QLabel('Амплитуда')
         self.fs_amplitude_label.setBuddy(self.fs_amplitude_spin)
 
         fs_amplitude_layout = QHBoxLayout()
         fs_amplitude_layout.addWidget(self.fs_amplitude_label)
         fs_amplitude_layout.addWidget(self.fs_amplitude_spin)
 
-        self.fs_sample_rate_spin = QLabel()
-        self.fs_sample_rate_label = QLabel('Sample rate, Hz')
-        self.fs_sample_rate_label.setBuddy(self.fs_sample_rate_spin)
-
-        fs_sample_rate_layout = QHBoxLayout()
-        fs_sample_rate_layout.addWidget(self.fs_sample_rate_label)
-        fs_sample_rate_layout.addWidget(self.fs_sample_rate_spin)
-
         self.fs_duration_spin = QLabel()
-        self.fs_duration_label = QLabel('Duration, sec')
+        self.fs_duration_label = QLabel('Продолжительность')
         self.fs_duration_label.setBuddy(self.fs_duration_spin)
 
         fs_duration_layout = QHBoxLayout()
@@ -76,12 +66,11 @@ class SummationWindow(QWidget):
         fs_signal.addLayout(fs_signals_form_layout)
         fs_signal.addLayout(fs_frequency_layout)
         fs_signal.addLayout(fs_amplitude_layout)
-        fs_signal.addLayout(fs_sample_rate_layout)
         fs_signal.addLayout(fs_duration_layout)
 
-        self.ok_button = QPushButton('Add signal')
+        self.ok_button = QPushButton('Добавить сигнал')
         self.ok_button.clicked.connect(self.button_clicked)
-        self.step_out_button = QPushButton('Step back')
+        self.step_out_button = QPushButton('Убрать последний сигнал')
         self.step_out_button.clicked.connect(self.step_back)
 
         self.plot = SignalPlotWidget()
@@ -92,38 +81,33 @@ class SummationWindow(QWidget):
 
         main_layout = QVBoxLayout()
 
-        mechanical_slider_amplitude_layout = QVBoxLayout()
-        self.amplitude_lable = QLabel("ось y")
-        self.mechanical_slider_amplitude = QDial()
-        self.mechanical_slider_amplitude.setRange(0, 50)
-        self.mechanical_slider_amplitude.setValue(1)
-        mechanical_slider_amplitude_layout.addWidget(self.amplitude_lable)
-        mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude)
-        self.mechanical_slider_amplitude.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_amplitude_checkbox = QCheckBox("Enabled")
-        self.mechanical_slider_amplitude_checkbox.setChecked(True)
-        mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude_checkbox)        
-        
-        mechanical_slider_frequency_layout = QVBoxLayout()
-        self.frequency_lable = QLabel("ось x")
-        self.mechanical_slider_frequency = QDial()
-        self.mechanical_slider_frequency.setRange(0, 50)
-        self.mechanical_slider_frequency.setValue(1)
-        mechanical_slider_frequency_layout.addWidget(self.frequency_lable)
-        mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency)
-        self.mechanical_slider_frequency.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_frequency_checkbox = QCheckBox("Enabled")
-        self.mechanical_slider_frequency_checkbox.setChecked(True)
-        mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency_checkbox)
+        plot_params_layout = QVBoxLayout()
+        plot_params_scale_x = QVBoxLayout()
+        self.scale_x = QComboBox()
+        self.scale_x.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
+        self.scale_x.setCurrentIndex(6)
+        self.scale_x_label = QLabel("Максимальное\nзначение частоты")
 
-        mechanical_sliders = QVBoxLayout()
+        plot_params_scale_x.addWidget(self.scale_x_label)
+        plot_params_scale_x.addWidget(self.scale_x)
 
-        mechanical_sliders.addLayout(mechanical_slider_frequency_layout)
-        mechanical_sliders.addLayout(mechanical_slider_amplitude_layout)
-        mechanical_sliders.addStretch()
+        plot_params_scale_y = QVBoxLayout()
+        self.scale_y = QComboBox()
+        self.scale_y.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
+        self.scale_y.setCurrentIndex(6)
+        self.scale_y_label = QLabel("Максимальное\nзначение амплитуды")
+
+        plot_params_scale_y.addWidget(self.scale_y_label)
+        plot_params_scale_y.addWidget(self.scale_y)
+
+        plot_params_layout.addLayout(plot_params_scale_x)
+        plot_params_layout.addLayout(plot_params_scale_y)
+        plot_params_layout.addStretch()
+        self.scale_x.currentIndexChanged.connect(self.editScale)
+        self.scale_y.currentIndexChanged.connect(self.editScale)
 
         plot_layout = QHBoxLayout()
-        plot_layout.addLayout(mechanical_sliders)
+        plot_layout.addLayout(plot_params_layout)
         plot_layout.addWidget(self.plot)
 
         main_layout.addLayout(signal_layout)
@@ -133,9 +117,6 @@ class SummationWindow(QWidget):
 
         self.setLayout(main_layout)
         self.setSignals()
-
-        self.x_scale_value = 1.1
-        self.y_scale_value = 1.1
 
     def editScale(self):
         self.x_scale_value = float(self.scale_x.currentText())* 1.1
@@ -155,35 +136,33 @@ class SummationWindow(QWidget):
         self.fs_signals_list.clear()
         data = self.signalDataArray.getArray()
         if len(data) == 0:
-            self.fs_signals_list.addItem("No signals")
+            self.fs_signals_list.addItem("Нет сигналов")
         else:   
             for i in range(len(data)):
-                self.fs_signals_list.addItem('Signal ' + str(i + 1))
+                self.fs_signals_list.addItem('Сигнал ' + str(i + 1))
             self.showSignalInfo_fs()
     
     def button_clicked(self):
         curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
        
         if self.signalsOnPlot.getArraySize() == 0:
-            self.plot.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], 1, animation_flag=self.animation_flag)
-            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
+            self.plot.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1], 1, animation_flag=self.animation_flag)
+            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], False))
         elif self.signalsOnPlot.getArraySize() == 1:
             ss_signal = self.signalsOnPlot.getSignalByIndex(self.signalsOnPlot.getArraySize() - 1)
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1],  1,
-                     ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getSampleRate(), self.mechanical_slider_frequency.value(), animation_flag=self.animation_flag)
-            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1],
+                     ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getDuration(), animation_flag=self.animation_flag)
+            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], False))
         else:
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], 1, animation_flag=self.animation_flag)
-            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], curSignal_fs[4], False))
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1], animation_flag=self.animation_flag)
     
     def showSignalInfo_fs(self):
         if (self.signalDataArray.getArraySize() > 0):
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
             self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
-            self.fs_duration_spin.setText(str(curSignal_fs[4]))
+            self.fs_duration_spin.setText(str(curSignal_fs[3]))
             self.fs_frequency_spin.setText(str(curSignal_fs[2]))
-            self.fs_sample_rate_spin.setText(str(curSignal_fs[3]))
             self.fs_signal_form_combo.setText(curSignal_fs[0])
     
     def step_back(self):
@@ -194,39 +173,8 @@ class SummationWindow(QWidget):
             self.plot.clear()
             return
         
-        self.plot.remove_last_points()
+        self.plot.remove_last_points(lastSigData[6], lastSigData[7])
         self.signalsOnPlot.removeLast()
        #bashkoff
-
-    def slider_frequency_move(self):
-
-        self.x_scale_value = float(self.mechanical_slider_frequency.value())* 1.1
-        self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
-
-        # self.updatePlot()
-
-        self.plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
-        self.plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
-
-        self.plot.view.draw()
-        self.plot.view.flush_events()
-
-    
-    # def updatePlot(self):
-
-    #     i = 0
-    #     while(i != self.signalsOnPlot.getArraySize()):
-    #         fs_signal = self.signalsOnPlot.getSignalByIndex(i)
-    #         if i == 0:
-    #             self.plot.plot(fs_signal.getSignaType(), fs_signal.getFrequency(), fs_signal.getSampleRate(), fs_signal.getAmplitude(), self.mechanical_slider_frequency.value(), animation_flag=0)
-    #             i += 1
-    #         elif i == 1:
-    #             ss_signal = self.signalsOnPlot.getSignalByIndex(0) 
-    #             self.plot.polyharmonic(fs_signal.getSignaType(), fs_signal.getFrequency(), fs_signal.getSampleRate(), fs_signal.getAmplitude(),  self.mechanical_slider_frequency.value(),
-    #                 ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getSampleRate(), self.mechanical_slider_frequency.value(), animation_flag=0)
-    #             i += 1
-    #         else:
-    #             self.plot.polyharmonic(fs_signal.getSignaType(), fs_signal.getFrequency(), fs_signal.getSampleRate(), fs_signal.getAmplitude(), self.mechanical_slider_frequency.value(), animation_flag=0)
-    #             i += 1
 
 

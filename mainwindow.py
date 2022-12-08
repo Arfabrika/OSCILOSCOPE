@@ -73,31 +73,24 @@ class MainWindow(QWidget):
         self.serial_ports_combo = QComboBox(self)
         self.serial_ports = serial.tools.list_ports.comports()
         serial_ports_desc = [port.name for port in self.serial_ports]
-        # serial_ports_desc.reverse()
         self.serial_ports_combo.addItems(serial_ports_desc)
-        self.serial_ports_combo_label = QLabel('Select port', self)
+        self.serial_ports_combo_label = QLabel('Выберите порт', self)
         self.serial_ports_combo_label.setBuddy(self.serial_ports_combo)        
-        
-        self.amplitude_sensitivity_label = QLabel('Amplitude sensitivity', self)
-        self.amplitude_sensitivity_spin = QSpinBox()
-        self.amplitude_sensitivity_spin.setRange(0, 200_000)
-        self.amplitude_sensitivity_spin.setValue(1)
-        self.amplitude_sensitivity_label.setBuddy(self.amplitude_sensitivity_spin)
 
-        self.fs_params_label = QLabel('First signal', self)
-        self.fs_toggle_button = QPushButton('ON/OFF', self)
+        self.fs_params_label = QLabel('Текущий сигнал', self)
+        self.fs_toggle_button = QPushButton('ВКЛ/ВЫКЛ', self)
         self.fs_toggle_button.setCheckable(True)
         self.fs_toggle_button.clicked.connect(self.set_signal)
         self.fs_params_label.setBuddy(self.fs_toggle_button)
         
         active_label_layout = QHBoxLayout()
         active_label_layout.setDirection(QHBoxLayout.RightToLeft)
-        self.active_label = QLabel('Choose signal', self)
+        self.active_label = QLabel('Выберите сигнал', self)
         active_label_layout.addWidget(self.active_label)
 
         self.fs_signal_form_combo = QComboBox(self)
         self.fs_signal_form_combo.addItems(signal_types)
-        self.fs_signal_form_combo_label = QLabel('Signal form', self)
+        self.fs_signal_form_combo_label = QLabel('Форма сигнала', self)
         self.fs_signal_form_combo_label.setBuddy(self.fs_signal_form_combo)
 
         self.signal_plot = SignalPlotWidget()
@@ -106,34 +99,24 @@ class MainWindow(QWidget):
         self.fs_frequency_spin = QSpinBox()
         self.fs_frequency_spin.setRange(0, 200_000)
         self.fs_frequency_spin.setValue(1)
-        self.fs_frequency_label = QLabel('Frequency')
+        self.fs_frequency_label = QLabel('Частота')
         self.fs_frequency_label.setBuddy(self.fs_frequency_spin)
 
         self.fs_amplitude_spin = QSpinBox()
         self.fs_amplitude_spin.setRange(0, 200_000)
         self.fs_amplitude_spin.setValue(1)
-        self.fs_amplitude_label = QLabel('Amplitude')
+        self.fs_amplitude_label = QLabel('Амплитуда')
         self.fs_amplitude_label.setBuddy(self.fs_amplitude_spin)
-
-        self.fs_sample_rate_spin = QSpinBox()
-        self.fs_sample_rate_spin.setRange(0, 200_000)
-        self.fs_sample_rate_spin.setValue(440)
-        self.fs_sample_rate_label = QLabel('Sample rate, Hz')
-        self.fs_sample_rate_label.setBuddy(self.fs_sample_rate_spin)
 
         self.fs_duration_spin = QSpinBox()
         self.fs_duration_spin.setValue(5)
-        self.fs_duration_label = QLabel('Duration, sec')
+        self.fs_duration_label = QLabel('Продолжительность')
         self.fs_duration_label.setBuddy(self.fs_duration_spin)
 
         
         serial_ports_layout = QHBoxLayout()
         serial_ports_layout.addWidget(self.serial_ports_combo_label)
         serial_ports_layout.addWidget(self.serial_ports_combo)
-               
-        amplitude_sensitivity_layout = QHBoxLayout()
-        amplitude_sensitivity_layout.addWidget(self.amplitude_sensitivity_label)
-        amplitude_sensitivity_layout.addWidget(self.amplitude_sensitivity_spin)
 
         fs_params_layout = QVBoxLayout()
 
@@ -153,27 +136,21 @@ class MainWindow(QWidget):
         fs_amplitude_input_layout.addWidget(self.fs_amplitude_label)
         fs_amplitude_input_layout.addWidget(self.fs_amplitude_spin)
 
-        fs_sample_rate_input_layout = QHBoxLayout()
-        fs_sample_rate_input_layout.addWidget(self.fs_sample_rate_label)
-        fs_sample_rate_input_layout.addWidget(self.fs_sample_rate_spin)
-
         fs_duration_input_layout = QHBoxLayout()
         fs_duration_input_layout.addWidget(self.fs_duration_label)
         fs_duration_input_layout.addWidget(self.fs_duration_spin)
 
         fs_signal_buttons_input_layout = QHBoxLayout()
-        self.add_signal_button = QPushButton('Add signal', self)
-        self.edit_signal_button = QPushButton('Edit current signal', self)
+        self.add_signal_button = QPushButton('Добавить сигнал', self)
+        self.edit_signal_button = QPushButton('Изменить текущий сигнал', self)
         fs_signal_buttons_input_layout.addWidget(self.add_signal_button)
         fs_signal_buttons_input_layout.addWidget(self.edit_signal_button)
-
         
         fs_params_layout.addLayout(fs_switch_layout)
         fs_params_layout.addLayout(active_label_layout)
         fs_params_layout.addLayout(fs_signal_form_layout)
         fs_params_layout.addLayout(fs_frequency_input_layout)
         fs_params_layout.addLayout(fs_amplitude_input_layout)
-        fs_params_layout.addLayout(fs_sample_rate_input_layout)
         fs_params_layout.addLayout(fs_duration_input_layout)
         fs_params_layout.addLayout(fs_signal_buttons_input_layout)
      
@@ -186,14 +163,17 @@ class MainWindow(QWidget):
         signals_list_layout.addWidget(self.signals_list)
         
         ampl_layout = QVBoxLayout()
-        self.ampl_create_button = QPushButton('Create amplitude modulation')
+        self.ampl_create_button = QPushButton('Амплитудная модуляция')
+        self.ampl_create_button.setCheckable(True)
         self.ampl_create_button.clicked.connect(self.click_amplitude_event)
-        self.freq_create_button = QPushButton('Create frequency modulation')
+        self.freq_create_button = QPushButton('Частотная модуляция')
+        self.freq_create_button.setCheckable(True)
         self.freq_create_button.clicked.connect(self.click_frequency_event)
-        self.sum_create_button = QPushButton('Create summation plots')
+        self.sum_create_button = QPushButton('Множественное суммирование сигналов')
+        self.sum_create_button.setCheckable(True)
         self.sum_create_button.clicked.connect(self.click_sum_event)
 
-        self.anim_checkbox = QCheckBox("Toggle animation")
+        self.anim_checkbox = QCheckBox("Включить анимацию")
         
 
         ampl_layout.addLayout(signals_list_layout)
@@ -226,26 +206,26 @@ class MainWindow(QWidget):
         # plot_params_scale_y.addWidget(self.scale_y)
 
         mechanical_slider_amplitude_layout = QVBoxLayout()
-        self.amplitude_lable = QLabel("ось y")
+        self.amplitude_lable = QLabel("Амплитуда")
         self.mechanical_slider_amplitude = QDial()
         self.mechanical_slider_amplitude.setRange(0, 50)
         self.mechanical_slider_amplitude.setValue(1)
         mechanical_slider_amplitude_layout.addWidget(self.amplitude_lable)
         mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude)
         self.mechanical_slider_amplitude.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_amplitude_checkbox = QCheckBox("Enabled")
+        self.mechanical_slider_amplitude_checkbox = QCheckBox("Регулятор включен")
         self.mechanical_slider_amplitude_checkbox.setChecked(True)
         mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude_checkbox)        
         
         mechanical_slider_frequency_layout = QVBoxLayout()
-        self.frequency_lable = QLabel("ось x")
+        self.frequency_lable = QLabel("Частота")
         self.mechanical_slider_frequency = QDial()
         self.mechanical_slider_frequency.setRange(0, 50)
         self.mechanical_slider_frequency.setValue(1)
         mechanical_slider_frequency_layout.addWidget(self.frequency_lable)
         mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency)
         self.mechanical_slider_frequency.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_frequency_checkbox = QCheckBox("Enabled")
+        self.mechanical_slider_frequency_checkbox = QCheckBox("Регулятор включен")
         self.mechanical_slider_frequency_checkbox.setChecked(True)
         mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency_checkbox)
 
@@ -263,17 +243,16 @@ class MainWindow(QWidget):
         plots_layout.addWidget(self.spectre_plot)        
 
         self.com_error_message = QErrorMessage()
-        self.receive_button = QPushButton('Receive')
-        self.stop_listening_button = QPushButton('Stop')
+        self.receive_button = QPushButton('Начать получение сигнала от МК')
+        self.stop_listening_button = QPushButton('Завершить получение сигнала от МК')
         
         main_layout = QVBoxLayout()
         main_layout.addLayout(serial_ports_layout)
-        main_layout.addLayout(amplitude_sensitivity_layout)
         main_layout.addLayout(params_layout)
         main_layout.addLayout(plots_layout)
         main_layout.addWidget(self.receive_button)
         main_layout.addWidget(self.stop_listening_button)
-        
+
         self.setLayout(main_layout)
         self.loadSignals()
         self.add_signal_button.clicked.connect(self.addSignal)
@@ -316,32 +295,32 @@ class MainWindow(QWidget):
         form_name = self.fs_signal_form_combo.currentText()
         amplitude = self.fs_amplitude_spin.value()
         frequency = self.fs_frequency_spin.value()
-        sample_rate = self.fs_sample_rate_spin.value()
+        #sample_rate = self.fs_sample_rate_spin.value()
         duration = self.fs_duration_spin.value()
         
-        self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, sample_rate, duration, False))
+        self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, duration, False))
         self.loadSignals()
     
     def loadSignals(self):  
         self.signals_list.clear()      
         data = self.signalDataArray.getArray()
         if len(data) == 0:
-            self.signals_list.addItem("New signal")
+            self.signals_list.addItem("Новый сигнал")
         else:
             for i in range(len(data)):
-                self.signals_list.addItem('Signal ' + str(i + 1))
-            self.signals_list.addItem('New signal')
+                self.signals_list.addItem('Сигнал ' + str(i + 1))
+            self.signals_list.addItem('Новый сигнал')
 
     def editSignal(self):
         form_name = self.fs_signal_form_combo.currentText()
         amplitude = self.fs_amplitude_spin.value()
         frequency = self.fs_frequency_spin.value()
-        sample_rate = self.fs_sample_rate_spin.value()
+        #sample_rate = self.fs_sample_rate_spin.value()
         duration = self.fs_duration_spin.value()
         curInd = self.signals_list.currentIndex()
         if ((curInd != self.signalDataArray.getArraySize()) 
         and (curInd != -1)):
-            self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, sample_rate, duration, 1), curInd)
+            self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, duration, 1), curInd)
             self.loadSignals()
 
     def changeSignalActivity(self):
@@ -358,21 +337,19 @@ class MainWindow(QWidget):
             self.fs_amplitude_spin.setValue(1)
             self.fs_duration_spin.setValue(5)
             self.fs_frequency_spin.setValue(1)
-            self.fs_sample_rate_spin.setValue(440)
+            #self.fs_sample_rate_spin.setValue(440)
         elif self.signals_list.currentIndex() != -1:           
             curSignal = self.signalDataArray.getSignalByIndex(self.signals_list.currentIndex()).getData()
             self.fs_signal_form_combo.setCurrentIndex(signal_types.index(curSignal[0]))
             self.fs_amplitude_spin.setValue(curSignal[1])
-            self.fs_duration_spin.setValue(curSignal[4])
+            self.fs_duration_spin.setValue(curSignal[3])
             self.fs_frequency_spin.setValue(curSignal[2])
-            self.fs_sample_rate_spin.setValue(curSignal[3]) 
+            #self.fs_sample_rate_spin.setValue(curSignal[3]) 
             
-            if curSignal[5] == True:
-                self.active_label.setText("Signal is active") 
+            if curSignal[4] == True:
+                self.active_label.setText("Сигнал активен") 
             else:
-                self.active_label.setText("Signal is inactive")
-
-
+                self.active_label.setText("Сигнал неактивен")
     
     def set_stop(self):
         self.stop_flag = True
@@ -450,7 +427,7 @@ class MainWindow(QWidget):
                         if 'serial' in port.description.lower() or 'VCP' in port.description.lower():
                             # init serial port and bound
                             # bound rate on two ports must be the same
-                            #was 9600
+                            #was 9600 // 115200
                             generator_ser = serial.Serial(generator_name, 115200, timeout=1)
                             generator_ser.flushInput()
                             #print(generator_ser.portstr)
@@ -460,18 +437,14 @@ class MainWindow(QWidget):
                             #print('stop flag', self.stop_flag)
 
                             start_time = time.time()   
-                            point_time = 0
-                            
+
                             while not self.stop_flag: # чтение байтов с порта   
                                 ser_bytes = generator_ser.read(2)
-                                # print('huint', ser_bytes[0], ser_bytes[1] )
+                                #print('huint', ser_bytes, len(ser_bytes) )
                                 if len(ser_bytes) != 0:
                                     try:
-                                        # print('ping', time.time() - point_time)
-
-                                        point_time = time.time()
-                                        cur_time = float(point_time - start_time)
-                                        cur_byte = int.from_bytes(ser_bytes, "little") / 1023.0 * 5.0
+                                        cur_time = float(time.time() - start_time)
+                                        cur_byte = int.from_bytes(ser_bytes, "big", signed=True) /1023.0*5.0
                                         # self.data_ind.append(cur_time)
                                         # self.data.append(cur_byte)
                                         self.data_dict[cur_time] = cur_byte
@@ -526,17 +499,17 @@ class MainWindow(QWidget):
         self.thread_manager.start(self.reDraw)
 
 
-    def click_amplitude_event(self):
-        self.amplitude_window.show()
+    def click_amplitude_event(self):        
         self.amplitude_window.updateSignalData(self.signalDataArray, self.animation_flag)
+        self.amplitude_window.show()
          
     def click_sum_event(self):
         self.summation_window.updateSignalData(self.signalDataArray, self.animation_flag)
         self.summation_window.show()
 
-    def click_frequency_event(self):
-        self.frequency_window.show()
+    def click_frequency_event(self):        
         self.frequency_window.updateSignalData(self.signalDataArray, self.animation_flag)
+        self.frequency_window.show()
 
     def changed_animation_checkbox_event(self):
         if (self.anim_checkbox.isChecked()):
@@ -549,10 +522,12 @@ class MainWindow(QWidget):
             return
         self.signalDataArray.array[self.signals_list.currentIndex()].changeActivity()
         if self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True:
-            self.active_label.setText("Signal is active")
+            self.active_label.setText("Сигнал активен")
             self.drawSignal()
         else:
-            self.active_label.setText("Signal is inactive")
+            self.active_label.setText("Сигнал неактивен")
+
+            #rewrite clear part
             self.signal_plot.clear(self.x_scale_value, self.y_scale_value)
             self.spectre_plot.clear()
 
@@ -570,7 +545,7 @@ class MainWindow(QWidget):
         self.signal_plot.plot(sigData[0], sigData[2], sigData[3], sigData[1],
         self.x_scale_value, self.y_scale_value, animation_flag=self.animation_flag)
 
-        self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[3], sigData[4])
+        self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[4])
     
     def slider_frequency_move(self):
 
@@ -585,7 +560,45 @@ class MainWindow(QWidget):
 
         if len(self.signalDataArray.array) and self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True: 
             self.drawSignal()    
+        # if self.signals_list.currentText() == "New signal" or self.fs_toggle_button.isChecked() == False or self.frequency_slider_enabled == False:
+        #     return
+
+        # self.signal_plot.clear()
         
+        # ind = self.signals_list.currentIndex()
+        # sigData = self.signalDataArray.getSignalByIndex(ind).getData()
+
+        # self.signal_plot.plot(sigData[0], self.mechanical_slider_frequency.value(), sigData[3], self.mechanical_slider_amplitude.value(),
+        # self.x_scale_value, self.y_scale_value, animation_flag=0)
+
+        # self.spectre_plot.plot(sigData[0], self.mechanical_slider_amplitude.value(), self.mechanical_slider_frequency.value(), sigData[3], sigData[4])
+        # self.fs_frequency_spin.setValue(self.mechanical_slider_frequency.value())
+
+    
+    # def slider_amplitude_move(self):
+    #     self.x_scale_value = float(self.mechanical_slider_frequency.value())* 1.1
+    #     self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
+
+    #     self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
+    #     self.signal_plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
+
+    #     if self.amplitude_window.is_ampl_signal_draw:
+    #         self.ok_button_clicked()
+    #     elif self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True and not self.amplitude_window.is_ampl_signal_draw: 
+    #         self.drawSignal()   
+        # if self.signals_list.currentText() == "New signal" or self.fs_toggle_button.isChecked() == False or self.amplitude_slider_enabled == False:
+        #     return
+        
+        # self.signal_plot.clear()
+
+        # ind = self.signals_list.currentIndex()
+        # sigData = self.signalDataArray.getSignalByIndex(ind).getData()
+
+        # self.signal_plot.plot(sigData[0], self.mechanical_slider_frequency.value(), sigData[3], self.mechanical_slider_amplitude.value(),
+        # self.x_scale_value, self.y_scale_value, animation_flag=0)
+
+        # self.spectre_plot.plot(sigData[0], self.mechanical_slider_amplitude.value(), self.mechanical_slider_frequency.value(), sigData[3], sigData[4])
+        # self.fs_amplitude_spin.setValue(self.mechanical_slider_amplitude.value())
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
