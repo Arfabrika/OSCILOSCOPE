@@ -41,40 +41,55 @@ class SpectrePlotWidget(PlotWidget):
         self.axes.set_ylabel('Magnitude')
         self.axes.grid(True)
 
-    def plot(self, signal_name, amplitude, frequency, duration):
+    def plot(self, signal_name, amplitude, frequency, sample_rate, duration):
         self.clear()
 
         if signal_name == '-':
             return
 
-        _, y = wave_generators[signal_name](amplitude, frequency, duration)
+        _, y = wave_generators[signal_name](amplitude, frequency, sample_rate, duration)
 
-        self.axes.magnitude_spectrum(y, #Fs=sample_rate, 
-        color='#1f77b4')
+        self.axes.magnitude_spectrum(y, Fs=sample_rate, color='#1f77b4')
 
         self.view.draw()
 
-    def polyharmonic(self, fs_signal_name, fs_amplitude, fs_frequency, fs_duration,
-                     ss_signal_name, ss_amplitude, ss_frequency, ss_duration):
+    def polyharmonic(self, fs_signal_name, fs_amplitude, fs_frequency, fs_sample_rate, fs_duration,
+                     ss_signal_name, ss_amplitude, ss_frequency, ss_sample_rate, ss_duration):
         self.clear()
 
         if fs_signal_name == '-' or ss_signal_name == '-':
             return
 
-        fx, fy = wave_generators[fs_signal_name](fs_amplitude, fs_frequency, fs_duration)
-        sx, sy = wave_generators[ss_signal_name](ss_amplitude, ss_frequency, ss_duration)
+        fx, fy = wave_generators[fs_signal_name](fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
+        sx, sy = wave_generators[ss_signal_name](ss_amplitude, ss_frequency, ss_sample_rate, ss_duration)
 
         py = fy + sy
 
-        self.axes.magnitude_spectrum(py, color='#1f77b4')
+        self.axes.magnitude_spectrum(py, Fs=fs_sample_rate, color='#1f77b4')
 
         self.view.draw()
 
-    def modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
+    def modulate(self, fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
         self.clear()
 
-        x, y = specter_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
-        
+        x, y = specter_modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        """
+        i = 0
+
+        for point in x:
+
+            i += 1
+
+            if i % 40 == 0 and len(x) > 40:
+                self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
+            else:
+                self.axes.bar(x, y, color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
+                break
+        """
         self.axes.plot(x, y, color='#1f77b4')
         self.view.draw()
 

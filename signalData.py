@@ -1,15 +1,18 @@
 from array import array
 
+
 class signalData:
-    def __init__(self, signalType, amplitude, frequency, duration, isActive = 1):
+    def __init__(self, signalType, amplitude, frequency, sample_rate, duration, isActive = 1):
         self.signalType = signalType
         self.amplitude = amplitude
         self.frequency = frequency
+        self.sample_rate = sample_rate
         self.duration = duration
-        self.isActive = isActive       
+        self.isActive = isActive
+       
 
     def getData(self):
-        return [self.signalType, self.amplitude, self.frequency, self.duration, self.isActive]
+        return [self.signalType, self.amplitude, self.frequency, self.sample_rate, self.duration, self.isActive]
 
     def changeActivity(self):
         self.isActive = not self.isActive
@@ -22,6 +25,9 @@ class signalData:
 
     def getFrequency(self):
         return self.frequency
+
+    def getSampleRate(self):
+        return self.sample_rate
 
     def getDuration(self):
         return self.duration
