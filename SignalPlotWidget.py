@@ -47,7 +47,7 @@ class SignalPlotWidget(PlotWidget):
         self.axes.set_ylabel('U, V')
         self.axes.grid(True)
 
-    def plot(self, signal_name, frequency, sample_rate, amplitude=1, x_scale_value = 1, 
+    def plot(self, signal_name, frequency, amplitude=1, x_scale_value = 1, 
     y_scale_value = 1, flag = 1, animation_flag = 1):
         self.clear()
         self.animation_flag = animation_flag
@@ -62,7 +62,7 @@ class SignalPlotWidget(PlotWidget):
         self.axes.set_xlabel(x_label)
         self.axes.set_ylabel(y_label)
                
-        x, y = wave_generators[signal_name](amplitude, frequency, sample_rate, x_scale_value)     
+        x, y = wave_generators[signal_name](amplitude, frequency, x_scale_value)     
 
         x_points = []
         y_points = []
@@ -70,7 +70,7 @@ class SignalPlotWidget(PlotWidget):
             self.axes.set_xlim(-x_scale_value, x_scale_value)
             self.axes.set_ylim(-y_scale_value, y_scale_value)
         
-        if self.animation_flag:
+        if self.animation_flag == 1 and flag == 0:
             i = 0
             checkvalue = len(x) / 20 
             for point in x:
@@ -137,7 +137,7 @@ class SignalPlotWidget(PlotWidget):
         return form
 
 
-    def polyharmonic(self, fs_signal_name, fs_frequency, fs_sample_rate, fs_amplitude=1,  fs_duration=1,
+    def polyharmonic(self, fs_signal_name, fs_frequency, fs_amplitude=1,  fs_duration=1,
                      ss_signal_name='', ss_amplitude=1, ss_frequency=1, ss_sample_rate=1, ss_duration=1, animation_flag = 1):
         self.clear()
         self.animation_flag = animation_flag
@@ -151,34 +151,10 @@ class SignalPlotWidget(PlotWidget):
         freq_mas = [fs_frequency, ss_frequency]
         ampl_mas = [fs_amplitude, ss_amplitude]
         freq_mas, ampl_mas = getScaledParamsInMas(freq_mas, ampl_mas, x_type_mas, y_type_mas)
-        """
-        x_scale_type = max(fs_x_scale_type, ss_x_scale_type)
-        y_scale_type = max(fs_y_scale_type, ss_y_scale_type)
-        
-        if x_scale_type == 2:
-            fs_frequency /= 1000000
-            ss_frequency /= 1000000
-            self.axes.set_xlabel('Time, µs')
-        elif x_scale_type == 1:
-            fs_frequency /= 1000
-            ss_frequency /= 1000
-            self.axes.set_xlabel('Time, ms')
-       
-        # y scale
-        if y_scale_type == 2:
-            fs_amplitude /= 1000000
-            ss_amplitude /= 1000000
-            self.axes.set_ylabel('U, µV')
-        elif y_scale_type == 1:
-            fs_amplitude /= 1000
-            ss_amplitude /= 1000
-            self.axes.set_ylabel('U, mV')
-        """
-
         self.axes.set_title(self.generate_formula(fs_signal_name, fs_amplitude, fs_frequency,
                      ss_signal_name, ss_amplitude, ss_frequency))
         #fx, fy = wave_generators[fs_signal_name](fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
-        fx, fy = wave_generators[fs_signal_name](ampl_mas[0], freq_mas[0], fs_sample_rate, fs_duration)
+        fx, fy = wave_generators[fs_signal_name](ampl_mas[0], freq_mas[0], fs_duration)
         
         if len(self.arrays) == 0:
             sx, sy = wave_generators[ss_signal_name](ampl_mas[1], freq_mas[1], ss_sample_rate, ss_duration)
@@ -209,15 +185,7 @@ class SignalPlotWidget(PlotWidget):
             self.axes.plot(fx, py, color='#1f77b4')
             self.view.draw()
 
-        # self.axes.axis('tight')
-        # self.axes.set_aspect('equal')
-        # self.axes.autoscale(enable=True)
-       
-
-        # self.view.draw()
-
-
-    def modulate(self, fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, 
+    def modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, 
     y_scale = 1, fs_x_scale_type = 0, fs_y_scale_type = 0, ss_x_scale_type = 0, ss_y_scale_type = 0,
     animation_flag = 1, flag = 1):
         self.clear()
@@ -248,7 +216,7 @@ class SignalPlotWidget(PlotWidget):
                 ss_amplitude /= 1000
                 self.axes.set_ylabel('U, mV')
 
-        x, y = modulating(fs_frequency, fs_sample_rate, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        x, y = modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
         
         if flag == 1:
             self.axes.set_xlim(-fs_duration, fs_duration)
@@ -269,31 +237,7 @@ class SignalPlotWidget(PlotWidget):
     def freq_modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, 
     fs_amplitude, y_scale= 1, animation_flag = 1, freq_dev = 10):
         self.clear()
-        self.animation_flag = animation_flag
-
-        """
-         # x scale
-        x_scale_type = max(fs_x_scale_type, ss_x_scale_type)
-        y_scale_type = max(fs_y_scale_type, ss_y_scale_type)
-        if x_scale_type == -2:
-            fs_frequency /= 1000000
-            ss_frequency /= 1000000
-            self.axes.set_xlabel('Time, µs')
-        elif x_scale_type == -1:
-            fs_frequency /= 1000
-            ss_frequency /= 1000
-            self.axes.set_xlabel('Time, ms')
-    
-        # y scale
-        if y_scale_type == -2:
-            fs_amplitude /= 1000000
-            ss_amplitude /= 1000000
-            self.axes.set_ylabel('U, µV')
-        elif y_scale_type == -1:
-            fs_amplitude /= 1000
-            ss_amplitude /= 1000
-            self.axes.set_ylabel('U, mV')
-        """
+        self.animation_flag = animation_flag        
         fs_x_scale_type, fs_y_scale_type = getScaleType(fs_frequency, fs_amplitude)
         ss_x_scale_type, ss_y_scale_type = getScaleType(ss_frequency, ss_amplitude)
         x_type_mas = [fs_x_scale_type, ss_x_scale_type]
