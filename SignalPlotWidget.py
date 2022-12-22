@@ -2,8 +2,6 @@
 from PlotWidget import PlotWidget
 from scalefuncs import *
 
-import asyncio
-
 from wave import (
     generate_sine_wave,
     generate_cosine_wave,
@@ -138,7 +136,7 @@ class SignalPlotWidget(PlotWidget):
 
 
     def polyharmonic(self, fs_signal_name, fs_frequency, fs_amplitude=1,  fs_duration=1,
-                     ss_signal_name='', ss_amplitude=1, ss_frequency=1, ss_sample_rate=1, ss_duration=1, animation_flag = 1):
+                     ss_signal_name='', ss_amplitude=1, ss_frequency=1, ss_duration=1, animation_flag = 1):
         self.clear()
         self.animation_flag = animation_flag
         if fs_signal_name == '-' or ss_signal_name == '-':
@@ -157,7 +155,7 @@ class SignalPlotWidget(PlotWidget):
         fx, fy = wave_generators[fs_signal_name](ampl_mas[0], freq_mas[0], fs_duration)
         
         if len(self.arrays) == 0:
-            sx, sy = wave_generators[ss_signal_name](ampl_mas[1], freq_mas[1], ss_sample_rate, ss_duration)
+            sx, sy = wave_generators[ss_signal_name](ampl_mas[1], freq_mas[1], ss_duration)
             py = fy + sy
             self.arrays.append([sx, sy])
             self.arrays.append([fx, py])
@@ -182,7 +180,7 @@ class SignalPlotWidget(PlotWidget):
                     self.view.draw()
                     self.view.flush_events()
         else:
-            self.axes.plot(fx, py, color='#1f77b4')
+            self.axes.plot(self.arrays[len(self.arrays) - 1][0], self.arrays[len(self.arrays) - 1][1], color='#1f77b4')
             self.view.draw()
 
     def modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, 
@@ -286,4 +284,3 @@ class SignalPlotWidget(PlotWidget):
                         self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
                         self.view.draw()
                         self.view.flush_events()
-
