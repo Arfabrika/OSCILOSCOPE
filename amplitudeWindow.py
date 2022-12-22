@@ -158,7 +158,9 @@ class AmplitudeWindow(QWidget):
 
         tmp = QHBoxLayout()
         tmp.addLayout(mechanical_sliders)
-        
+
+        #fs_signal.addLayout(tmp)
+
         self.ok_button = QPushButton('Выполнить модуляцию')
         self.ok_button.clicked.connect(self.ok_button_clicked)
 
@@ -247,4 +249,9 @@ class AmplitudeWindow(QWidget):
         ind_ss = self.ss_signals_list.currentIndex()
         signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
         signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], self.mechanical_slider_frequency.value(), signal_ss[1], signal_ss[2], signal_fs[1], flag = 0, animation_flag=self.animation_flag)
+
+        tmp = self.mechanical_slider_frequency.value()
+        if signal_fs[3] >= self.mechanical_slider_frequency.value():
+            tmp = signal_fs[3]
+
+        self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), flag = 0, animation_flag=self.animation_flag)
