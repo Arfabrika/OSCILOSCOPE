@@ -284,4 +284,3 @@ class SignalPlotWidget(PlotWidget):
                         self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
                         self.view.draw()
                         self.view.flush_events()
-
