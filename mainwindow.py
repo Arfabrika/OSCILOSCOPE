@@ -32,6 +32,7 @@ from summationWindow import SummationWindow
 signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
 import time
 from functools import partial, wraps
+from numba import njit
 
 class CoolDownDecorator(object):
   def __init__(self,func,interval):
@@ -163,13 +164,10 @@ class MainWindow(QWidget):
         
         ampl_layout = QVBoxLayout()
         self.ampl_create_button = QPushButton('Амплитудная модуляция')
-        self.ampl_create_button.setCheckable(True)
         self.ampl_create_button.clicked.connect(self.click_amplitude_event)
         self.freq_create_button = QPushButton('Частотная модуляция')
-        self.freq_create_button.setCheckable(True)
         self.freq_create_button.clicked.connect(self.click_frequency_event)
         self.sum_create_button = QPushButton('Множественное суммирование сигналов')
-        self.sum_create_button.setCheckable(True)
         self.sum_create_button.clicked.connect(self.click_sum_event)
 
         self.anim_checkbox = QCheckBox("Включить анимацию")
@@ -205,7 +203,7 @@ class MainWindow(QWidget):
         # plot_params_scale_y.addWidget(self.scale_y)
 
         mechanical_slider_amplitude_layout = QVBoxLayout()
-        self.amplitude_lable = QLabel("Амплитуда")
+        self.amplitude_lable = QLabel("Ось y")
         self.mechanical_slider_amplitude = QDial()
         self.mechanical_slider_amplitude.setRange(0, 50)
         self.mechanical_slider_amplitude.setValue(1)
@@ -217,7 +215,7 @@ class MainWindow(QWidget):
         mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude_checkbox)        
         
         mechanical_slider_frequency_layout = QVBoxLayout()
-        self.frequency_lable = QLabel("Частота")
+        self.frequency_lable = QLabel("Ось x")
         self.mechanical_slider_frequency = QDial()
         self.mechanical_slider_frequency.setRange(0, 50)
         self.mechanical_slider_frequency.setValue(1)
@@ -280,6 +278,7 @@ class MainWindow(QWidget):
         self.data = [0]
         self.data_ind = [0]
         self.data_dict = dict()
+        self.first_contact = 1
 
     def change_amplitude_slider_event(self):
         self.amplitude_slider_enabled = not self.amplitude_slider_enabled
@@ -356,19 +355,19 @@ class MainWindow(QWidget):
     # @CoolDown(0.1)
     # function for drawing data from controller
     def reDraw(self):
-        print("Br", self.stop_flag)
+        #print("Br", self.stop_flag)
         try:
             while not self.stop_flag:           
                 self.signal_plot.axes.clear() # fixed
                 self.signal_plot.axes.grid(True)
         #----------------------------------------------------------------------
-                if self.tmp != 0 and len(self.x):
+                """if self.tmp != 0 and len(self.x):
                     self.x = np.append(self.x, max(self.x) + self.tmp)
                     self.x = np.delete(self.x, 0)
                 else:
                     self.x = np.arange(0, len(self.data))
                 self.x = self.x * (1/9.5)
-                self.tmp = self.tmp + 1 
+                self.tmp = self.tmp + 1 """
         #----------------------------------------------------------------------
                 self.x_scale_value = float(self.mechanical_slider_frequency.value())
                 self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
@@ -383,10 +382,12 @@ class MainWindow(QWidget):
 
                 #print("Data in redraw", self.data)
                 #print("Inds", self.data_ind)
+                
                 self.signal_plot.axes.plot(self.data_dict.keys(), self.data_dict.values(), color='#1f77b4')
-                self.signal_plot.view.draw()        
+                self.signal_plot.view.draw()      
+                
                     
-
+            """
             print("inds", self.data_ind)
             print("data", self.data)
             print("len inds", len(self.data_ind))
@@ -395,6 +396,7 @@ class MainWindow(QWidget):
             print("dict keys len", len(self.data_dict.keys()))
             print("dict values", self.data_dict.values())
             print("dict values len", len(self.data_dict.values()))
+            """
             self.signal_plot.axes.plot(self.data_dict.keys(), self.data_dict.values(), color='#1f77b4')
             self.signal_plot.view.draw()
             self.data.clear()
@@ -404,6 +406,7 @@ class MainWindow(QWidget):
                 print('error in draw', str(e))
         # self.spectre_plot.view.draw()
 
+    # @njit(fastmath=True, cache=True, parallel=True)
     def receive_signal(self):
         if self.serial_ports_combo.currentText() == '-':
             self.stop_flag = True
@@ -423,60 +426,88 @@ class MainWindow(QWidget):
                             # init serial port and bound
                             # bound rate on two ports must be the same
                             #was 9600 // 115200
-                            generator_ser = serial.Serial(generator_name, 115200, timeout=1)
+                            generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
                             generator_ser.flushInput()
+                            generator_ser.flushOutput()
+                            generator_ser.set_buffer_size(rx_size = 6, tx_size = 6)
+                            delta = 0
+                            delta_mas = 0
+                            cur_time = 0
+
+                            if self.first_contact:
+                                self.first_contact = 0
+                                while 1:
+                                    generator_ser.write(bytearray(170))
+                                    ser_bytes = generator_ser.read(1)
+                                    print(ser_bytes)
+
+                                    if (len(ser_bytes)):
+                                        if ser_bytes[0] == 255:#ur_byte == 255:
+                                            break
                             #print(generator_ser.portstr)
 
                             #data = []
 
                             #print('stop flag', self.stop_flag)
 
-                            start_time = time.time()   
+                            start_time = time.perf_counter()#time.time()   
 
-                            while not self.stop_flag: # чтение байтов с порта   
+                            while not self.stop_flag or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
+                                if (self.stop_flag):
+                                    generator_ser.send_break(0)
+                                point_time = time.perf_counter()   
                                 ser_bytes = generator_ser.read(2)
                                 #print('huint', ser_bytes, len(ser_bytes) )
                                 if len(ser_bytes) != 0:
                                     try:
-                                        cur_time = float(time.time() - start_time)
-                                        cur_byte = int.from_bytes(ser_bytes, "big", signed=True) /1023.0*5.0
+                                       #
+                                        cur_byte = int.from_bytes(ser_bytes, "little", signed=False) /1023.0*5.0
+                                        #delta_mas.append(float(point_time - start_time) - cur_time)
+                                        #print(delta)
+                                        cur_time = float(point_time - start_time)
                                         # self.data_ind.append(cur_time)
-                                        # self.data.append(cur_byte)
+                                        self.data.append(cur_byte)
                                         self.data_dict[cur_time] = cur_byte
                                         
                                         #print("Time", float(time.time() - start_time))
-                                        # print(ser_bytes)
+                                        #print(cur_byte)
                                     except Exception as e:
                                         print('error in input', str(e))
+                                else:
+                                    break
                                 
-                                # self.reDraw(self.data[-50:])
+                                #if(generator_ser.isOpen() and self.stop_flag): generator_ser.close()
+                            
+                            # print("ssss", generator_ser.read(generator_ser.inWaiting()))
 
-                            else:
-                                print("Stop flag:", self.stop_flag)
-                                
-                                """
-                                self.signal_plot.clear()
-                                self.spectre_plot.clear()
-                                self.spectre_plot.axes.magnitude_spectrum(self.data, color='#1f77b4')
-                                self.signal_plot.clear()
-                                """
-    #----------------------------------------------------------------------
-                                x = np.arange(0, len(self.data))
-                                x = x * (1/9.5)
-                                self.tmp = 0
-                                self.x = [0]
-    #----------------------------------------------------------------------
-                                print("Data", self.data)
-                                print("Inds", self.data_ind)
-                                
-                                """
-                                self.signal_plot.axes.plot(x, self.data, color='#1f77b4')
-                                self.signal_plot.view.draw()
-                                
-                                self.data.clear()
-                                self.data[0] = 0
-                                """
-                                return
+                            # self.reDraw(self.data[-50:])
+
+                            print("Stop flag:", self.stop_flag)
+                            
+                            """
+                            self.signal_plot.clear()
+                            self.spectre_plot.clear()
+                            self.spectre_plot.axes.magnitude_spectrum(self.data, color='#1f77b4')
+                            self.signal_plot.clear()
+                            """
+#----------------------------------------------------------------------
+                            x = np.arange(0, len(self.data))
+                            x = x * (1/9.5)
+                            self.tmp = 0
+                            self.x = [0]
+#----------------------------------------------------------------------
+                            print("Data", self.data, "len data", len(self.data), "len dict", len(self.data_dict.keys()))
+                            print("Min/max data: ", min(self.data_dict), max(self.data_dict))
+                            #print("Inds", self.data_ind)
+                            
+                            """
+                            self.signal_plot.axes.plot(x, self.data, color='#1f77b4')
+                            self.signal_plot.view.draw()
+                            
+                            self.data.clear()
+                            self.data[0] = 0
+                            """
+                            return
                         else:
                             self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
                             return    
@@ -491,6 +522,7 @@ class MainWindow(QWidget):
         self.data_dict.clear()
 
         self.thread_manager.start(self.receive_signal)
+        #self.receive_signal()
         self.thread_manager.start(self.reDraw)
 
 
@@ -537,7 +569,7 @@ class MainWindow(QWidget):
             ampl = self.mechanical_slider_amplitude.value()
         else:
             ampl = sigData[1]
-        self.signal_plot.plot(sigData[0], sigData[2], sigData[3], sigData[1],
+        self.signal_plot.plot(sigData[0], sigData[2], sigData[1],
         self.x_scale_value, self.y_scale_value, animation_flag=self.animation_flag)
 
         self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[4])
@@ -547,14 +579,17 @@ class MainWindow(QWidget):
         self.x_scale_value = float(self.mechanical_slider_frequency.value())* 1.1
         self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
 
+
+        if len(self.signalDataArray.array) and self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True: 
+            self.drawSignal() 
+        
         self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
         self.signal_plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
 
         self.signal_plot.view.draw()
         self.signal_plot.view.flush_events()
 
-        if len(self.signalDataArray.array) and self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True: 
-            self.drawSignal() 
+
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)

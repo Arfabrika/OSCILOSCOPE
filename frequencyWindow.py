@@ -6,8 +6,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QSpinBox,
-    QCheckBox,
-    QDial
+    QDial,
+    QCheckBox
 )
 
 from SignalPlotWidget import SignalPlotWidget
@@ -140,6 +140,36 @@ class FrequencyWindow(QWidget):
         ss_signal.addWidget(self.plot2)
         ss_signal.addWidget(self.specter_plot)
 
+        self.ok_button = QPushButton('Выполнить модуляцию')
+        self.ok_button.clicked.connect(self.ok_button_clicked)
+
+        signal_layout = QHBoxLayout()        
+        
+        """plot_params_layout = QVBoxLayout()
+        plot_params_scale_x = QVBoxLayout()
+        self.scale_x = QComboBox()
+        self.scale_x.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
+        self.scale_x.setCurrentIndex(6)
+        self.scale_x_label = QLabel("Максимальное\nзначение частоты")
+
+        plot_params_scale_x.addWidget(self.scale_x_label)
+        plot_params_scale_x.addWidget(self.scale_x)
+
+        plot_params_scale_y = QVBoxLayout()
+        self.scale_y = QComboBox()
+        self.scale_y.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
+        self.scale_y.setCurrentIndex(6)
+        self.scale_y_label = QLabel("Максимальноe\nзначение амплитуды")
+
+        plot_params_scale_y.addWidget(self.scale_y_label)
+        plot_params_scale_y.addWidget(self.scale_y)
+
+        plot_params_layout.addLayout(plot_params_scale_x)
+        plot_params_layout.addLayout(plot_params_scale_y)
+        plot_params_layout.addStretch()
+        self.scale_x.currentIndexChanged.connect(self.editScale)
+        self.scale_y.currentIndexChanged.connect(self.editScale)
+        """
         mechanical_slider_amplitude_layout = QVBoxLayout()
         self.amplitude_lable = QLabel("ось y")
         self.mechanical_slider_amplitude = QDial()
@@ -168,23 +198,26 @@ class FrequencyWindow(QWidget):
         mechanical_sliders.addLayout(mechanical_slider_frequency_layout)
         mechanical_sliders.addLayout(mechanical_slider_amplitude_layout)
 
-        tmp = QHBoxLayout()
-        tmp.addLayout(mechanical_sliders)
+       
 
-        self.ok_button = QPushButton('Выполнить модуляцию')
-        self.ok_button.clicked.connect(self.ok_button_clicked)
-
-        signal_layout = QHBoxLayout()    
+        #signal_layout.addLayout(plot_params_layout)
         
-        main_layout = QVBoxLayout()
 
-        signal_layout.addLayout(tmp)
+        #fs_signal.addLayout(tmp)
+
         signal_layout.addLayout(fs_signal)
         signal_layout.addLayout(ss_signal)
 
-        main_layout.addLayout(signal_layout)       
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(signal_layout)
 
         main_layout.addWidget(self.ok_button)
+        
+        tmp = QHBoxLayout() 
+        tmp.addLayout(mechanical_sliders)
+        tmp.addLayout(main_layout)
+       
+       # tmp.addWidget(self.signal_plot)
 
         self.x_scale_value = 1
         self.y_scale_value = 1
@@ -192,7 +225,7 @@ class FrequencyWindow(QWidget):
         self.y_scale_type = 0
 
         self.deviation_input.setValue(10)
-        self.setLayout(main_layout)
+        self.setLayout(tmp)
 
     def updateSignalData(self, signalDataArray, animation_flag):
         self.signalDataArray = signalDataArray
@@ -257,18 +290,9 @@ class FrequencyWindow(QWidget):
 
         self.x_scale_value = float(self.mechanical_slider_frequency.value())* 1.1
         self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
-        self.update_plot()
 
         self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
         self.signal_plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
 
         self.signal_plot.view.draw()
         self.signal_plot.view.flush_events()
-
-
-    def update_plot(self):
-        ind_fs = self.fs_signals_list.currentIndex()
-        ind_ss = self.ss_signals_list.currentIndex()
-        signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
-        signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], self.mechanical_slider_frequency.value(), signal_ss[1], signal_ss[2], signal_fs[1], flag = 0, animation_flag=self.animation_flag)

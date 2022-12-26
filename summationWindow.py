@@ -5,8 +5,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
-    QCheckBox,
-    QDial
+    QDial,
+    QCheckBox
 )
 
 from SignalPlotWidget import SignalPlotWidget
@@ -106,16 +106,15 @@ class SummationWindow(QWidget):
         self.mechanical_slider_frequency_checkbox = QCheckBox("Enabled")
         self.mechanical_slider_frequency_checkbox.setChecked(True)
         mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency_checkbox)
-
+       
         mechanical_sliders = QVBoxLayout()
+
         mechanical_sliders.addLayout(mechanical_slider_frequency_layout)
         mechanical_sliders.addLayout(mechanical_slider_amplitude_layout)
-
-        tmp = QHBoxLayout()
-        tmp.addLayout(mechanical_sliders)
+        mechanical_sliders.addStretch()
 
         plot_layout = QHBoxLayout()
-        plot_layout.addLayout(tmp)
+        plot_layout.addLayout(mechanical_sliders)
         plot_layout.addWidget(self.plot)
 
         main_layout.addLayout(signal_layout)
@@ -154,25 +153,24 @@ class SummationWindow(QWidget):
         curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
        
         if self.signalsOnPlot.getArraySize() == 0:
-            self.plot.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1], 1, animation_flag=self.animation_flag)
-            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], False))
+            self.plot.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[3], curSignal_fs[1], 1)
+            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], False))
         elif self.signalsOnPlot.getArraySize() == 1:
             ss_signal = self.signalsOnPlot.getSignalByIndex(self.signalsOnPlot.getArraySize() - 1)
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1],
-                     ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getDuration(), animation_flag=self.animation_flag)
-            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], False))
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1],  curSignal_fs[3],
+                     ss_signal.getSignaType(), ss_signal.getAmplitude(), ss_signal.getFrequency(), ss_signal.getDuration())
+            self.signalsOnPlot.appendSignal(signalData(curSignal_fs[0], curSignal_fs[1], curSignal_fs[2], curSignal_fs[3], False))
         else:
-            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1], animation_flag=self.animation_flag)
-    
-    def showSignalInfo_fs(self):
-        if (self.signalDataArray.getArraySize() > 0):
-            curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
+            self.plot.polyharmonic(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1], curSignal_fs[3])
 
-            self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
-            self.fs_duration_spin.setText(str(curSignal_fs[3]))
-            self.fs_frequency_spin.setText(str(curSignal_fs[2]))
-            self.fs_signal_form_combo.setText(curSignal_fs[0])
-    
+    def showSignalInfo_fs(self):
+        curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
+
+        self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
+        self.fs_duration_spin.setText(str(curSignal_fs[4]))
+        self.fs_frequency_spin.setText(str(curSignal_fs[2]))
+        self.fs_signal_form_combo.setText(curSignal_fs[0])
+        
     def step_back(self):
         lastSigData = self.signalsOnPlot.getLastSignal().getData()
         
@@ -183,27 +181,17 @@ class SummationWindow(QWidget):
         
         self.plot.remove_last_points(lastSigData[6], lastSigData[7])
         self.signalsOnPlot.removeLast()
-
+       #bashkoff
     def slider_frequency_move(self):
 
         self.x_scale_value = float(self.mechanical_slider_frequency.value())* 1.1
         self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
-        self.update_plot()
 
-        self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
-        self.signal_plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
+        # self.updatePlot()
 
-        self.signal_plot.view.draw()
-        self.signal_plot.view.flush_events()
+        self.plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
+        self.plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
 
-
-    def update_plot(self):
-        ind_fs = self.fs_signals_list.currentIndex()
-        ind_ss = self.ss_signals_list.currentIndex()
-        signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
-        signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], self.mechanical_slider_frequency.value(), signal_ss[1], signal_ss[2], signal_fs[1], flag = 0, animation_flag=self.animation_flag)
-
-       #bashkoff
-
+        self.plot.view.draw()
+        self.plot.view.flush_events()
 

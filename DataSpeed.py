@@ -1,10 +1,14 @@
 import serial.tools.list_ports
 import time
+import matplotlib.pyplot as plt
+from PySide6.QtCore import QThreadPool
 
 def receive_signal():
             times = []
             data=[]
+            datadict = dict()
             serial_ports = serial.tools.list_ports.comports()
+            
             try:
                 generator_name = 'COM3'
                 for port in serial_ports:
@@ -15,36 +19,44 @@ def receive_signal():
                             # bound rate on two ports must be the same
                             #was 9600
                             generator_ser = serial.Serial(generator_name, 115200, timeout=1)
-                            generator_ser.flushInput()
-                            #print(generator_ser.portstr)
+                            #generator_ser.flushInput()
+                            
 
-                            #data = []
+                            while 1:
+                                generator_ser.write(bytearray(170))
+                                ser_bytes = generator_ser.read(1)
+                                print(ser_bytes)
 
-                            #print('stop flag', self.stop_flag)
+                                if (len(ser_bytes)):
+                                    if ser_bytes[0] == 255:#ur_byte == 255:
+                                        break
 
-                            start_time = time.time()
+
+                            start_time = time.perf_counter()
                             point_time = start_time
                             stop_flag = 0   
                             
                             while not stop_flag: # чтение байтов с порта 
-                                point_time = time.time()
+                                point_time = time.perf_counter()
                                 ser_bytes = generator_ser.read(2)
                                 # print('huint', ser_bytes[0], ser_bytes[1] )
                                 if len(ser_bytes) != 0:
                                     try:
                                         # print('ping', time.time() - point_time)
 
-                                        cur_byte = int.from_bytes(ser_bytes, "little", signed=False) / 1024 * 5
+                                        cur_byte = int.from_bytes(ser_bytes, "little", signed=False) /1023.0*5.0
                                         data.append(cur_byte)
                                   
-                                        cur_time = float(time.time() - point_time)
-                                        times.append(cur_time)
+                                        cur_time = float(point_time - start_time)
+                                        #data[cur_time] = cur_byte
+                                        #times.append(cur_time)
+                                        datadict[cur_time] = cur_byte
                                         
                                       
                                         
                                     except Exception as e:
                                         print('error in input', str(e))
-                                if point_time - start_time >=20:
+                                if point_time - start_time >= 7:
                                     stop_flag = 1
                                     
                                 # self.reDraw(self.data[-50:])
@@ -56,11 +68,15 @@ def receive_signal():
     #----------------------------------------------------------------------
                                
     #----------------------------------------------------------------------
-                                print("Times", times)
-                                print("Avg", sum(times)/len(times), 1 / (sum(times)/len(times)), 'Hz')
+                                print(data, len(data), len(datadict.keys()))
+                                # print("Times", datadict.keys())
+                                # print("Len: ", len(datadict.keys()))
+                                # print("Avg", len(datadict.keys()) / list(datadict.keys())[-1],  'Hz')
 
-                                print("data: ", data)
-                                print("min/max: ", min(data), max(data))
+                                # print("data: ", datadict)
+                                # print("min/max: ", min(datadict.values()), max(datadict.values()))
+                                plt.plot(datadict.keys(), datadict.values())
+                                plt.show()
 
                                 #print("Inds", self.data_ind)
                                 
@@ -71,5 +87,6 @@ def receive_signal():
                             return    
             except Exception as e:
                 print('error in common input', str(e))   
+
 
 receive_signal() 
