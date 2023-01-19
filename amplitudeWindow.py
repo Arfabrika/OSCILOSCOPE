@@ -131,35 +131,29 @@ class AmplitudeWindow(QWidget):
         mechanical_slider_amplitude_layout = QVBoxLayout()
         self.amplitude_lable = QLabel("ось y")
         self.mechanical_slider_amplitude = QDial()
-        self.mechanical_slider_amplitude.setRange(0, 50)
-        self.mechanical_slider_amplitude.setValue(1)
+        self.mechanical_slider_amplitude.setRange(0, 12)
+        self.mechanical_slider_amplitude.setValue(6)
         mechanical_slider_amplitude_layout.addWidget(self.amplitude_lable)
         mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude)
-        self.mechanical_slider_amplitude.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_amplitude_checkbox = QCheckBox("Enabled")
-        self.mechanical_slider_amplitude_checkbox.setChecked(True)
-        mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude_checkbox)        
+        self.mechanical_slider_amplitude.valueChanged.connect(self.slider_frequency_move)   
         
         mechanical_slider_frequency_layout = QVBoxLayout()
+        
         self.frequency_lable = QLabel("ось x")
         self.mechanical_slider_frequency = QDial()
-        self.mechanical_slider_frequency.setRange(0, 50)
-        self.mechanical_slider_frequency.setValue(1)
+        self.mechanical_slider_frequency.setRange(0, 12)
+        self.mechanical_slider_frequency.setValue(6)
         mechanical_slider_frequency_layout.addWidget(self.frequency_lable)
         mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency)
         self.mechanical_slider_frequency.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_frequency_checkbox = QCheckBox("Enabled")
-        self.mechanical_slider_frequency_checkbox.setChecked(True)
-        mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency_checkbox)
 
         mechanical_sliders = QVBoxLayout()
+        mechanical_sliders.addStretch(2)
         mechanical_sliders.addLayout(mechanical_slider_frequency_layout)
         mechanical_sliders.addLayout(mechanical_slider_amplitude_layout)
-
+        mechanical_sliders.addStretch(1)
         tmp = QHBoxLayout()
         tmp.addLayout(mechanical_sliders)
-
-        #fs_signal.addLayout(tmp)
 
         self.ok_button = QPushButton('Выполнить модуляцию')
         self.ok_button.clicked.connect(self.ok_button_clicked)
@@ -232,9 +226,15 @@ class AmplitudeWindow(QWidget):
         self.specter_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1])
 
     def slider_frequency_move(self):
+        if self.mechanical_slider_frequency.value() % 2 == 0:
+            self.x_scale_value = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
+        else:
+            self.x_scale_value = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
 
-        self.x_scale_value = float(self.mechanical_slider_frequency.value())* 1.1
-        self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
+        if self.mechanical_slider_amplitude.value() % 2 == 0:
+            self.y_scale_value = 0.0011 * 10**(self.mechanical_slider_amplitude.value() // 2)
+        else:
+            self.y_scale_value = 0.0055 * 10**(self.mechanical_slider_amplitude.value() // 2)
         self.update_plot()
 
         self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
@@ -242,7 +242,6 @@ class AmplitudeWindow(QWidget):
 
         self.signal_plot.view.draw()
         self.signal_plot.view.flush_events()
-
 
     def update_plot(self):
         ind_fs = self.fs_signals_list.currentIndex()

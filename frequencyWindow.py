@@ -144,60 +144,29 @@ class FrequencyWindow(QWidget):
         self.ok_button.clicked.connect(self.ok_button_clicked)
 
         signal_layout = QHBoxLayout()        
-        
-        """plot_params_layout = QVBoxLayout()
-        plot_params_scale_x = QVBoxLayout()
-        self.scale_x = QComboBox()
-        self.scale_x.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
-        self.scale_x.setCurrentIndex(6)
-        self.scale_x_label = QLabel("Максимальное\nзначение частоты")
-
-        plot_params_scale_x.addWidget(self.scale_x_label)
-        plot_params_scale_x.addWidget(self.scale_x)
-
-        plot_params_scale_y = QVBoxLayout()
-        self.scale_y = QComboBox()
-        self.scale_y.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
-        self.scale_y.setCurrentIndex(6)
-        self.scale_y_label = QLabel("Максимальноe\nзначение амплитуды")
-
-        plot_params_scale_y.addWidget(self.scale_y_label)
-        plot_params_scale_y.addWidget(self.scale_y)
-
-        plot_params_layout.addLayout(plot_params_scale_x)
-        plot_params_layout.addLayout(plot_params_scale_y)
-        plot_params_layout.addStretch()
-        self.scale_x.currentIndexChanged.connect(self.editScale)
-        self.scale_y.currentIndexChanged.connect(self.editScale)
-        """
         mechanical_slider_amplitude_layout = QVBoxLayout()
         self.amplitude_lable = QLabel("ось y")
         self.mechanical_slider_amplitude = QDial()
-        self.mechanical_slider_amplitude.setRange(0, 50)
-        self.mechanical_slider_amplitude.setValue(1)
+        self.mechanical_slider_amplitude.setRange(0, 12)
+        self.mechanical_slider_amplitude.setValue(6)
         mechanical_slider_amplitude_layout.addWidget(self.amplitude_lable)
         mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude)
-        self.mechanical_slider_amplitude.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_amplitude_checkbox = QCheckBox("Enabled")
-        self.mechanical_slider_amplitude_checkbox.setChecked(True)
-        mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude_checkbox)        
+        self.mechanical_slider_amplitude.valueChanged.connect(self.slider_frequency_move)    
         
         mechanical_slider_frequency_layout = QVBoxLayout()
         self.frequency_lable = QLabel("ось x")
         self.mechanical_slider_frequency = QDial()
-        self.mechanical_slider_frequency.setRange(0, 50)
-        self.mechanical_slider_frequency.setValue(1)
+        self.mechanical_slider_frequency.setRange(0, 12)
+        self.mechanical_slider_frequency.setValue(6)
         mechanical_slider_frequency_layout.addWidget(self.frequency_lable)
         mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency)
         self.mechanical_slider_frequency.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_frequency_checkbox = QCheckBox("Enabled")
-        self.mechanical_slider_frequency_checkbox.setChecked(True)
-        mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency_checkbox)
 
         mechanical_sliders = QVBoxLayout()
+        mechanical_sliders.addStretch(2)
         mechanical_sliders.addLayout(mechanical_slider_frequency_layout)
         mechanical_sliders.addLayout(mechanical_slider_amplitude_layout)
-
+        mechanical_sliders.addStretch(1)
        
 
         #signal_layout.addLayout(plot_params_layout)
@@ -221,8 +190,6 @@ class FrequencyWindow(QWidget):
 
         self.x_scale_value = 1
         self.y_scale_value = 1
-        self.x_scale_type = 0
-        self.y_scale_type = 0
 
         self.deviation_input.setValue(10)
         self.setLayout(tmp)
@@ -288,11 +255,18 @@ class FrequencyWindow(QWidget):
     
     def slider_frequency_move(self):
 
-        self.x_scale_value = float(self.mechanical_slider_frequency.value())* 1.1
-        self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
+        if self.mechanical_slider_frequency.value() % 2 == 0:
+            self.x_scale_value = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
+        else:
+            self.x_scale_value = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
+
+        if self.mechanical_slider_amplitude.value() % 2 == 0:
+            self.y_scale_value = 0.0011 * 10**(self.mechanical_slider_amplitude.value() // 2)
+        else:
+            self.y_scale_value = 0.0055 * 10**(self.mechanical_slider_amplitude.value() // 2)
 
         self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
-        self.signal_plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
+        self.signal_plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)        
 
         self.signal_plot.view.draw()
         self.signal_plot.view.flush_events()

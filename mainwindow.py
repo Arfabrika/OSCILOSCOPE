@@ -205,26 +205,20 @@ class MainWindow(QWidget):
         mechanical_slider_amplitude_layout = QVBoxLayout()
         self.amplitude_lable = QLabel("Ось y")
         self.mechanical_slider_amplitude = QDial()
-        self.mechanical_slider_amplitude.setRange(0, 50)
-        self.mechanical_slider_amplitude.setValue(1)
+        self.mechanical_slider_amplitude.setRange(0, 12)
+        self.mechanical_slider_amplitude.setValue(6)
         mechanical_slider_amplitude_layout.addWidget(self.amplitude_lable)
         mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude)
         self.mechanical_slider_amplitude.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_amplitude_checkbox = QCheckBox("Регулятор включен")
-        self.mechanical_slider_amplitude_checkbox.setChecked(True)
-        mechanical_slider_amplitude_layout.addWidget(self.mechanical_slider_amplitude_checkbox)        
-        
+               
         mechanical_slider_frequency_layout = QVBoxLayout()
         self.frequency_lable = QLabel("Ось x")
         self.mechanical_slider_frequency = QDial()
-        self.mechanical_slider_frequency.setRange(0, 50)
-        self.mechanical_slider_frequency.setValue(1)
+        self.mechanical_slider_frequency.setRange(0, 12)
+        self.mechanical_slider_frequency.setValue(6)
         mechanical_slider_frequency_layout.addWidget(self.frequency_lable)
         mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency)
         self.mechanical_slider_frequency.valueChanged.connect(self.slider_frequency_move)
-        self.mechanical_slider_frequency_checkbox = QCheckBox("Регулятор включен")
-        self.mechanical_slider_frequency_checkbox.setChecked(True)
-        mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency_checkbox)
 
         # plot_params_layout.addLayout(plot_params_scale_x)
         plot_params_layout.addLayout(plot_params_scale_y)
@@ -258,13 +252,9 @@ class MainWindow(QWidget):
         self.signals_list.currentIndexChanged.connect(self.showSignals)
         self.edit_signal_button.clicked.connect(self.editSignal)
         self.anim_checkbox.toggled.connect(self.changed_animation_checkbox_event)
-        self.mechanical_slider_amplitude_checkbox.toggled.connect(self.change_amplitude_slider_event)
-        self.mechanical_slider_frequency_checkbox.toggled.connect(self.change_frequency_slider_event)
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
         self.animation_flag = 0
-        self.amplitude_slider_enabled = True
-        self.frequency_slider_enabled = True
 
         self.amplitude_window = AmplitudeWindow(self.signalDataArray, self.animation_flag)
         self.frequency_window = FrequencyWindow(self.signalDataArray, self.animation_flag)
@@ -279,12 +269,6 @@ class MainWindow(QWidget):
         self.data_ind = [0]
         self.data_dict = dict()
         self.first_contact = 1
-
-    def change_amplitude_slider_event(self):
-        self.amplitude_slider_enabled = not self.amplitude_slider_enabled
-
-    def change_frequency_slider_event(self):
-        self.frequency_slider_enabled = not self.frequency_slider_enabled
 
     def addSignal(self):
         if self.fs_signal_form_combo.currentText() == "-":
@@ -477,8 +461,6 @@ class MainWindow(QWidget):
                                     break
                                 
                                 #if(generator_ser.isOpen() and self.stop_flag): generator_ser.close()
-                            
-                            # print("ssss", generator_ser.read(generator_ser.inWaiting()))
 
                             # self.reDraw(self.data[-50:])
 
@@ -561,24 +543,23 @@ class MainWindow(QWidget):
     def drawSignal(self):
         ind = self.signals_list.currentIndex()
         sigData = self.signalDataArray.getSignalByIndex(ind).getData()
-        if (self.frequency_slider_enabled):
-            freq = self.mechanical_slider_frequency.value()
-        else:
-            freq =  sigData[2]
-        if (self.amplitude_slider_enabled):
-            ampl = self.mechanical_slider_amplitude.value()
-        else:
-            ampl = sigData[1]
         self.signal_plot.plot(sigData[0], sigData[2], sigData[1],
         self.x_scale_value, self.y_scale_value, animation_flag=self.animation_flag)
 
         self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[4])
     
     def slider_frequency_move(self):
+        if self.mechanical_slider_frequency.value() % 2 == 0:
+            self.x_scale_value = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
+            #float(self.mechanical_slider_frequency.value())* 1.1
+        else:
+            self.x_scale_value = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
 
-        self.x_scale_value = float(self.mechanical_slider_frequency.value())* 1.1
-        self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
-
+        if self.mechanical_slider_amplitude.value() % 2 == 0:
+            self.y_scale_value = 0.0011 * 10**(self.mechanical_slider_amplitude.value() // 2)
+        else:
+            self.y_scale_value = 0.0055 * 10**(self.mechanical_slider_amplitude.value() // 2)
+        #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
 
         if len(self.signalDataArray.array) and self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True: 
             self.drawSignal() 
@@ -588,8 +569,6 @@ class MainWindow(QWidget):
 
         self.signal_plot.view.draw()
         self.signal_plot.view.flush_events()
-
-
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)

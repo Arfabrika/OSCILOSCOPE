@@ -8,14 +8,12 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
-
 class PlotWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
         #  create widgets
         figure = Figure(figsize=(8, 6))
-        #figure.set_size_inches(9, 7, forward=True)
         self.view = FigureCanvas(figure)
         self.axes = self.view.figure.subplots()
         self.axes.grid(True)
