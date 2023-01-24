@@ -60,7 +60,7 @@ class AmplitudeWindow(QWidget):
         fs_duration_layout.addWidget(self.fs_duration_spin)
 
         self.plot1 = SignalPlotWidget()
-        self.plot1.setFixedSize(350, 250)
+        self.plot1.setFixedSize(450, 250)
 
         self.signal_plot = SignalPlotWidget()
 
@@ -115,7 +115,7 @@ class AmplitudeWindow(QWidget):
         ss_duration_layout.addWidget(self.ss_duration_spin)
 
         self.plot2 = SignalPlotWidget()
-        self.plot2.setFixedSize(350, 250)
+        self.plot2.setFixedSize(450, 250)
 
         self.specter_plot = SpectrePlotWidget()
 
@@ -199,23 +199,23 @@ class AmplitudeWindow(QWidget):
         if len(self.signalDataArray.getArray()) > 0:
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
-            self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
-            self.fs_duration_spin.setText(str(curSignal_fs[3]))
-            self.fs_frequency_spin.setText(str(curSignal_fs[2]))
+            self.fs_amplitude_spin.setText(str(curSignal_fs[1]) + ' В')
+            self.fs_duration_spin.setText(str(curSignal_fs[3]) + ' Сек.')
+            self.fs_frequency_spin.setText(str(curSignal_fs[2]) + ' Гц')
             self.fs_signal_form_combo.setText(curSignal_fs[0])
 
-            self.plot1.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1], flag=0)
+            self.plot1.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1], curSignal_fs[3], flag=0)
 
     def showSignalInfo_ss(self):
         if len(self.signalDataArray.getArray()) > 0:
             curSignal_ss = self.signalDataArray.getSignalByIndex(self.ss_signals_list.currentIndex()).getData() 
 
-            self.ss_amplitude_spin.setText(str(curSignal_ss[1]))
-            self.ss_duration_spin.setText(str(curSignal_ss[3]))
-            self.ss_frequency_spin.setText(str(curSignal_ss[2]))
+            self.ss_amplitude_spin.setText(str(curSignal_ss[1]) + ' В')
+            self.ss_duration_spin.setText(str(curSignal_ss[3]) + ' Сек.')
+            self.ss_frequency_spin.setText(str(curSignal_ss[2]) + ' Гц')
             self.ss_signal_form_combo.setText(curSignal_ss[0])
 
-            self.plot2.plot(curSignal_ss[0], curSignal_ss[2], curSignal_ss[1], flag=0)
+            self.plot2.plot(curSignal_ss[0], curSignal_ss[2], curSignal_ss[1], curSignal_ss[3],flag=0)
 
     def ok_button_clicked(self):
         ind_fs = self.fs_signals_list.currentIndex()
