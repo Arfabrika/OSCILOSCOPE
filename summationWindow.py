@@ -161,9 +161,9 @@ class SummationWindow(QWidget):
         if self.signalDataArray.getArraySize() > 0:
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
-            self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
-            self.fs_duration_spin.setText(str(curSignal_fs[4]))
-            self.fs_frequency_spin.setText(str(curSignal_fs[2]))
+            self.fs_amplitude_spin.setText(str(curSignal_fs[1]) + ' В')
+            self.fs_duration_spin.setText(str(curSignal_fs[3]) + ' Сек.')
+            self.fs_frequency_spin.setText(str(curSignal_fs[2]) + ' Гц')
             self.fs_signal_form_combo.setText(curSignal_fs[0])
         else:
             self.fs_amplitude_spin.setText("Нет сигналов")
