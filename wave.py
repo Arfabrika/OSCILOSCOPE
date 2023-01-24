@@ -84,19 +84,19 @@ def modulating (fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplit
     return x, y
 
 def specter_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
-    x = np.linspace(0, fs_duration, 440 * fs_duration, endpoint=False)
+    x = []#np.linspace(0, fs_duration, 440 * fs_duration, endpoint=False)
     y = []
 
     t1 = (2 * np.pi) / (1 / ss_frequency)
     t2 = (2 * np.pi) / (1 / fs_frequency)
 
-    for point in x:
-       y.append(0)
-    index = len(x) // 2
+    x.append(fs_frequency - ss_frequency)
+    x.append(fs_frequency)
+    x.append(fs_frequency + ss_frequency)
 
-    y[index] = fs_amplitude * np.cos(t2 * point)
-    y[index + len(x) // 6] = (fs_amplitude * (ss_amplitude / fs_amplitude) / 2) * np.cos((t2 + t1) * point)
-    y[index - len(x) // 6] = (fs_amplitude * (ss_amplitude / fs_amplitude) / 2) * np.cos((t2 - t1) * point)
+    y.append((fs_amplitude * ((fs_amplitude - ss_amplitude) / fs_amplitude) / 2))
+    y.append(fs_amplitude)
+    y.append((fs_amplitude * ((fs_amplitude - ss_amplitude) / fs_amplitude) / 2))
     return x, y
 
 def freq_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, freq_dev):
