@@ -26,7 +26,7 @@ class PlotWidget(QWidget):
         self.setLayout(vlayout)
 
     def clear(self, x_scale = 0, y_scale = 0):
-        if len(self.axes.lines):
+        # if len(self.axes.lines): ???????????
             self.axes.clear()
             if (x_scale != 0):
                 self.axes.set_xlim(-x_scale, x_scale)
