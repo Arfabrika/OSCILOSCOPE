@@ -45,7 +45,7 @@ class SignalPlotWidget(PlotWidget):
         self.axes.set_ylabel('U, V')
         self.axes.grid(True)
 
-    def plot(self, signal_name, frequency, amplitude=1, x_scale_value = 1, 
+    def plot(self, signal_name, frequency, amplitude=1, duration=1, x_scale_value = 1, 
     y_scale_value = 1, flag = 1, animation_flag = 1):
         self.clear()
         self.animation_flag = animation_flag
@@ -55,17 +55,17 @@ class SignalPlotWidget(PlotWidget):
             return
 
         x_scale_type, y_scale_type = getScaleType(frequency, amplitude)
-        frequency,amplitude = getScaledParams(frequency, amplitude, x_scale_type, y_scale_type)
+        # frequency,amplitude = getScaledParams(frequency, amplitude, x_scale_type, y_scale_type)
         x_label, y_label = getAxisNames(x_scale_type, y_scale_type)
         self.axes.set_xlabel(x_label)
         self.axes.set_ylabel(y_label)
                
-        x, y = wave_generators[signal_name](amplitude, frequency, x_scale_value)     
+        x, y = wave_generators[signal_name](amplitude, frequency, duration)     
 
         x_points = []
         y_points = []
         if flag == 1:
-            self.axes.set_xlim(-x_scale_value, x_scale_value)
+            self.axes.set_xlim(-duration, duration)
             self.axes.set_ylim(-y_scale_value, y_scale_value)
         
         if self.animation_flag == 1 and flag == 0:
@@ -85,6 +85,8 @@ class SignalPlotWidget(PlotWidget):
             self.axes.plot(x, y, color='#1f77b4')
             self.view.draw()
             self.view.flush_events()
+        
+
 
     def generate_formula(self, fs_form_name, fs_amplitude=1, fs_frequency=1, ss_form_name = '-', ss_amplitude =1, ss_frequency=1):
         form = 'Formula: '
@@ -123,13 +125,13 @@ class SignalPlotWidget(PlotWidget):
         if (curSigData[0] == 'sine'):
             form += str(curSigData[1]) + r'$\cdot$' + 'sin(' + str(curSigData[2]) + r'$\cdot$' + 't)'
         elif (curSigData[0] == 'cosine'):
-            form += str(curSigData[1]) + r'$\cdot$' +'cos(' + str(fs_frequency) + r'$\cdot$' + 't)'
+            form += str(curSigData[1]) + r'$\cdot$' +'cos(' + str(curSigData[2]) + r'$\cdot$' + 't)'
         elif (curSigData[0] == 'square'):
-            form += r'$\frac{4\cdot'+ str(curSigData[1]) + r'}{\pi}\sum_{k=1}^\infty \frac{sin(k\cdot' + str(fs_frequency) +  r'\cdot t)}{k}$'   
+            form += r'$\frac{4\cdot'+ str(curSigData[1]) + r'}{\pi}\sum_{k=1}^\infty \frac{sin(k\cdot' + str(curSigData[2]) +  r'\cdot t)}{k}$'   
         elif (curSigData[0] == 'triangle'):
-            form += r'$\frac{8\cdot'+ str(curSigData[1]) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(fs_frequency) + r'\cdot t)}{k^{2}}$'
+            form += r'$\frac{8\cdot'+ str(curSigData[1]) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(curSigData[2]) + r'\cdot t)}{k^{2}}$'
         else:
-            form += r'$\frac{' + str(curSigData[1]) + r'}{2} - \frac{'+ str(curSigData[1]) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(fs_frequency) +  r'\cdot t)$'
+            form += r'$\frac{' + str(curSigData[1]) + r'}{2} - \frac{'+ str(curSigData[1]) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(curSigData[2]) +  r'\cdot t)$'
         
         
         return form
