@@ -75,7 +75,8 @@ class SpectrePlotWidget(PlotWidget):
 
         x, y = specter_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
         
-        self.axes.plot(x, y, color='#1f77b4')
+        self.axes.clear()
+        self.axes.bar(x, y, color='#1f77b4')
         self.view.draw()
 
     def freq_modulate(self, fs_frequency, ss_frequency, freq_dev):
