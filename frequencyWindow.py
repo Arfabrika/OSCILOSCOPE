@@ -53,17 +53,6 @@ class FrequencyWindow(QWidget):
         fs_amplitude_layout.addWidget(self.fs_amplitude_label)
         fs_amplitude_layout.addWidget(self.fs_amplitude_spin)
 
-        self.fs_duration_spin = QLabel()
-        self.fs_duration_label = QLabel('Продолжительность')
-        self.fs_duration_label.setBuddy(self.fs_duration_spin)
-
-        fs_duration_layout = QHBoxLayout()
-        fs_duration_layout.addWidget(self.fs_duration_label)
-        fs_duration_layout.addWidget(self.fs_duration_spin)
-
-        self.plot1 = SignalPlotWidget(animation_flag=0)
-        self.plot1.setFixedSize(350, 250)
-
         self.signal_plot = SignalPlotWidget()
 
         fs_signal = QVBoxLayout()
@@ -71,7 +60,6 @@ class FrequencyWindow(QWidget):
         fs_signal.addLayout(fs_signals_form_layout)
         fs_signal.addLayout(fs_frequency_layout)
         fs_signal.addLayout(fs_amplitude_layout)
-        fs_signal.addLayout(fs_duration_layout)
 
         deviation_layout = QHBoxLayout()
         self.deviation_label = QLabel("Частота девиации:")
@@ -79,7 +67,6 @@ class FrequencyWindow(QWidget):
         deviation_layout.addWidget(self.deviation_label)
         deviation_layout.addWidget(self.deviation_input)
         fs_signal.addLayout(deviation_layout)
-        fs_signal.addWidget(self.plot1)
         fs_signal.addWidget(self.signal_plot)
 
         self.ss_signals_label = QLabel('Модулирующий сигнал')
@@ -115,17 +102,6 @@ class FrequencyWindow(QWidget):
         ss_amplitude_layout.addWidget(self.ss_amplitude_label)
         ss_amplitude_layout.addWidget(self.ss_amplitude_spin)
 
-        self.ss_duration_spin = QLabel()
-        self.ss_duration_label = QLabel('Продолжительность')
-        self.ss_duration_label.setBuddy(self.ss_duration_spin)
-
-        ss_duration_layout = QHBoxLayout()
-        ss_duration_layout.addWidget(self.ss_duration_label)
-        ss_duration_layout.addWidget(self.ss_duration_spin)
-
-        self.plot2 = SignalPlotWidget(animation_flag=0)
-        self.plot2.setFixedSize(350, 250)
-
         self.specter_plot = SpectrePlotWidget()
 
         self.ss_empty = QLabel(" ")
@@ -135,9 +111,7 @@ class FrequencyWindow(QWidget):
         ss_signal.addLayout(ss_signals_form_layout)
         ss_signal.addLayout(ss_frequency_layout)
         ss_signal.addLayout(ss_amplitude_layout)
-        ss_signal.addLayout(ss_duration_layout)
         ss_signal.addWidget(self.ss_empty)
-        ss_signal.addWidget(self.plot2)
         ss_signal.addWidget(self.specter_plot)
 
         self.ok_button = QPushButton('Выполнить модуляцию')
@@ -167,12 +141,6 @@ class FrequencyWindow(QWidget):
         mechanical_sliders.addLayout(mechanical_slider_frequency_layout)
         mechanical_sliders.addLayout(mechanical_slider_amplitude_layout)
         mechanical_sliders.addStretch(1)
-       
-
-        #signal_layout.addLayout(plot_params_layout)
-        
-
-        #fs_signal.addLayout(tmp)
 
         signal_layout.addLayout(fs_signal)
         signal_layout.addLayout(ss_signal)
@@ -185,8 +153,6 @@ class FrequencyWindow(QWidget):
         tmp = QHBoxLayout() 
         tmp.addLayout(mechanical_sliders)
         tmp.addLayout(main_layout)
-       
-       # tmp.addWidget(self.signal_plot)
 
         self.x_scale_value = 1
         self.y_scale_value = 1
@@ -227,21 +193,16 @@ class FrequencyWindow(QWidget):
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
             self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
-            self.fs_duration_spin.setText(str(curSignal_fs[3]))
             self.fs_frequency_spin.setText(str(curSignal_fs[2]))
             self.fs_signal_form_combo.setText(curSignal_fs[0])
-
-            self.plot1.plot(curSignal_fs[0], curSignal_fs[2], curSignal_fs[1], flag=0, animation_flag=0)
 
     def showSignalInfo_ss(self):
         if len(self.signalDataArray.getArray()) > 0:
             curSignal_ss = self.signalDataArray.getSignalByIndex(self.ss_signals_list.currentIndex()).getData() 
 
             self.ss_amplitude_spin.setText(str(curSignal_ss[1]))
-            self.ss_duration_spin.setText(str(curSignal_ss[3]))
             self.ss_frequency_spin.setText(str(curSignal_ss[2]))
             self.ss_signal_form_combo.setText(curSignal_ss[0])
-            self.plot2.plot(curSignal_ss[0], curSignal_ss[2], curSignal_ss[1], flag=0, animation_flag=0)
 
     def ok_button_clicked(self):
         ind_fs = self.fs_signals_list.currentIndex()

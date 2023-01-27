@@ -90,9 +90,9 @@ class SignalPlotWidget(PlotWidget):
         form = 'Formula: '
 
         if (fs_form_name == 'sine'):
-            form += str(fs_amplitude) + r'$\cdot$' + 'sin(' + str(fs_frequency) + r'$\cdot$' + 't)'
+            form += str(fs_amplitude) + r'$\cdot$' + 'sin(' + str(fs_frequency ) + r'$\cdot2\pi$' + 't)'
         elif (fs_form_name == 'cosine'):
-            form += str(fs_amplitude) + r'$\cdot$' +'cos(' + str(fs_frequency) + r'$\cdot$' + 't)'
+            form += str(fs_amplitude) + r'$\cdot$' +'cos(' + str(fs_frequency) + r'$\cdot2\pi$' + 't)'
         elif (fs_form_name == 'square'):
             form += r'$\frac{4\cdot'+ str(fs_amplitude) + r'}{\pi}\sum_{k=1}^\infty \frac{sin(k\cdot' + str(fs_frequency) +  r'\cdot t)}{k}$'   
         elif (fs_form_name == 'triangle'):

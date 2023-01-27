@@ -99,20 +99,21 @@ class MainWindow(QWidget):
         self.fs_frequency_spin = QSpinBox()
         self.fs_frequency_spin.setRange(0, 200_000)
         self.fs_frequency_spin.setValue(1)
-        self.fs_frequency_label = QLabel('Частота')
+        self.fs_frequency_label = QLabel('Частота, Гц')
         self.fs_frequency_label.setBuddy(self.fs_frequency_spin)
 
         self.fs_amplitude_spin = QSpinBox()
         self.fs_amplitude_spin.setRange(0, 200_000)
         self.fs_amplitude_spin.setValue(1)
-        self.fs_amplitude_label = QLabel('Амплитуда')
+        self.fs_amplitude_label = QLabel('Амплитуда, В')
         self.fs_amplitude_label.setBuddy(self.fs_amplitude_spin)
 
+        """
         self.fs_duration_spin = QSpinBox()
         self.fs_duration_spin.setValue(5)
         self.fs_duration_label = QLabel('Продолжительность')
         self.fs_duration_label.setBuddy(self.fs_duration_spin)
-
+        """
         
         serial_ports_layout = QHBoxLayout()
         serial_ports_layout.addWidget(self.serial_ports_combo_label)
@@ -136,9 +137,11 @@ class MainWindow(QWidget):
         fs_amplitude_input_layout.addWidget(self.fs_amplitude_label)
         fs_amplitude_input_layout.addWidget(self.fs_amplitude_spin)
 
+        """
         fs_duration_input_layout = QHBoxLayout()
         fs_duration_input_layout.addWidget(self.fs_duration_label)
         fs_duration_input_layout.addWidget(self.fs_duration_spin)
+        """
 
         fs_signal_buttons_input_layout = QHBoxLayout()
         self.add_signal_button = QPushButton('Добавить сигнал', self)
@@ -151,7 +154,7 @@ class MainWindow(QWidget):
         fs_params_layout.addLayout(fs_signal_form_layout)
         fs_params_layout.addLayout(fs_frequency_input_layout)
         fs_params_layout.addLayout(fs_amplitude_input_layout)
-        fs_params_layout.addLayout(fs_duration_input_layout)
+        #fs_params_layout.addLayout(fs_duration_input_layout)
         fs_params_layout.addLayout(fs_signal_buttons_input_layout)
      
         self.signals_label = QLabel('Список сигналов')
@@ -277,9 +280,10 @@ class MainWindow(QWidget):
         form_name = self.fs_signal_form_combo.currentText()
         amplitude = self.fs_amplitude_spin.value()
         frequency = self.fs_frequency_spin.value()
-        duration = self.fs_duration_spin.value()
+        #duration = self.fs_duration_spin.value()
         
-        self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, duration, False))
+        #self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, duration, False))
+        self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, self.x_scale_value, False))
         self.loadSignals()
     
     def loadSignals(self):  
@@ -296,11 +300,12 @@ class MainWindow(QWidget):
         form_name = self.fs_signal_form_combo.currentText()
         amplitude = self.fs_amplitude_spin.value()
         frequency = self.fs_frequency_spin.value()
-        duration = self.fs_duration_spin.value()
+        #duration = self.fs_duration_spin.value()
         curInd = self.signals_list.currentIndex()
         if ((curInd != self.signalDataArray.getArraySize()) 
         and (curInd != -1)):
-            self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, duration, 1), curInd)
+            #self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, duration, 1), curInd)
+            self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, self.x_scale_value, 1), curInd)
             self.loadSignals()
 
     def changeSignalActivity(self):
@@ -315,13 +320,13 @@ class MainWindow(QWidget):
         or (self.signals_list.currentIndex() == self.signalDataArray.getArraySize())):
             self.fs_signal_form_combo.setCurrentIndex(1)
             self.fs_amplitude_spin.setValue(1)
-            self.fs_duration_spin.setValue(5)
+            #self.fs_duration_spin.setValue(5)
             self.fs_frequency_spin.setValue(1)
         elif self.signals_list.currentIndex() != -1:           
             curSignal = self.signalDataArray.getSignalByIndex(self.signals_list.currentIndex()).getData()
             self.fs_signal_form_combo.setCurrentIndex(signal_types.index(curSignal[0]))
             self.fs_amplitude_spin.setValue(curSignal[1])
-            self.fs_duration_spin.setValue(curSignal[3])
+            #self.fs_duration_spin.setValue(curSignal[3])
             self.fs_frequency_spin.setValue(curSignal[2])
             
             if curSignal[4] == True:
@@ -418,8 +423,9 @@ class MainWindow(QWidget):
                             delta_mas = 0
                             cur_time = 0
 
-                            if self.first_contact:
+                            """if self.first_contact:
                                 self.first_contact = 0
+                                print("Imn")
                                 while 1:
                                     generator_ser.write(bytearray(170))
                                     ser_bytes = generator_ser.read(1)
@@ -428,6 +434,7 @@ class MainWindow(QWidget):
                                     if (len(ser_bytes)):
                                         if ser_bytes[0] == 255:#ur_byte == 255:
                                             break
+                                        """
                             #print(generator_ser.portstr)
 
                             #data = []
@@ -439,6 +446,7 @@ class MainWindow(QWidget):
                             while not self.stop_flag or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
                                 if (self.stop_flag):
                                     generator_ser.send_break(0)
+                                print("In while")
                                 point_time = time.perf_counter()   
                                 ser_bytes = generator_ser.read(2)
                                 #print('huint', ser_bytes, len(ser_bytes) )
@@ -546,7 +554,7 @@ class MainWindow(QWidget):
         self.signal_plot.plot(sigData[0], sigData[2], sigData[1],
         self.x_scale_value, self.y_scale_value, animation_flag=self.animation_flag)
 
-        self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[4])
+        self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[3])
     
     def slider_frequency_move(self):
         if self.mechanical_slider_frequency.value() % 2 == 0:

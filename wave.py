@@ -35,11 +35,23 @@ def generate_square_wave(amplitude, freq, duration):
     y = amplitude * signal.square(frequencies * (2 * np.pi))
     return x, y
 
+def generate_spectr_sine(ampl, freq, duration):
+    num_of_points = 440 * int(10 / duration) if 10 / duration > 1 else int(440 * duration)
+    x = np.linspace(-duration, duration, num_of_points, endpoint=False)
+    y = [0] * num_of_points#y = np.empty(num_of_points, dtype=np.int32) #[]
+    #for i in range(num_of_points):
+    #    y[i] = 0
+    #y = np.linspace(0, 0, num_of_points, endpoint=False)
+    y[int(freq * (num_of_points / 2 * duration))] = ampl
+    return x, y
 
-def mod_generate_sine_wave(freq, duration):
-    x = np.linspace(-duration, duration, 440 * int(10 / duration) if 10 / duration > 1 else int(440 * duration), endpoint=False)
-    frequencies = x * freq
-    y = np.sin(frequencies * (2 * np.pi))
+
+def mod_generate_sine_wave(freq, duration, ampl):
+    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq)
+    x = np.linspace(0, 10, num_of_points, endpoint=False)
+    y = [0] * len(x)
+    y[int(freq * num_of_points / max(x))] = ampl
+    #y[int(num_of_points / freq / 10 - 1)] = ampl
     return x, y
 
 
