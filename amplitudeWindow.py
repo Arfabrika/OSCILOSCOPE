@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QDial,
 )
-from PlotWimdow import PlotWindow
+from PlotWindow import PlotWindow
 
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
