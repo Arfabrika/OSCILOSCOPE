@@ -1,7 +1,9 @@
 # This Python file uses the following encoding: utf-8
+import numpy as np
 from PlotWidget import PlotWidget
+import matplotlib.pyplot as plt
 
-from wave import (
+from wave_1 import (
     generate_sine_wave,
     generate_cosine_wave,
     generate_triangle_wave,
@@ -70,13 +72,13 @@ class SpectrePlotWidget(PlotWidget):
 
         self.view.draw()
 
-    def modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
+    def modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, signalMainArray, signalModuArray):
         self.clear()
 
         x, y = specter_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
-        
-        self.axes.clear()
-        self.axes.bar(x, y, color='#1f77b4')
+
+        self.axes.set_title(self.generate_formula_am(signalMainArray, signalModuArray))
+        self.axes.plot(x, y, color='#1f77b4')
         self.view.draw()
 
     def freq_modulate(self, fs_frequency, ss_frequency, freq_dev):
@@ -84,3 +86,6 @@ class SpectrePlotWidget(PlotWidget):
         x, y = freq_modulating_specter(fs_frequency, ss_frequency, freq_dev)
         self.axes.plot(x,y,color='#1f77b4')
         self.view.draw()
+    
+    def generate_formula_am(self, signalMainArray, signalModuArray):
+        return 'Formula:' + str(signalMainArray[1]) + ' * cos(' + str(round((2 * np.pi) / (1 / signalMainArray[2]), 2)) + 't) + ' + str(round(((2 * np.pi) / (1 / signalMainArray[2])) * ((signalModuArray[1] / signalMainArray[1]) / 2), 2)) + ' * cos(' + str(round(((2 * np.pi) / (1 / signalMainArray[2])) + ((2 * np.pi) / (1 / signalModuArray[2])), 2)) + ' * t))  + ' + str(round(((2 * np.pi) / (1 / signalMainArray[2])) * ((signalModuArray[1] / signalMainArray[1]) / 2), 2)) + ' * cos(' + str(round(((2 * np.pi) / (1 / signalMainArray[2])) - ((2 * np.pi) / (1 / signalModuArray[2])), 2)) + ' * t))'
