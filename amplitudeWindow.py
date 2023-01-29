@@ -52,13 +52,7 @@ class AmplitudeWindow(QWidget):
         fs_amplitude_layout.addWidget(self.fs_amplitude_label)
         fs_amplitude_layout.addWidget(self.fs_amplitude_spin)
 
-        self.fs_duration_spin = QLabel()
-        self.fs_duration_label = QLabel('Продолжительность')
-        self.fs_duration_label.setBuddy(self.fs_duration_spin)
-
         fs_duration_layout = QHBoxLayout()
-        fs_duration_layout.addWidget(self.fs_duration_label)
-        fs_duration_layout.addWidget(self.fs_duration_spin)
 
         self.plot1_button = QPushButton('Показать график')
         self.plot1_button.clicked.connect(self.show_plot1)
@@ -70,7 +64,6 @@ class AmplitudeWindow(QWidget):
         fs_signal.addLayout(fs_signals_form_layout)
         fs_signal.addLayout(fs_frequency_layout)
         fs_signal.addLayout(fs_amplitude_layout)
-        fs_signal.addLayout(fs_duration_layout)
         fs_signal.addWidget(self.plot1_button)
         fs_signal.addWidget(self.signal_plot)
 
@@ -107,13 +100,7 @@ class AmplitudeWindow(QWidget):
         ss_amplitude_layout.addWidget(self.ss_amplitude_label)
         ss_amplitude_layout.addWidget(self.ss_amplitude_spin)
 
-        self.ss_duration_spin = QLabel()
-        self.ss_duration_label = QLabel('Продолжительность')
-        self.ss_duration_label.setBuddy(self.ss_duration_spin)
-
         ss_duration_layout = QHBoxLayout()
-        ss_duration_layout.addWidget(self.ss_duration_label)
-        ss_duration_layout.addWidget(self.ss_duration_spin)
 
         self.plot2_button = QPushButton('Показать график')
         self.plot2_button.clicked.connect(self.show_plot2)
@@ -125,7 +112,6 @@ class AmplitudeWindow(QWidget):
         ss_signal.addLayout(ss_signals_form_layout)
         ss_signal.addLayout(ss_frequency_layout)
         ss_signal.addLayout(ss_amplitude_layout)
-        ss_signal.addLayout(ss_duration_layout)
         ss_signal.addWidget(self.plot2_button)
         ss_signal.addWidget(self.specter_plot)
 
@@ -201,7 +187,6 @@ class AmplitudeWindow(QWidget):
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
             self.fs_amplitude_spin.setText(str(curSignal_fs[1]) + ' В')
-            self.fs_duration_spin.setText(str(curSignal_fs[3]) + ' Сек.')
             self.fs_frequency_spin.setText(str(curSignal_fs[2]) + ' Гц')
             self.fs_signal_form_combo.setText(curSignal_fs[0])
 
@@ -220,7 +205,6 @@ class AmplitudeWindow(QWidget):
             curSignal_ss = self.signalDataArray.getSignalByIndex(self.ss_signals_list.currentIndex()).getData() 
 
             self.ss_amplitude_spin.setText(str(curSignal_ss[1]) + ' В')
-            self.ss_duration_spin.setText(str(curSignal_ss[3]) + ' Сек.')
             self.ss_frequency_spin.setText(str(curSignal_ss[2]) + ' Гц')
             self.ss_signal_form_combo.setText(curSignal_ss[0])
 
@@ -238,8 +222,8 @@ class AmplitudeWindow(QWidget):
         ind_ss = self.ss_signals_list.currentIndex()
         signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
         signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1], flag = 0, animation_flag=self.animation_flag)
-        self.specter_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1])
+        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1], flag = 0, animation_flag=self.animation_flag, signal_fs=signal_fs, signal_ss=signal_ss)
+        self.specter_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1], signal_fs, signal_ss)
 
     def slider_frequency_move(self):
         if self.mechanical_slider_frequency.value() % 2 == 0:
