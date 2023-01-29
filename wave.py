@@ -35,53 +35,90 @@ def generate_square_wave(amplitude, freq, duration):
     y = amplitude * signal.square(frequencies * (2 * np.pi))
     return x, y
 
-def generate_spectr_sine(ampl, freq, duration):
-    num_of_points = 440 * int(10 / duration) if 10 / duration > 1 else int(440 * duration)
-    x = np.linspace(-duration, duration, num_of_points, endpoint=False)
-    y = [0] * num_of_points#y = np.empty(num_of_points, dtype=np.int32) #[]
-    #for i in range(num_of_points):
-    #    y[i] = 0
-    #y = np.linspace(0, 0, num_of_points, endpoint=False)
-    y[int(freq * (num_of_points / 2 * duration))] = ampl
-    return x, y
-
-
 def mod_generate_sine_wave(freq, duration, ampl):
-    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq)
-    x = np.linspace(0, 10, num_of_points, endpoint=False)
+    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq) * freq
+    x = np.linspace(0, freq * 2, num_of_points, endpoint=False)
     y = [0] * len(x)
     y[int(freq * num_of_points / max(x))] = ampl
-    #y[int(num_of_points / freq / 10 - 1)] = ampl
+    return x, y
+
+def mod_generate_cosine_wave(freq, duration, ampl):
+    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq) * freq
+    x = np.linspace(0, freq * 2, num_of_points, endpoint=False)
+    y = [0] * len(x)
+    y[int(freq * num_of_points / max(x))] = ampl
     return x, y
 
 
-def mod_generate_cosine_wave(freq, duration):
-    x = np.linspace(-duration, duration, 440 * int(10 / duration) if 10 / duration > 1 else int(440 * duration), endpoint=False)
-    frequencies = x * freq
-    y = np.cos(frequencies * (2 * np.pi))
-    return x, y
-
-
-def mod_generate_triangle_wave(freq, duration):
+def mod_generate_triangle_wave(freq, duration, ampl):
+    """
     x = np.linspace(-duration, duration, 440 * int(10 / duration) if 10 / duration > 1 else int(440 * duration), endpoint=False)
     frequencies = x * freq
     y = signal.sawtooth(frequencies * (2 * np.pi), 0.5)
     return x, y
+    """
+    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq)
+    omega = freq * 2 * np.pi
+    x = np.linspace(0, 10 if freq <= 5 else freq * 2, num_of_points, endpoint=False)
+    y = [0] * len(x)
+    i = 1
+    
+    while int(i * num_of_points / max(x)) < len(x):
+        ind = int(i * num_of_points / max(x))
+        y[ind] = (ampl * x[ind] / 2) * (np.sin(omega * x[ind] / 4)**2) / ((omega * x[ind] / 4)**2)
+        i += 1
+    return x, y
 
+def tmp(freq, duration, ampl):
+    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq)
+    T = 1 / freq
+    omega = freq * 2 * np.pi
+    x = np.linspace(0, 10, num_of_points, endpoint=False)
+    y = [0] * len(x)
+    i = 1
+    for i in range(1, len(x) - 1):
+        y[i] = ampl * np.sin(omega * x[i] / 2) / (omega * x[i] / 2)#(ampl * x[i] / 2) * (np.sin(omega * x[i] / 4)**2) / ((omega * x[i] / 4)**2)
+        if i % 396 == 0:
+            print(i, " ", y[i])
+        i += 1
+    return x, y
 
 def mod_generate_sawtooth_wave(freq, duration):
+    """
     x = np.linspace(-duration, duration, 440 * int(10 / duration) if 10 / duration > 1 else int(440 * duration), endpoint=False)
     frequencies = x * freq
     y = signal.sawtooth(frequencies * (2 * np.pi), 1)
+    """
+    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq)
+    omega = freq * 2 * np.pi
+    x = np.linspace(0, 10 if freq <= 5 else freq * 2, num_of_points, endpoint=False)
+    y = [0] * len(x)
+    i = 0.5
+    while int(i * num_of_points / max(x)) < len(x):
+        ind = int(i * num_of_points / max(x))
+        y[ind] = ampl * np.sin(omega * x[ind] / 2) / (omega * x[ind] / 2)
+        i += 0.5
+    return x, y
     return x, y
 
 
-def mod_generate_square_wave(freq, duration):
+def mod_generate_square_wave(freq, duration, ampl):
+    """
     x = np.linspace(-duration, duration, 440 * int(10 / duration) if 10 / duration > 1 else int(440 * duration), endpoint=False)
     frequencies = x * freq
     y = signal.square(frequencies * (2 * np.pi))
     return x, y
-
+    """
+    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq)
+    omega = freq * 2 * np.pi
+    x = np.linspace(0, 10 if freq <= 5 else freq * 2, num_of_points, endpoint=False)
+    y = [0] * len(x)
+    i = 0.5
+    while int(i * num_of_points / max(x)) < len(x):
+        ind = int(i * num_of_points / max(x))
+        y[ind] = ampl * np.sin(omega * x[ind] / 2) / (omega * x[ind] / 2)
+        i += 0.5
+    return x, y
 
 def modulating (fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
     x = np.linspace(-fs_duration, fs_duration, 440 * int(10 / fs_duration) if 10 / fs_duration > 1 else int(fs_sample_rate * 440), endpoint=False)

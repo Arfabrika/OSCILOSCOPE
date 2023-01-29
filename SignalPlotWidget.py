@@ -115,25 +115,26 @@ class SignalPlotWidget(PlotWidget):
         
         return form
 
-    def generate_formula_arr(self, signalArray):
+    def generate_formula_arr(self, signalArray, sep = ' + '):
         form = 'Formula: '
         ind = 0
-        for signal in signalArray:
+        for ind in range(signalArray.getArraySize()):
             curSigData = signalArray.getSignalByIndex(ind).getData()
-        if (curSigData[0] == 'sine'):
-            form += str(curSigData[1]) + r'$\cdot$' + 'sin(' + str(curSigData[2]) + r'$\cdot$' + 't)'
-        elif (curSigData[0] == 'cosine'):
-            form += str(curSigData[1]) + r'$\cdot$' +'cos(' + str(fs_frequency) + r'$\cdot$' + 't)'
-        elif (curSigData[0] == 'square'):
-            form += r'$\frac{4\cdot'+ str(curSigData[1]) + r'}{\pi}\sum_{k=1}^\infty \frac{sin(k\cdot' + str(fs_frequency) +  r'\cdot t)}{k}$'   
-        elif (curSigData[0] == 'triangle'):
-            form += r'$\frac{8\cdot'+ str(curSigData[1]) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(fs_frequency) + r'\cdot t)}{k^{2}}$'
-        else:
-            form += r'$\frac{' + str(curSigData[1]) + r'}{2} - \frac{'+ str(curSigData[1]) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(fs_frequency) +  r'\cdot t)$'
-        
-        
+            if (curSigData[0] == 'sine'):
+                form += str(curSigData[1]) + r'$\cdot$' + 'sin(' + str(curSigData[2]) + r'$\cdot$' + 't)'
+            elif (curSigData[0] == 'cosine'):
+                form += str(curSigData[1]) + r'$\cdot$' +'cos(' + str(curSigData[2]) + r'$\cdot$' + 't)'
+            elif (curSigData[0] == 'square'):
+                form += r'$\frac{4\cdot'+ str(curSigData[1]) + r'}{\pi}\sum_{k=1}^\infty \frac{sin(k\cdot' + str(curSigData[2]) +  r'\cdot t)}{k}$'   
+            elif (curSigData[0] == 'triangle'):
+                form += r'$\frac{8\cdot'+ str(curSigData[1]) + r'}{\pi^{2}}\sum_{k=1}^\infty (-1)^{\frac{k-1}{2}} \cdot \frac{  sin(k\cdot'+ str(curSigData[2]) + r'\cdot t)}{k^{2}}$'
+            else:
+                form += r'$\frac{' + str(curSigData[1]) + r'}{2} - \frac{'+ str(curSigData[1]) + r'}{\pi}\sum_{k=1}^\infty \frac{1}{k} \cdot sin(k\cdot' + str(curSigData[2]) +  r'\cdot t)$'      
+            form += sep
         return form
 
+    def generate_formula_freqmod(self, signal_fs, signal_ss, freq_dev):
+        return 'Formula: ' + str(signal_ss[1]) + 'cos(' + str(signal_ss[2] * 2) + r'$\pi t + ' + str(freq_dev) + 'sin(' + str(signal_fs[2] * 2) + r'\pi$' + 't))'
 
     def polyharmonic(self, fs_signal_name, fs_frequency, fs_amplitude=1,  fs_duration=1,
                      ss_signal_name='', ss_amplitude=1, ss_frequency=1, ss_duration=1, animation_flag = 1):
@@ -151,7 +152,6 @@ class SignalPlotWidget(PlotWidget):
         freq_mas, ampl_mas = getScaledParamsInMas(freq_mas, ampl_mas, x_type_mas, y_type_mas)
         self.axes.set_title(self.generate_formula(fs_signal_name, fs_amplitude, fs_frequency,
                      ss_signal_name, ss_amplitude, ss_frequency))
-        #fx, fy = wave_generators[fs_signal_name](fs_amplitude, fs_frequency, fs_sample_rate, fs_duration)
         fx, fy = wave_generators[fs_signal_name](ampl_mas[0], freq_mas[0], fs_duration)
         
         if len(self.arrays) == 0:
@@ -244,8 +244,6 @@ class SignalPlotWidget(PlotWidget):
         ampl_mas = [fs_amplitude, ss_amplitude]
         freq_mas, ampl_mas = getScaledParamsInMas(freq_mas, ampl_mas, x_type_mas, y_type_mas)
         x, y = freq_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, freq_dev)
-        # TODO make a scale in frequency window
-        #x, y = freq_modulating(freq_mas[0], fs_duration, ampl_mas[1], freq_mas[1], freq_dev)
 
         self.axes.set_xlim(-fs_duration, fs_duration )
         self.axes.set_ylim(-y_scale , y_scale)

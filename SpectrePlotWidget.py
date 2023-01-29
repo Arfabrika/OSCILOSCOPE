@@ -14,8 +14,7 @@ from wave import (
     mod_generate_sawtooth_wave,
     mod_generate_square_wave,
     specter_modulating,
-    freq_modulating_specter, 
-    generate_spectr_sine
+    freq_modulating_specter, tmp
 )
 
 wave_generators = {
@@ -27,7 +26,7 @@ wave_generators = {
 }
 
 mod_wave_generators = {
-    'sine': mod_generate_sine_wave,#generate_spectr_sine,
+    'sine': mod_generate_sine_wave,
     'cosine': mod_generate_cosine_wave,
     'triangle': mod_generate_triangle_wave,
     'sawtooth': mod_generate_sawtooth_wave,
@@ -43,12 +42,16 @@ class SpectrePlotWidget(PlotWidget):
         self.axes.set_ylabel('Magnitude')
         self.axes.grid(True)
 
-    def generate_formula_spectr(self, fs_form_name, fs_amplitude=1, fs_frequency=1):
+    def generate_formula_spectr(self, fs_form_name = "sine", row_formula = "", fs_amplitude=1, fs_frequency=1):
         form = 'Formula: '
         T = str(round(1.0 / fs_frequency, 3))
-        f = SignalPlotWidget.generate_formula(self, fs_form_name, fs_amplitude, fs_frequency)
+        if row_formula == "":
+            f = SignalPlotWidget.generate_formula(self, fs_form_name, fs_amplitude, fs_frequency)
+        else:
+            f = row_formula    
         f = f[9::]
         f = f.replace('$', ' ')
+        
         form += r'$\frac{1}{' + T + r'}\int_0^{' + T + r'}' + f + r'e^{-i\frac{2\pi kt}{' + T + r'}}\mathrm{d}t$'
         return form
 
@@ -58,13 +61,14 @@ class SpectrePlotWidget(PlotWidget):
         if signal_name == '-':
             return
 
-
         _, y = mod_wave_generators[signal_name](frequency, duration, amplitude)
 
         #self.axes.magnitude_spectrum(y,Fs=100, color='#1f77b4')
+        #q, z = tmp(frequency, duration, amplitude)
         self.axes.plot(_, y, color='#1f77b4')
-        self.axes.set_title(self.generate_formula_spectr(signal_name, amplitude, frequency))
-        self.axes.set_ylim(0, amplitude * 1.1)
+        #self.axes.plot(_, z, color='#f10233')
+        self.axes.set_title(self.generate_formula_spectr(fs_form_name= signal_name, fs_amplitude= amplitude,fs_frequency= frequency))
+        self.axes.set_ylim(0, max(y) * 2)
 
         self.view.draw()
 

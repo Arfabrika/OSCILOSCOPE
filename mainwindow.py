@@ -108,13 +108,6 @@ class MainWindow(QWidget):
         self.fs_amplitude_label = QLabel('Амплитуда, В')
         self.fs_amplitude_label.setBuddy(self.fs_amplitude_spin)
 
-        """
-        self.fs_duration_spin = QSpinBox()
-        self.fs_duration_spin.setValue(5)
-        self.fs_duration_label = QLabel('Продолжительность')
-        self.fs_duration_label.setBuddy(self.fs_duration_spin)
-        """
-        
         serial_ports_layout = QHBoxLayout()
         serial_ports_layout.addWidget(self.serial_ports_combo_label)
         serial_ports_layout.addWidget(self.serial_ports_combo)
@@ -137,12 +130,6 @@ class MainWindow(QWidget):
         fs_amplitude_input_layout.addWidget(self.fs_amplitude_label)
         fs_amplitude_input_layout.addWidget(self.fs_amplitude_spin)
 
-        """
-        fs_duration_input_layout = QHBoxLayout()
-        fs_duration_input_layout.addWidget(self.fs_duration_label)
-        fs_duration_input_layout.addWidget(self.fs_duration_spin)
-        """
-
         fs_signal_buttons_input_layout = QHBoxLayout()
         self.add_signal_button = QPushButton('Добавить сигнал', self)
         self.edit_signal_button = QPushButton('Изменить текущий сигнал', self)
@@ -154,7 +141,6 @@ class MainWindow(QWidget):
         fs_params_layout.addLayout(fs_signal_form_layout)
         fs_params_layout.addLayout(fs_frequency_input_layout)
         fs_params_layout.addLayout(fs_amplitude_input_layout)
-        #fs_params_layout.addLayout(fs_duration_input_layout)
         fs_params_layout.addLayout(fs_signal_buttons_input_layout)
      
         self.signals_label = QLabel('Список сигналов')
@@ -173,8 +159,7 @@ class MainWindow(QWidget):
         self.sum_create_button = QPushButton('Множественное суммирование сигналов')
         self.sum_create_button.clicked.connect(self.click_sum_event)
 
-        self.anim_checkbox = QCheckBox("Включить анимацию")
-        
+        self.anim_checkbox = QCheckBox("Включить анимацию")        
 
         ampl_layout.addLayout(signals_list_layout)
         ampl_layout.addWidget(self.ampl_create_button)
@@ -185,25 +170,11 @@ class MainWindow(QWidget):
         params_layout = QHBoxLayout()
         params_layout.addLayout(fs_params_layout)
         params_layout.addLayout(ampl_layout)
-
         plot_params_layout = QVBoxLayout()
-        # plot_params_scale_x = QVBoxLayout()
-        # self.scale_x = QComboBox()
-        # self.scale_x.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
-        # self.scale_x.setCurrentIndex(6)
-        # self.scale_x_label = QLabel("Max x scale")
-
-        # plot_params_scale_x.addWidget(self.scale_x_label)
-        # plot_params_scale_x.addWidget(self.scale_x)
-
         plot_params_scale_y = QVBoxLayout()
-        # self.scale_y = QComboBox()
-        # self.scale_y.addItems(['0.001', '0.005', '0.01', '0.05', '0.1', '0.5', '1', '5', '10', '50', '100', '500', '1000'])
-        # self.scale_y.setCurrentIndex(6)
         self.scale_y_label = QLabel("Маштаб графика")
 
         plot_params_scale_y.addWidget(self.scale_y_label)
-        # plot_params_scale_y.addWidget(self.scale_y)
 
         mechanical_slider_amplitude_layout = QVBoxLayout()
         self.amplitude_lable = QLabel("Ось y")
@@ -223,13 +194,10 @@ class MainWindow(QWidget):
         mechanical_slider_frequency_layout.addWidget(self.mechanical_slider_frequency)
         self.mechanical_slider_frequency.valueChanged.connect(self.slider_frequency_move)
 
-        # plot_params_layout.addLayout(plot_params_scale_x)
         plot_params_layout.addLayout(plot_params_scale_y)
         plot_params_layout.addLayout(mechanical_slider_amplitude_layout)
         plot_params_layout.addLayout(mechanical_slider_frequency_layout)
         plot_params_layout.addStretch()
-        # self.scale_x.currentIndexChanged.connect(self.editScale)
-        # self.scale_y.currentIndexChanged.connect(self.editScale)
 
         plots_layout = QHBoxLayout()
         plots_layout.addLayout(plot_params_layout)
@@ -280,9 +248,6 @@ class MainWindow(QWidget):
         form_name = self.fs_signal_form_combo.currentText()
         amplitude = self.fs_amplitude_spin.value()
         frequency = self.fs_frequency_spin.value()
-        #duration = self.fs_duration_spin.value()
-        
-        #self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, duration, False))
         self.signalDataArray.appendSignal(signalData(form_name, amplitude, frequency, self.x_scale_value, False))
         self.loadSignals()
     
@@ -300,11 +265,9 @@ class MainWindow(QWidget):
         form_name = self.fs_signal_form_combo.currentText()
         amplitude = self.fs_amplitude_spin.value()
         frequency = self.fs_frequency_spin.value()
-        #duration = self.fs_duration_spin.value()
         curInd = self.signals_list.currentIndex()
         if ((curInd != self.signalDataArray.getArraySize()) 
         and (curInd != -1)):
-            #self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, duration, 1), curInd)
             self.signalDataArray.editSignalByIndex(signalData(form_name, amplitude, frequency, self.x_scale_value, 1), curInd)
             self.loadSignals()
 
@@ -320,13 +283,11 @@ class MainWindow(QWidget):
         or (self.signals_list.currentIndex() == self.signalDataArray.getArraySize())):
             self.fs_signal_form_combo.setCurrentIndex(1)
             self.fs_amplitude_spin.setValue(1)
-            #self.fs_duration_spin.setValue(5)
             self.fs_frequency_spin.setValue(1)
         elif self.signals_list.currentIndex() != -1:           
             curSignal = self.signalDataArray.getSignalByIndex(self.signals_list.currentIndex()).getData()
             self.fs_signal_form_combo.setCurrentIndex(signal_types.index(curSignal[0]))
             self.fs_amplitude_spin.setValue(curSignal[1])
-            #self.fs_duration_spin.setValue(curSignal[3])
             self.fs_frequency_spin.setValue(curSignal[2])
             
             if curSignal[4] == True:
@@ -339,7 +300,8 @@ class MainWindow(QWidget):
 
     def set_stop_safely(self):
         self.thread_manager.start(self.set_stop)
-        self.stop_flag = True
+        self.setEnable(True)
+        ###self.stop_flag = True
 
     # @CoolDown(0.1)
     # function for drawing data from controller
@@ -362,6 +324,8 @@ class MainWindow(QWidget):
                 self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
 
                 self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
+                self.signal_plot.axes.set_xlabel('Time, s')
+                self.signal_plot.axes.set_ylabel('U, V')
                 #----------------------------------------------------------------------
                 #self.signal_plot.axes.set_xlim(self.x.min(), self.x.max())
                 #self.signal_plot.axes.set_xlim(min(self.data_ind), max(self.data_ind)+0.000000001)
@@ -452,7 +416,6 @@ class MainWindow(QWidget):
                                 #print('huint', ser_bytes, len(ser_bytes) )
                                 if len(ser_bytes) != 0:
                                     try:
-                                       #
                                         cur_byte = int.from_bytes(ser_bytes, "little", signed=False) /1023.0*5.0
                                         #delta_mas.append(float(point_time - start_time) - cur_time)
                                         #print(delta)
@@ -504,15 +467,27 @@ class MainWindow(QWidget):
             except Exception as e:
                 print('error in common input', str(e))              
 
-    
+    def setEnable(self, val):
+        self.fs_signal_form_combo.setEnabled(val)
+        self.fs_toggle_button.setEnabled(val)
+        self.fs_frequency_spin.setEnabled(val)
+        self.fs_amplitude_spin.setEnabled(val)
+        self.add_signal_button.setEnabled(val)
+        self.edit_signal_button.setEnabled(val)
+        self.signals_list.setEnabled(val)
+        self.ampl_create_button.setEnabled(val)
+        self.freq_create_button.setEnabled(val)
+        self.sum_create_button.setEnabled(val)
+        self.anim_checkbox.setEnabled(val)
+
     def receive_signal_safely(self):
         self.stop_flag = False
         self.signal_plot.clear()
         self.spectre_plot.clear()
         self.data_dict.clear()
-
+        self.setEnable(False)
+        
         self.thread_manager.start(self.receive_signal)
-        #self.receive_signal()
         self.thread_manager.start(self.reDraw)
 
 
@@ -559,7 +534,6 @@ class MainWindow(QWidget):
     def slider_frequency_move(self):
         if self.mechanical_slider_frequency.value() % 2 == 0:
             self.x_scale_value = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
-            #float(self.mechanical_slider_frequency.value())* 1.1
         else:
             self.x_scale_value = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
 
@@ -567,7 +541,6 @@ class MainWindow(QWidget):
             self.y_scale_value = 0.0011 * 10**(self.mechanical_slider_amplitude.value() // 2)
         else:
             self.y_scale_value = 0.0055 * 10**(self.mechanical_slider_amplitude.value() // 2)
-        #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
 
         if len(self.signalDataArray.array) and self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True: 
             self.drawSignal() 

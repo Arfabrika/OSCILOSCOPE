@@ -210,6 +210,9 @@ class FrequencyWindow(QWidget):
         signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
         signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
         freq_dev = self.deviation_input.value()
+        sig_formula = self.signal_plot.generate_formula_freqmod(signal_fs, signal_ss, freq_dev)
+        self.signal_plot.axes.set_title(sig_formula)
+        self.specter_plot.axes.set_title(self.specter_plot.generate_formula_spectr(row_formula=sig_formula))
         self.signal_plot.freq_modulate(signal_fs[2], self.x_scale_value, signal_ss[1], signal_ss[2], 
         signal_fs[1], self.y_scale_value, self.animation_flag, freq_dev)
         self.specter_plot.freq_modulate(signal_fs[2], signal_ss[2], freq_dev)
