@@ -33,6 +33,7 @@ signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
 import time
 from functools import partial, wraps
 from numba import njit
+from wave import (generate_data_spectrum)
 
 class CoolDownDecorator(object):
   def __init__(self,func,interval):
@@ -301,6 +302,11 @@ class MainWindow(QWidget):
     def set_stop_safely(self):
         self.thread_manager.start(self.set_stop)
         self.setEnable(True)
+        x, y = generate_data_spectrum(list(self.data_dict.values()), max(self.data_dict.keys())) ## EDIT THIS VALUE
+        self.spectre_plot.axes.plot(x, y * 2, color='#1f77b4')
+        self.spectre_plot.axes.set_ylim(0, max(y * 2) * 1.5)
+        self.spectre_plot.axes.set_xlim(0, max(x))
+        self.spectre_plot.view.draw()
         ###self.stop_flag = True
 
     # @CoolDown(0.1)
@@ -410,7 +416,7 @@ class MainWindow(QWidget):
                             while not self.stop_flag or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
                                 if (self.stop_flag):
                                     generator_ser.send_break(0)
-                                print("In while")
+                                #print("In while")
                                 point_time = time.perf_counter()   
                                 ser_bytes = generator_ser.read(2)
                                 #print('huint', ser_bytes, len(ser_bytes) )

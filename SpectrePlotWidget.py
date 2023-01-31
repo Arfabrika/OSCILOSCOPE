@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 from PlotWidget import PlotWidget
 from SignalPlotWidget import SignalPlotWidget
+import scipy as sc
 
 from wave import (
     generate_sine_wave,
@@ -14,7 +15,8 @@ from wave import (
     mod_generate_sawtooth_wave,
     mod_generate_square_wave,
     specter_modulating,
-    freq_modulating_specter, tmp
+    freq_modulating_specter, tmp,
+    generate_data_spectrum
 )
 
 wave_generators = {
@@ -63,12 +65,16 @@ class SpectrePlotWidget(PlotWidget):
 
         _, y = mod_wave_generators[signal_name](frequency, duration, amplitude)
 
-        #self.axes.magnitude_spectrum(y,Fs=100, color='#1f77b4')
+        #self.axes.magnitude_spectrum(y,len(_) / duration / 2, color='#1f77b4')
         #q, z = tmp(frequency, duration, amplitude)
+        #_, yy = generate_sine_wave(amplitude, frequency, duration)
+        #yy = yy[len(yy)//2:len(yy)-1]
+       # a, yyy = generate_data_spectrum(yy,2 * duration)# len(_) / duration / 2)
         self.axes.plot(_, y, color='#1f77b4')
+        #self.axes.plot(a, yyy, color='#1f77b4')
         #self.axes.plot(_, z, color='#f10233')
         self.axes.set_title(self.generate_formula_spectr(fs_form_name= signal_name, fs_amplitude= amplitude,fs_frequency= frequency))
-        self.axes.set_ylim(0, max(y) * 2)
+        self.axes.set_ylim(0, max(max(y), amplitude) * 2)
 
         self.view.draw()
 
