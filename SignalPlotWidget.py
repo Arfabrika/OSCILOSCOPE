@@ -1,4 +1,5 @@
 # This Python file uses the following encoding: utf-8
+import numpy as np
 from PlotWidget import PlotWidget
 from scalefuncs import *
 
@@ -185,7 +186,7 @@ class SignalPlotWidget(PlotWidget):
 
     def modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, 
     y_scale = 1, fs_x_scale_type = 0, fs_y_scale_type = 0, ss_x_scale_type = 0, ss_y_scale_type = 0,
-    animation_flag = 1, flag = 1):
+    animation_flag = 1, flag = 1, signal_fs = [], signal_ss = []):
         self.clear()
         self.animation_flag = animation_flag
 
@@ -213,8 +214,10 @@ class SignalPlotWidget(PlotWidget):
                 fs_amplitude /= 1000
                 ss_amplitude /= 1000
                 self.axes.set_ylabel('U, mV')
-
+        
+        
         x, y = modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        self.axes.set_title(self.generate_formula_am(signal_fs, signal_ss))
         
         if flag == 1:
             self.axes.set_xlim(-fs_duration, fs_duration)
@@ -231,6 +234,7 @@ class SignalPlotWidget(PlotWidget):
         else:
             self.axes.plot(x, y, color='#1f77b4')
             self.view.draw()
+
 
     def freq_modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, 
     fs_amplitude, y_scale= 1, animation_flag = 1, freq_dev = 10):
@@ -282,3 +286,6 @@ class SignalPlotWidget(PlotWidget):
                         self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
                         self.view.draw()
                         self.view.flush_events()
+
+    def generate_formula_am(self, signalMainArray, signalModuArray):
+        return'Formula: (' + str(signalMainArray[1]) + ' + ' + str(signalModuArray[1]) + ' * cos(' + str(round((2 * np.pi) / (1 / signalModuArray[2]), 2)) + ' * t)) * cos(' + str(round((2 * np.pi) / (1 / signalMainArray[2]), 2)) + ' * t)'
