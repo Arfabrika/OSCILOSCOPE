@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QDial,
     QCheckBox
 )
+from PlotWindow import PlotWindow
 
 from SignalPlotWidget import SignalPlotWidget
 from signalData import signalData, signalDataArray
@@ -18,6 +19,7 @@ class SummationWindow(QWidget):
         self.signalDataArray = DataArray
         self.animation_flag = animation_flag
         self.signalsOnPlot = signalDataArray([])
+        self.plot_window = PlotWindow()
         
         self.fs_signals_label = QLabel('Основной сигнал')
         self.fs_signals_list = QComboBox(self)
@@ -70,6 +72,8 @@ class SummationWindow(QWidget):
         fs_signal.addLayout(fs_amplitude_layout)
         fs_signal.addLayout(fs_duration_layout)
 
+        self.show_plot_button = QPushButton('Показать график')
+        self.show_plot_button.clicked.connect(self.show_plot)
         self.ok_button = QPushButton('Добавить сигнал')
         self.ok_button.clicked.connect(self.button_clicked)
         self.step_out_button = QPushButton('Убрать последний сигнал')
@@ -111,7 +115,9 @@ class SummationWindow(QWidget):
         plot_layout.addLayout(mechanical_sliders)
         plot_layout.addWidget(self.plot)
 
+        
         main_layout.addLayout(signal_layout)
+        main_layout.addWidget(self.show_plot_button)
         main_layout.addWidget(self.ok_button)
         main_layout.addWidget(self.step_out_button)
         main_layout.addLayout(plot_layout)
@@ -161,9 +167,9 @@ class SummationWindow(QWidget):
         if self.signalDataArray.getArraySize() > 0:
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
-            self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
-            self.fs_duration_spin.setText(str(curSignal_fs[4]))
-            self.fs_frequency_spin.setText(str(curSignal_fs[2]))
+            self.fs_amplitude_spin.setText(str(curSignal_fs[1]) + ' В')
+            self.fs_duration_spin.setText(str(curSignal_fs[3]) + ' Сек.')
+            self.fs_frequency_spin.setText(str(curSignal_fs[2]) + ' Гц')
             self.fs_signal_form_combo.setText(curSignal_fs[0])
         else:
             self.fs_amplitude_spin.setText("Нет сигналов")
@@ -196,3 +202,10 @@ class SummationWindow(QWidget):
         self.plot.view.draw()
         self.plot.view.flush_events()
 
+    def show_plot(self):
+        if self.fs_signals_list.currentIndex() == -1:
+            return 
+        
+        curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData()
+        self.plot_window.plot_graph(curSignal_fs)
+        self.plot_window.show()
