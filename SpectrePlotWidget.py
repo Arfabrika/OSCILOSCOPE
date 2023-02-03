@@ -1,7 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import numpy as np
 from PlotWidget import PlotWidget
-import matplotlib.pyplot as plt
+from SignalPlotWidget import SignalPlotWidget
 
 from wave import (
     generate_sine_wave,
@@ -49,12 +49,24 @@ class SpectrePlotWidget(PlotWidget):
         if signal_name == '-':
             return
 
-        _, y = wave_generators[signal_name](amplitude, frequency, duration)
-
-        self.axes.magnitude_spectrum(y, #Fs=sample_rate, 
-        color='#1f77b4')
-
+        _, y = mod_wave_generators[signal_name](frequency, duration,amplitude)
+        self.axes.plot(_, y, color='#1f77b4')
+        self.axes.set_title(self.generate_formula_spectr(fs_form_name= signal_name, fs_amplitude= amplitude,fs_frequency= frequency))
+        self.axes.set_ylim(0, max(max(y), amplitude) * 2)
         self.view.draw()
+
+    def generate_formula_spectr(self, fs_form_name = "sine", row_formula = "", fs_amplitude=1, fs_frequency=1):
+        form = 'Formula: '
+        T = str(round(1.0 / fs_frequency, 3))
+        if row_formula == "":
+            f = SignalPlotWidget.generate_formula(self, fs_form_name, fs_amplitude, fs_frequency)
+        else:
+            f = row_formula    
+        f = f[9::]
+        f = f.replace('$', ' ')
+        
+        form += r'$\frac{1}{' + T + r'}\int_0^{' + T + r'}' + f + r'e^{-i\frac{2\pi kt}{' + T + r'}}\mathrm{d}t$'
+        return form
 
     def polyharmonic(self, fs_signal_name, fs_amplitude, fs_frequency, fs_duration,
                      ss_signal_name, ss_amplitude, ss_frequency, ss_duration):

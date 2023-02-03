@@ -135,7 +135,7 @@ class SignalPlotWidget(PlotWidget):
         return form
 
     def generate_formula_freqmod(self, signal_fs, signal_ss, freq_dev):
-        return 'Formula: ' + str(signal_ss[1]) + 'cos(' + str(signal_ss[2] * 2) + r'$\pi t + ' + str(freq_dev) + 'sin(' + str(signal_fs[2] * 2) + r'\pi$' + 't))'
+        return 'Formula: ' + str(signal_ss[1]) + 'cos(' + str(signal_ss[2]) + r'$\cdot2\pi t + ' + str(1 / freq_dev) + 'sin(' + str(signal_fs[2]) + r'\cdot2\pi$' + 't))'
 
     def polyharmonic(self, fs_signal_name, fs_frequency, fs_amplitude=1,  fs_duration=1,
                      ss_signal_name='', ss_amplitude=1, ss_frequency=1, ss_duration=1, animation_flag = 1):
