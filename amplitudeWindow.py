@@ -19,7 +19,7 @@ class AmplitudeWindow(QWidget):
         self.animation_flag = animation_flag
         self.plot_window = PlotWindow()
         
-        self.fs_signals_label = QLabel('Основной сигнал')
+        self.fs_signals_label = QLabel('Моделируемый сигнал')
         self.fs_signals_list = QComboBox(self)
         self.fs_signals_label.setBuddy(self.fs_signals_list)
         self.fs_signals_list.currentIndexChanged.connect(self.showSignalInfo_fs)
@@ -37,7 +37,7 @@ class AmplitudeWindow(QWidget):
         fs_signals_form_layout.addWidget(self.fs_signal_form_combo)
 
         self.fs_frequency_spin = QLabel()
-        self.fs_frequency_label = QLabel('Частота')
+        self.fs_frequency_label = QLabel('Частота f, Гц')
         self.fs_frequency_label.setBuddy(self.fs_frequency_spin)
 
         fs_frequency_layout = QHBoxLayout()
@@ -45,7 +45,7 @@ class AmplitudeWindow(QWidget):
         fs_frequency_layout.addWidget(self.fs_frequency_spin)
 
         self.fs_amplitude_spin = QLabel()
-        self.fs_amplitude_label = QLabel('Амплитуда')
+        self.fs_amplitude_label = QLabel('Амплитуда Uн, В')
         self.fs_amplitude_label.setBuddy(self.fs_amplitude_spin)
 
         fs_amplitude_layout = QHBoxLayout()
@@ -57,6 +57,11 @@ class AmplitudeWindow(QWidget):
         self.plot1_button = QPushButton('Показать график')
         self.plot1_button.clicked.connect(self.show_plot1)
 
+        self.formula = QLabel('Формула АМ: u(t) = ')
+
+        self.formula_layout = QHBoxLayout()
+        self.formula_layout.addWidget(self.formula)
+
         self.signal_plot = SignalPlotWidget()
 
         fs_signal = QVBoxLayout()
@@ -65,9 +70,10 @@ class AmplitudeWindow(QWidget):
         fs_signal.addLayout(fs_frequency_layout)
         fs_signal.addLayout(fs_amplitude_layout)
         fs_signal.addWidget(self.plot1_button)
+        fs_signal.addLayout(self.formula_layout)
         fs_signal.addWidget(self.signal_plot)
 
-        self.ss_signals_label = QLabel('Модулирующий сигнал')
+        self.ss_signals_label = QLabel('Моделирующий сигнал')
         self.ss_signals_list = QComboBox(self)
         self.ss_signals_label.setBuddy(self.ss_signals_list)
         self.ss_signals_list.currentIndexChanged.connect(self.showSignalInfo_ss)
@@ -85,7 +91,7 @@ class AmplitudeWindow(QWidget):
         ss_signals_form_layout.addWidget(self.ss_signal_form_combo)
 
         self.ss_frequency_spin = QLabel()
-        self.ss_frequency_label = QLabel('Частота')
+        self.ss_frequency_label = QLabel('Частота F, Гц')
         self.ss_frequency_label.setBuddy(self.ss_frequency_spin)
 
         ss_frequency_layout = QHBoxLayout()
@@ -93,7 +99,7 @@ class AmplitudeWindow(QWidget):
         ss_frequency_layout.addWidget(self.ss_frequency_spin)
 
         self.ss_amplitude_spin = QLabel()
-        self.ss_amplitude_label = QLabel('Амплитуда')
+        self.ss_amplitude_label = QLabel('Амплитуда Um, B')
         self.ss_amplitude_label.setBuddy(self.ss_amplitude_spin)
 
         ss_amplitude_layout = QHBoxLayout()
@@ -104,6 +110,11 @@ class AmplitudeWindow(QWidget):
 
         self.plot2_button = QPushButton('Показать график')
         self.plot2_button.clicked.connect(self.show_plot2)
+                
+        self.formula_spectr = QLabel('Формула АМ: u(t) = Uн * cos(2пft) + (Uн * )')
+
+        self.formula_spectr_layout = QHBoxLayout()
+        self.formula_spectr_layout.addWidget(self.formula_spectr)
 
         self.specter_plot = SpectrePlotWidget()
 
@@ -186,8 +197,8 @@ class AmplitudeWindow(QWidget):
         if len(self.signalDataArray.getArray()) > 0:
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
-            self.fs_amplitude_spin.setText(str(curSignal_fs[1]) + ' В')
-            self.fs_frequency_spin.setText(str(curSignal_fs[2]) + ' Гц')
+            self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
+            self.fs_frequency_spin.setText(str(curSignal_fs[2]))
             self.fs_signal_form_combo.setText(curSignal_fs[0])
 
     def show_plot1(self):
@@ -204,8 +215,8 @@ class AmplitudeWindow(QWidget):
         if len(self.signalDataArray.getArray()) > 0:
             curSignal_ss = self.signalDataArray.getSignalByIndex(self.ss_signals_list.currentIndex()).getData() 
 
-            self.ss_amplitude_spin.setText(str(curSignal_ss[1]) + ' В')
-            self.ss_frequency_spin.setText(str(curSignal_ss[2]) + ' Гц')
+            self.ss_amplitude_spin.setText(str(curSignal_ss[1]))
+            self.ss_frequency_spin.setText(str(curSignal_ss[2]))
             self.ss_signal_form_combo.setText(curSignal_ss[0])
 
     
@@ -253,3 +264,4 @@ class AmplitudeWindow(QWidget):
         if signal_fs[3] >= self.mechanical_slider_frequency.value():
             tmp = signal_fs[3]
         self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), flag = 0, animation_flag=self.animation_flag)
+
