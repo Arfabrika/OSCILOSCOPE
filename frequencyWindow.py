@@ -6,9 +6,9 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QSpinBox,
-    QDial,
-    QCheckBox
+    QDial
 )
+from PlotWindow import PlotWindow
 
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
@@ -19,7 +19,8 @@ class FrequencyWindow(QWidget):
         super().__init__(parent)
         self.signalDataArray = signalDataArray
         self.animation_flag = animation_flag
-        
+        self.plot_window = PlotWindow()
+
         self.fs_signals_label = QLabel('Основной сигнал')
         self.fs_signals_list = QComboBox(self)
         self.fs_signals_label.setBuddy(self.fs_signals_list)
@@ -53,6 +54,9 @@ class FrequencyWindow(QWidget):
         fs_amplitude_layout.addWidget(self.fs_amplitude_label)
         fs_amplitude_layout.addWidget(self.fs_amplitude_spin)
 
+        self.plot1_button = QPushButton('Показать график')
+        self.plot1_button.clicked.connect(self.show_plot1)
+
         self.signal_plot = SignalPlotWidget()
 
         fs_signal = QVBoxLayout()
@@ -67,6 +71,7 @@ class FrequencyWindow(QWidget):
         deviation_layout.addWidget(self.deviation_label)
         deviation_layout.addWidget(self.deviation_input)
         fs_signal.addLayout(deviation_layout)
+        fs_signal.addWidget(self.plot1_button)
         fs_signal.addWidget(self.signal_plot)
 
         self.ss_signals_label = QLabel('Модулирующий сигнал')
@@ -102,6 +107,9 @@ class FrequencyWindow(QWidget):
         ss_amplitude_layout.addWidget(self.ss_amplitude_label)
         ss_amplitude_layout.addWidget(self.ss_amplitude_spin)
 
+        self.plot2_button = QPushButton('Показать график')
+        self.plot2_button.clicked.connect(self.show_plot2)
+
         self.specter_plot = SpectrePlotWidget()
 
         self.ss_empty = QLabel(" ")
@@ -112,6 +120,7 @@ class FrequencyWindow(QWidget):
         ss_signal.addLayout(ss_frequency_layout)
         ss_signal.addLayout(ss_amplitude_layout)
         ss_signal.addWidget(self.ss_empty)
+        ss_signal.addWidget(self.plot2_button)
         ss_signal.addWidget(self.specter_plot)
 
         self.ok_button = QPushButton('Выполнить модуляцию')
@@ -195,6 +204,14 @@ class FrequencyWindow(QWidget):
             self.fs_amplitude_spin.setText(str(curSignal_fs[1]))
             self.fs_frequency_spin.setText(str(curSignal_fs[2]))
             self.fs_signal_form_combo.setText(curSignal_fs[0])
+    
+    def show_plot1(self):
+        if self.fs_signals_list.currentIndex() == -1:
+            return 
+        
+        curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData()
+        self.plot_window.plot_graph(curSignal_fs)
+        self.plot_window.show()
 
     def showSignalInfo_ss(self):
         if len(self.signalDataArray.getArray()) > 0:
@@ -203,6 +220,14 @@ class FrequencyWindow(QWidget):
             self.ss_amplitude_spin.setText(str(curSignal_ss[1]))
             self.ss_frequency_spin.setText(str(curSignal_ss[2]))
             self.ss_signal_form_combo.setText(curSignal_ss[0])
+
+    def show_plot2(self):
+        if self.fs_signals_list.currentIndex() == -1:
+            return 
+        
+        curSignal_ss = self.signalDataArray.getSignalByIndex(self.ss_signals_list.currentIndex()).getData()
+        self.plot_window.plot_graph(curSignal_ss)
+        self.plot_window.show()
 
     def ok_button_clicked(self):
         ind_fs = self.fs_signals_list.currentIndex()
