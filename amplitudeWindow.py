@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QDial,
 )
+from ParametrWindow import ParametrWindow
 from PlotWindow import PlotWindow
 
 from SignalPlotWidget import SignalPlotWidget
@@ -18,6 +19,7 @@ class AmplitudeWindow(QWidget):
         self.signalDataArray = signalDataArray
         self.animation_flag = animation_flag
         self.plot_window = PlotWindow()
+        self.parametr_window = ParametrWindow()
         
         self.fs_signals_label = QLabel('Моделируемый сигнал')
         self.fs_signals_list = QComboBox(self)
@@ -166,8 +168,11 @@ class AmplitudeWindow(QWidget):
 
         main_layout = QVBoxLayout()
 
+        self.parametrs = QPushButton('Показать параметры сигнала')
+        self.parametrs.clicked.connect(self.show_parametrs_button)
         main_layout.addLayout(signal_layout)
         main_layout.addWidget(self.ok_button)
+        main_layout.addWidget(self.parametrs)
 
         self.setLayout(main_layout)
 
@@ -266,5 +271,13 @@ class AmplitudeWindow(QWidget):
             tmp = signal_fs[3]
         self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), flag = 0, animation_flag=self.animation_flag)
 
+    def show_parametrs_button(self):
+        ind_fs = self.fs_signals_list.currentIndex()
+        ind_ss = self.ss_signals_list.currentIndex()
+        signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
+        signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
 
+        self.parametr_window.show_parametrs(signal_fs, signal_ss)
+
+        self.parametr_window.show()
        

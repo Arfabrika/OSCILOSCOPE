@@ -175,6 +175,12 @@ class SummationWindow(QWidget):
             self.fs_amplitude_spin.setText("Нет сигналов")
         
     def step_back(self):
+        tmp = self.plot.remove_last_points()
+
+        if tmp == True:
+            return 
+        
+
         lastSigData = self.signalsOnPlot.getLastSignal().getData()
         
         if lastSigData[1] == 0 or self.signalsOnPlot.getArraySize() == 1:
