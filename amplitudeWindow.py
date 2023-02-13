@@ -57,7 +57,7 @@ class AmplitudeWindow(QWidget):
         self.plot1_button = QPushButton('Показать график')
         self.plot1_button.clicked.connect(self.show_plot1)
 
-        self.formula = QLabel('Формула АМ: u(t) = ')
+        self.formula = QLabel('Общая формула АМ: u(t) = (Uн + cos(2*pi*F*t)) * cos(2*pi*f*t)')
 
         self.formula_layout = QHBoxLayout()
         self.formula_layout.addWidget(self.formula)
@@ -111,7 +111,7 @@ class AmplitudeWindow(QWidget):
         self.plot2_button = QPushButton('Показать график')
         self.plot2_button.clicked.connect(self.show_plot2)
                 
-        self.formula_spectr = QLabel('Формула АМ: u(t) = Uн * cos(2пft) + (Uн * )')
+        self.formula_spectr = QLabel('Общая формула АМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * M/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * M/2) * cos((2*pi*f - 2*pi*F)t)')
 
         self.formula_spectr_layout = QHBoxLayout()
         self.formula_spectr_layout.addWidget(self.formula_spectr)
@@ -124,6 +124,7 @@ class AmplitudeWindow(QWidget):
         ss_signal.addLayout(ss_frequency_layout)
         ss_signal.addLayout(ss_amplitude_layout)
         ss_signal.addWidget(self.plot2_button)
+        ss_signal.addLayout(self.formula_spectr_layout)
         ss_signal.addWidget(self.specter_plot)
 
         mechanical_slider_amplitude_layout = QVBoxLayout()
@@ -265,3 +266,5 @@ class AmplitudeWindow(QWidget):
             tmp = signal_fs[3]
         self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), flag = 0, animation_flag=self.animation_flag)
 
+
+       
