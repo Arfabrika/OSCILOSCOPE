@@ -21,9 +21,6 @@ class ParametrWindow(QWidget):
         self.setWindowTitle('Параметры АМ')
         self.setFixedWidth(300)
 
-    def show_parametrs(self, fs_DataArray, ss_dataArray):
-        UMax = fs_DataArray[1] + ss_dataArray[1]
-        Umin = fs_DataArray[1] - ss_dataArray[1]
-        M = round(ss_dataArray[1] / fs_DataArray[1], 2)
+    def show_parametrs(self, formula):
 
-        self.parametrs.setText('Umax = Uн + Uм = ' + str(UMax) + '\nUmin = Uн - Uм = ' + str(Umin) + '\nM = Uм / Uн = ' + str(M) + '\n')
+        self.parametrs.setText(formula)

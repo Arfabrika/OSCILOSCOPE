@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QDial,
     QCheckBox
 )
+from PulseAmplitudeWindow import PulseAmplitudeWindow
 
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
@@ -159,6 +160,8 @@ class MainWindow(QWidget):
         self.freq_create_button.clicked.connect(self.click_frequency_event)
         self.sum_create_button = QPushButton('Множественное суммирование сигналов')
         self.sum_create_button.clicked.connect(self.click_sum_event)
+        self.pulse_amplitude_button = QPushButton('Амплитудно-импульсная модуляция')
+        self.pulse_amplitude_button.clicked.connect(self.click_pulse_amplitude_event)
 
         self.anim_checkbox = QCheckBox("Включить анимацию")        
 
@@ -166,6 +169,7 @@ class MainWindow(QWidget):
         ampl_layout.addWidget(self.ampl_create_button)
         ampl_layout.addWidget(self.freq_create_button)
         ampl_layout.addWidget(self.sum_create_button)
+        ampl_layout.addWidget(self.pulse_amplitude_button)
         ampl_layout.addWidget(self.anim_checkbox)
 
         params_layout = QHBoxLayout()
@@ -231,6 +235,7 @@ class MainWindow(QWidget):
         self.amplitude_window = AmplitudeWindow(self.signalDataArray, self.animation_flag)
         self.frequency_window = FrequencyWindow(self.signalDataArray, self.animation_flag)
         self.summation_window = SummationWindow(self.signalDataArray, self.animation_flag)   
+        self.pulse_amplitude_window = PulseAmplitudeWindow(self.signalDataArray, self.animation_flag)   
         self.showMaximized()
 
         #----------------------------------------------------------------------
@@ -508,6 +513,10 @@ class MainWindow(QWidget):
     def click_frequency_event(self):        
         self.frequency_window.updateSignalData(self.signalDataArray, self.animation_flag)
         self.frequency_window.show()
+
+    def click_pulse_amplitude_event(self):
+        self.pulse_amplitude_window.updateSignalData(self.signalDataArray, self.animation_flag)
+        self.pulse_amplitude_window.show()
 
     def changed_animation_checkbox_event(self):
         if (self.anim_checkbox.isChecked()):
