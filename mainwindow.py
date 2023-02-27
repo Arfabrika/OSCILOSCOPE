@@ -28,7 +28,6 @@ import serial.tools.list_ports
 import time
 
 from summationWindow import SummationWindow
-
 signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
 import time
 from functools import partial, wraps

@@ -269,7 +269,7 @@ class AmplitudeWindow(QWidget):
         tmp = self.mechanical_slider_frequency.value()
         if signal_fs[3] >= self.mechanical_slider_frequency.value():
             tmp = signal_fs[3]
-        self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), flag = 0, animation_flag=self.animation_flag)
+        self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), flag = 0, animation_flag=self.animation_flag, signal_fs=signal_fs, signal_ss=signal_ss)
 
     def show_parametrs_button(self):
         if self.fs_signals_list.currentIndex() == -1 and self.ss_signals_list.currentIndex() == -1:

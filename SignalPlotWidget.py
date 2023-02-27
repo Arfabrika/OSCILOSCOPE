@@ -290,6 +290,7 @@ class SignalPlotWidget(PlotWidget):
                 return True
         else:
             return False
+    
     def generate_formula_am(self, signalMainArray, signalModuArray):
         return'Formula: (' + str(signalMainArray[1]) + ' + ' + str(signalModuArray[1]) + ' * cos(' + str(round((2 * np.pi) / (1 / signalModuArray[2]), 2)) + ' * t)) * cos(' + str(round((2 * np.pi) / (1 / signalMainArray[2]), 2)) + ' * t)'
 
