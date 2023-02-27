@@ -25,7 +25,7 @@ from frequencyWindow import FrequencyWindow
 from signalData import signalData, signalDataArray
 from scalefuncs import getScaleType
 
-# import serial.tools.list_ports
+import serial.tools.list_ports
 import time
 
 from summationWindow import SummationWindow
@@ -73,9 +73,9 @@ class MainWindow(QWidget):
         self.summation_window = None
         
         self.serial_ports_combo = QComboBox(self)
-        # self.serial_ports = serial.tools.list_ports.comports()
-        # serial_ports_desc = [port.name for port in self.serial_ports]
-        # self.serial_ports_combo.addItems(serial_ports_desc)
+        self.serial_ports = serial.tools.list_ports.comports()
+        serial_ports_desc = [port.name for port in self.serial_ports]
+        self.serial_ports_combo.addItems(serial_ports_desc)
         self.serial_ports_combo_label = QLabel('Выберите порт', self)
         self.serial_ports_combo_label.setBuddy(self.serial_ports_combo)        
 
@@ -371,112 +371,112 @@ class MainWindow(QWidget):
         # self.spectre_plot.view.draw()
 
     # @njit(fastmath=True, cache=True, parallel=True)
-#     def receive_signal(self):
-#         if self.serial_ports_combo.currentText() == '-':
-#             self.stop_flag = True
-#             return         
-#         else:
-#             self.stop_flag = False
-#             generator_name = self.serial_ports_combo.currentText()
+    def receive_signal(self):
+        if self.serial_ports_combo.currentText() == '-':
+            self.stop_flag = True
+            return         
+        else:
+            self.stop_flag = False
+            generator_name = self.serial_ports_combo.currentText()
 
-#             #self.signal_plot.clear()
-#             #self.spectre_plot.clear()
+            #self.signal_plot.clear()
+            #self.spectre_plot.clear()
 
-#             try:
-#                 for port in self.serial_ports:
-#                     if generator_name == port.name:
-#                         print("Found serial port")
-#                         if 'serial' in port.description.lower() or 'VCP' in port.description.lower():
-#                             # init serial port and bound
-#                             # bound rate on two ports must be the same
-#                             #was 9600 // 115200
-#                             generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
-#                             generator_ser.flushInput()
-#                             generator_ser.flushOutput()
-#                             generator_ser.set_buffer_size(rx_size = 6, tx_size = 6)
-#                             delta = 0
-#                             delta_mas = 0
-#                             cur_time = 0
+            try:
+                for port in self.serial_ports:
+                    if generator_name == port.name:
+                        print("Found serial port")
+                        if 'serial' in port.description.lower() or 'VCP' in port.description.lower():
+                            # init serial port and bound
+                            # bound rate on two ports must be the same
+                            #was 9600 // 115200
+                            generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
+                            generator_ser.flushInput()
+                            generator_ser.flushOutput()
+                            generator_ser.set_buffer_size(rx_size = 6, tx_size = 6)
+                            delta = 0
+                            delta_mas = 0
+                            cur_time = 0
 
-#                             """if self.first_contact:
-#                                 self.first_contact = 0
-#                                 print("Imn")
-#                                 while 1:
-#                                     generator_ser.write(bytearray(170))
-#                                     ser_bytes = generator_ser.read(1)
-#                                     print(ser_bytes)
+                            """if self.first_contact:
+                                self.first_contact = 0
+                                print("Imn")
+                                while 1:
+                                    generator_ser.write(bytearray(170))
+                                    ser_bytes = generator_ser.read(1)
+                                    print(ser_bytes)
 
-#                                     if (len(ser_bytes)):
-#                                         if ser_bytes[0] == 255:#ur_byte == 255:
-#                                             break
-#                                         """
-#                             #print(generator_ser.portstr)
+                                    if (len(ser_bytes)):
+                                        if ser_bytes[0] == 255:#ur_byte == 255:
+                                            break
+                                        """
+                            #print(generator_ser.portstr)
 
-#                             #data = []
+                            #data = []
 
-#                             #print('stop flag', self.stop_flag)
+                            #print('stop flag', self.stop_flag)
 
-#                             start_time = time.perf_counter()#time.time()   
+                            start_time = time.perf_counter()#time.time()   
 
-#                             while not self.stop_flag or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
-#                                 if (self.stop_flag):
-#                                     generator_ser.send_break(0)
-#                                 #print("In while")
-#                                 point_time = time.perf_counter()   
-#                                 ser_bytes = generator_ser.read(2)
-#                                 #print('huint', ser_bytes, len(ser_bytes) )
-#                                 if len(ser_bytes) != 0:
-#                                     try:
-#                                         cur_byte = int.from_bytes(ser_bytes, "little", signed=False) /1023.0*5.0
-#                                         #delta_mas.append(float(point_time - start_time) - cur_time)
-#                                         #print(delta)
-#                                         cur_time = float(point_time - start_time)
-#                                         # self.data_ind.append(cur_time)
-#                                         self.data.append(cur_byte)
-#                                         self.data_dict[cur_time] = cur_byte
+                            while not self.stop_flag or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
+                                if (self.stop_flag):
+                                    generator_ser.send_break(0)
+                                #print("In while")
+                                point_time = time.perf_counter()   
+                                ser_bytes = generator_ser.read(2)
+                                #print('huint', ser_bytes, len(ser_bytes) )
+                                if len(ser_bytes) != 0:
+                                    try:
+                                        cur_byte = int.from_bytes(ser_bytes, "little", signed=False) /1023.0*5.0
+                                        #delta_mas.append(float(point_time - start_time) - cur_time)
+                                        #print(delta)
+                                        cur_time = float(point_time - start_time)
+                                        # self.data_ind.append(cur_time)
+                                        self.data.append(cur_byte)
+                                        self.data_dict[cur_time] = cur_byte
                                         
-#                                         #print("Time", float(time.time() - start_time))
-#                                         #print(cur_byte)
-#                                     except Exception as e:
-#                                         print('error in input', str(e))
-#                                 else:
-#                                     break
+                                        #print("Time", float(time.time() - start_time))
+                                        #print(cur_byte)
+                                    except Exception as e:
+                                        print('error in input', str(e))
+                                else:
+                                    break
                                 
-#                                 #if(generator_ser.isOpen() and self.stop_flag): generator_ser.close()
+                                #if(generator_ser.isOpen() and self.stop_flag): generator_ser.close()
 
-#                             # self.reDraw(self.data[-50:])
+                            # self.reDraw(self.data[-50:])
 
-#                             print("Stop flag:", self.stop_flag)
+                            print("Stop flag:", self.stop_flag)
                             
-#                             """
-#                             self.signal_plot.clear()
-#                             self.spectre_plot.clear()
-#                             self.spectre_plot.axes.magnitude_spectrum(self.data, color='#1f77b4')
-#                             self.signal_plot.clear()
-#                             """
-# #----------------------------------------------------------------------
-#                             x = np.arange(0, len(self.data))
-#                             x = x * (1/9.5)
-#                             self.tmp = 0
-#                             self.x = [0]
-# #----------------------------------------------------------------------
-#                             print("Data", self.data, "len data", len(self.data), "len dict", len(self.data_dict.keys()))
-#                             print("Min/max data: ", min(self.data_dict), max(self.data_dict))
-#                             #print("Inds", self.data_ind)
+                            """
+                            self.signal_plot.clear()
+                            self.spectre_plot.clear()
+                            self.spectre_plot.axes.magnitude_spectrum(self.data, color='#1f77b4')
+                            self.signal_plot.clear()
+                            """
+#----------------------------------------------------------------------
+                            x = np.arange(0, len(self.data))
+                            x = x * (1/9.5)
+                            self.tmp = 0
+                            self.x = [0]
+#----------------------------------------------------------------------
+                            print("Data", self.data, "len data", len(self.data), "len dict", len(self.data_dict.keys()))
+                            print("Min/max data: ", min(self.data_dict), max(self.data_dict))
+                            #print("Inds", self.data_ind)
                             
-#                             """
-#                             self.signal_plot.axes.plot(x, self.data, color='#1f77b4')
-#                             self.signal_plot.view.draw()
+                            """
+                            self.signal_plot.axes.plot(x, self.data, color='#1f77b4')
+                            self.signal_plot.view.draw()
                             
-#                             self.data.clear()
-#                             self.data[0] = 0
-#                             """
-#                             return
-#                         else:
-#                             self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
-#                             return    
-#             except Exception as e:
-#                 print('error in common input', str(e))              
+                            self.data.clear()
+                            self.data[0] = 0
+                            """
+                            return
+                        else:
+                            self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
+                            return    
+            except Exception as e:
+                print('error in common input', str(e))              
 
     def setEnable(self, val):
         self.fs_signal_form_combo.setEnabled(val)
