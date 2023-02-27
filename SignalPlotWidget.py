@@ -15,7 +15,8 @@ from wave import (
     mod_generate_sawtooth_wave,
     mod_generate_square_wave,
     modulating,
-    freq_modulating
+    freq_modulating,
+    pulse_amplitude_modulating
 )
 
 wave_generators = {
@@ -291,3 +292,24 @@ class SignalPlotWidget(PlotWidget):
             return False
     def generate_formula_am(self, signalMainArray, signalModuArray):
         return'Formula: (' + str(signalMainArray[1]) + ' + ' + str(signalModuArray[1]) + ' * cos(' + str(round((2 * np.pi) / (1 / signalModuArray[2]), 2)) + ' * t)) * cos(' + str(round((2 * np.pi) / (1 / signalMainArray[2]), 2)) + ' * t)'
+
+    def pulse_amplitude_modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, y_scale= 1):
+        self.clear()    
+        fs_x_scale_type, fs_y_scale_type = getScaleType(fs_frequency, fs_amplitude)
+        ss_x_scale_type, ss_y_scale_type = getScaleType(ss_frequency, ss_amplitude)
+        x_type_mas = [fs_x_scale_type, ss_x_scale_type]
+        y_type_mas = [fs_y_scale_type, ss_y_scale_type]
+        freq_mas = [fs_frequency, ss_frequency]
+        ampl_mas = [fs_amplitude, ss_amplitude]
+        freq_mas, ampl_mas = getScaledParamsInMas(freq_mas, ampl_mas, x_type_mas, y_type_mas)
+        x, y = pulse_amplitude_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+
+        self.axes.set_xlim(-fs_duration, fs_duration )
+        self.axes.set_ylim(-y_scale , y_scale)
+        x_label, y_label = getAxisNames(min(x_type_mas), min(y_type_mas))
+        self.axes.set_xlabel(x_label)
+        self.axes.set_ylabel(y_label)
+
+
+        self.axes.plot(x, y, color='#1f77b4')
+        self.view.draw()      
