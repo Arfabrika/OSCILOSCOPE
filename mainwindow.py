@@ -410,14 +410,18 @@ class MainWindow(QWidget):
                             delta = 0
                             delta_mas = 0
                             cur_time = 0
+                            #print("bef if")
 
                             if self.first_contact:
                                 self.first_contact = 0
+                               # print("bef while")
                                 while 1:
                                     try:
+                                       # print("bef write")
                                         generator_ser.write(bytearray(170))
-                                        ser_bytes = generator_ser.read(1)
-                                        print("In while")
+                                        #print("bef read")
+                                        ser_bytes = generator_ser.read(2)
+                                        #print("In while")
                                         print(ser_bytes)
                                         if (len(ser_bytes)):
                                             if ser_bytes[0] == 255:#ur_byte == 255:

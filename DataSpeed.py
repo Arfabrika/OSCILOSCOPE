@@ -21,15 +21,16 @@ def receive_signal():
                             generator_ser = serial.Serial(generator_name, 115200, timeout=1)
                             #generator_ser.flushInput()
                             
-
+                            
                             while 1:
                                 generator_ser.write(bytearray(170))
-                                ser_bytes = generator_ser.read(1)
-                                print(ser_bytes)
+                                ser_bytes = generator_ser.read(2)
+                                #print(ser_bytes)
 
                                 if (len(ser_bytes)):
-                                    if ser_bytes[0] == 255:#ur_byte == 255:
+                                    if ser_bytes[0] == 0xFF:#ur_byte == 255:
                                         break
+                                        
 
 
                             start_time = time.perf_counter()
@@ -56,7 +57,7 @@ def receive_signal():
                                         
                                     except Exception as e:
                                         print('error in input', str(e))
-                                if point_time - start_time >= 7:
+                                if point_time - start_time >= 5:
                                     stop_flag = 1
                                     
                                 # self.reDraw(self.data[-50:])
@@ -71,7 +72,7 @@ def receive_signal():
                                 print(data, len(data), len(datadict.keys()))
                                 # print("Times", datadict.keys())
                                 # print("Len: ", len(datadict.keys()))
-                                # print("Avg", len(datadict.keys()) / list(datadict.keys())[-1],  'Hz')
+                                print("Avg", len(datadict.keys()) / list(datadict.keys())[-1],  'Hz')
 
                                 # print("data: ", datadict)
                                 # print("min/max: ", min(datadict.values()), max(datadict.values()))
