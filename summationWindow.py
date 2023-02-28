@@ -56,21 +56,12 @@ class SummationWindow(QWidget):
         fs_amplitude_layout.addWidget(self.fs_amplitude_label)
         fs_amplitude_layout.addWidget(self.fs_amplitude_spin)
 
-        self.fs_duration_spin = QLabel()
-        self.fs_duration_label = QLabel('Продолжительность')
-        self.fs_duration_label.setBuddy(self.fs_duration_spin)
-
-        fs_duration_layout = QHBoxLayout()
-        fs_duration_layout.addWidget(self.fs_duration_label)
-        fs_duration_layout.addWidget(self.fs_duration_spin)
-
 
         fs_signal = QVBoxLayout()
         fs_signal.addLayout(fs_signals_layout)
         fs_signal.addLayout(fs_signals_form_layout)
         fs_signal.addLayout(fs_frequency_layout)
         fs_signal.addLayout(fs_amplitude_layout)
-        fs_signal.addLayout(fs_duration_layout)
 
         self.show_plot_button = QPushButton('Показать график')
         self.show_plot_button.clicked.connect(self.show_plot)
@@ -168,7 +159,6 @@ class SummationWindow(QWidget):
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 
             self.fs_amplitude_spin.setText(str(curSignal_fs[1]) + ' В')
-            self.fs_duration_spin.setText(str(curSignal_fs[3]) + ' Сек.')
             self.fs_frequency_spin.setText(str(curSignal_fs[2]) + ' Гц')
             self.fs_signal_form_combo.setText(curSignal_fs[0])
         else:
