@@ -59,7 +59,7 @@ class FrequencyWindow(QWidget):
         self.plot1_button = QPushButton('Показать график')
         self.plot1_button.clicked.connect(self.show_plot1)
 
-        self.formula = QLabel('Общая формула АМ: u(t) = Uн * cos(2*pi*f*t + m*sin(2*pi*F*t))')
+        self.formula = QLabel('Общая формула ЧМ: u(t) = Uн * cos(2*pi*f*t + m*sin(2*pi*F*t))')
 
         self.signal_plot = SignalPlotWidget()
 
@@ -115,7 +115,7 @@ class FrequencyWindow(QWidget):
         self.plot2_button = QPushButton('Показать график')
         self.plot2_button.clicked.connect(self.show_plot2)
 
-        self.formula_spectr = QLabel('Общая формула АМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * m/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * m/2) * cos((2*pi*f - 2*pi*F)t)')
+        self.formula_spectr = QLabel('Общая формула ЧМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * m/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * m/2) * cos((2*pi*f - 2*pi*F)t)')
 
         self.specter_plot = SpectrePlotWidget()
 

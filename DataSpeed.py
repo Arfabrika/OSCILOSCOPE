@@ -23,9 +23,9 @@ def receive_signal():
                             
                             
                             while 1:
-                                generator_ser.write(bytearray(170))
+                                generator_ser.write(bytearray(255))
                                 ser_bytes = generator_ser.read(2)
-                                #print(ser_bytes)
+                                print(ser_bytes)
 
                                 if (len(ser_bytes)):
                                     if ser_bytes[0] == 0xFF:#ur_byte == 255:
