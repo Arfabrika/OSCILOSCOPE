@@ -48,11 +48,12 @@ class SignalPlotWidget(PlotWidget):
         self.axes.grid(True)
 
     def plot(self, signal_name, frequency, amplitude=1, x_scale_value = 1, 
-    y_scale_value = 1, flag = 1, animation_flag = 1):
+    y_scale_value = 1, animation_flag = 1):
         self.clear()
         self.animation_flag = animation_flag
-        if flag == 1:
-            self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency))
+        
+        self.axes.set_title(self.generate_formula(signal_name, amplitude, frequency))
+
         if signal_name == '-':
             return
 
@@ -66,11 +67,10 @@ class SignalPlotWidget(PlotWidget):
 
         x_points = []
         y_points = []
-        if flag == 1:
-            self.axes.set_xlim(-x_scale_value, x_scale_value)
-            self.axes.set_ylim(-y_scale_value, y_scale_value)
+        self.axes.set_xlim(-x_scale_value, x_scale_value)
+        self.axes.set_ylim(-y_scale_value, y_scale_value)
         
-        if self.animation_flag == 1 and flag == 0:
+        if self.animation_flag == 1:
             i = 0
             checkvalue = len(x) / 20 
             for point in x:
@@ -139,9 +139,9 @@ class SignalPlotWidget(PlotWidget):
         return 'Formula: ' + str(signal_ss[1]) + 'cos(' + str(signal_ss[2]) + r'$\cdot2\pi t + ' + str(1 / freq_dev) + 'sin(' + str(signal_fs[2]) + r'\cdot2\pi$' + 't))'
 
     def polyharmonic(self, fs_signal_name, fs_frequency, fs_amplitude=1,  fs_duration=1,
-                     ss_signal_name='', ss_amplitude=1, ss_frequency=1, ss_duration=1, animation_flag = 1):
+                     ss_signal_name='', ss_amplitude=1, ss_frequency=1, ss_duration=1):
         self.clear()
-        self.animation_flag = animation_flag
+        # self.animation_flag = animation_flag
         if fs_signal_name == '-' or ss_signal_name == '-':
             return
 
@@ -166,33 +166,30 @@ class SignalPlotWidget(PlotWidget):
 
             self.arrays.append([fx, py])
 
-        if self.animation_flag:
-            x_points = []
-            y_points = []
-            i = 0
+        # if self.animation_flag:
+        #     x_points = []
+        #     y_points = []
+        #     i = 0
 
-            for point in fx:
-                x_points.append(point)
-                y_points.append(py[i])
+        #     for point in fx:
+        #         x_points.append(point)
+        #         y_points.append(py[i])
 
-                i += 1
+        #         i += 1
 
-                if i % (len(fx) / 20) == 0:
-                    self.axes.plot(x_points, y_points, color='#1f77b4')
-                    self.view.draw()
-                    self.view.flush_events()
-        else:
-            self.axes.plot(self.arrays[len(self.arrays) - 1][0], self.arrays[len(self.arrays) - 1][1], color='#1f77b4')
-            self.view.draw()
+        #         if i % (len(fx) / 20) == 0:
+        #             self.axes.plot(x_points, y_points, color='#1f77b4')
+        #             self.view.draw()
+        #             self.view.flush_events()
+        # else:
+        self.axes.plot(self.arrays[len(self.arrays) - 1][0], self.arrays[len(self.arrays) - 1][1], color='#1f77b4')
+        self.view.draw()
 
     def modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, 
-    y_scale = 1, fs_x_scale_type = 0, fs_y_scale_type = 0, ss_x_scale_type = 0, ss_y_scale_type = 0,
-    animation_flag = 1, flag = 1, signal_fs = [], signal_ss = []):
+    y_scale = 1, fs_x_scale_type = 0, fs_y_scale_type = 0, ss_x_scale_type = 0, ss_y_scale_type = 0, flag = 1, signal_fs = [], signal_ss = []):
         self.clear()
-        self.animation_flag = animation_flag
-
-         # x scale
-         # нужен ли flag?
+        # self.animation_flag = animation_flag
+            
         if flag == 1:
             
             x_scale_type = max(fs_x_scale_type, ss_x_scale_type)
@@ -216,31 +213,30 @@ class SignalPlotWidget(PlotWidget):
                 ss_amplitude /= 1000
                 self.axes.set_ylabel('U, mV')
         
-        
         x, y = modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
         self.axes.set_title(self.generate_formula_am(signal_fs, signal_ss))
-        
+
         if flag == 1:
             self.axes.set_xlim(-fs_duration, fs_duration)
             self.axes.set_ylim(-y_scale, y_scale)
 
-        if self.animation_flag:
-            i = 0
-            for point in x:
-                i += 1
-                if i % 40 == 0:
-                    self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
-                    self.view.draw()
-                    self.view.flush_events()
-        else:
-            self.axes.plot(x, y, color='#1f77b4')
-            self.view.draw()
+        # if self.animation_flag:
+        #     i = 0
+        #     for point in x:
+        #         i += 1
+        #         if i % 40 == 0:
+        #             self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+        #             self.view.draw()
+        #             self.view.flush_events()
+        
+        self.axes.plot(x, y, color='#1f77b4')
+        self.view.draw()
 
 
     def freq_modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, 
-    fs_amplitude, y_scale= 1, animation_flag = 1, freq_dev = 10):
+    fs_amplitude, y_scale= 1, freq_dev = 10):
         self.clear()
-        self.animation_flag = animation_flag        
+        # self.animation_flag = animation_flag        
         fs_x_scale_type, fs_y_scale_type = getScaleType(fs_frequency, fs_amplitude)
         ss_x_scale_type, ss_y_scale_type = getScaleType(ss_frequency, ss_amplitude)
         x_type_mas = [fs_x_scale_type, ss_x_scale_type]
@@ -256,17 +252,17 @@ class SignalPlotWidget(PlotWidget):
         self.axes.set_xlabel(x_label)
         self.axes.set_ylabel(y_label)
 
-        if self.animation_flag:
-            i = 0
-            for point in x:
-                i += 1
-                if i % 40 == 0:
-                    self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
-                    self.view.draw()
-                    self.view.flush_events()
-        else:
-            self.axes.plot(x, y, color='#1f77b4')
-            self.view.draw()                
+        # if self.animation_flag:
+        #     i = 0
+        #     for point in x:
+        #         i += 1
+        #         if i % 40 == 0:
+        #             self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+        #             self.view.draw()
+        #             self.view.flush_events()
+        # else:
+        self.axes.plot(x, y, color='#1f77b4')
+        self.view.draw()                
 
     def remove_last_points(self, x_scale = 0, y_scale = 0):
         self.clear(x_scale, y_scale) 
@@ -277,16 +273,19 @@ class SignalPlotWidget(PlotWidget):
                 xy = self.arrays[-1]
                 x = xy[0] 
                 y = xy[1] 
+                self.axes.plot(x, y, color='#1f77b4')
+                self.view.draw()
+                self.view.flush_events()
 
-                i = 0
-                for point in x:
+                # i = 0
+                # for point in x:
 
-                    i += 1
+                #     i += 1
 
-                    if i % 40 == 0:
-                        self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
-                        self.view.draw()
-                        self.view.flush_events()
+                #     if i % 40 == 0:
+                #         self.axes.plot(x[0:i], y[0:i], color='#1f77b4')
+                #         self.view.draw()
+                #         self.view.flush_events()
                 return True
         else:
             return False

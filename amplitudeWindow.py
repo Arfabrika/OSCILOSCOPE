@@ -17,7 +17,7 @@ class AmplitudeWindow(QWidget):
     def __init__(self, signalDataArray, animation_flag, parent=None):
         super().__init__(parent)
         self.signalDataArray = signalDataArray
-        self.animation_flag = animation_flag
+        # self.animation_flag = animation_flag
         self.plot_window = PlotWindow()
         self.parametr_window = ParametrWindow()
         
@@ -181,7 +181,7 @@ class AmplitudeWindow(QWidget):
 
     def updateSignalData(self, signalDataArray, animation_flag):
         self.signalDataArray = signalDataArray
-        self.animation_flag = animation_flag
+        # self.animation_flag = animation_flag
         self.setSignals()
 
     def closeEvent(self, event):
@@ -239,7 +239,7 @@ class AmplitudeWindow(QWidget):
         ind_ss = self.ss_signals_list.currentIndex()
         signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
         signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1], flag = 0, animation_flag=self.animation_flag, signal_fs=signal_fs, signal_ss=signal_ss)
+        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1],flag = 0, signal_fs=signal_fs, signal_ss=signal_ss)
         self.specter_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1], signal_fs, signal_ss)
 
     def slider_frequency_move(self):
@@ -269,7 +269,7 @@ class AmplitudeWindow(QWidget):
         tmp = self.mechanical_slider_frequency.value()
         if signal_fs[3] >= self.mechanical_slider_frequency.value():
             tmp = signal_fs[3]
-        self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), flag = 0, animation_flag=self.animation_flag, signal_fs=signal_fs, signal_ss=signal_ss)
+        self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), signal_fs=signal_fs, signal_ss=signal_ss)
 
     def show_parametrs_button(self):
         if self.fs_signals_list.currentIndex() == -1 and self.ss_signals_list.currentIndex() == -1:
