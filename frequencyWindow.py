@@ -251,7 +251,7 @@ class FrequencyWindow(QWidget):
         self.signal_plot.axes.set_title(sig_formula)
         self.specter_plot.axes.set_title(self.specter_plot.generate_formula_spectr(row_formula=sig_formula))
         self.signal_plot.freq_modulate(signal_fs[2], self.x_scale_value, signal_ss[1], signal_ss[2], 
-        signal_fs[1], self.y_scale_value, self.animation_flag, freq_dev)
+        signal_fs[1], self.y_scale_value, freq_dev)
         self.specter_plot.freq_modulate(signal_fs[2], signal_ss[2], freq_dev)
     
     def slider_frequency_move(self):
