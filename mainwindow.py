@@ -24,7 +24,7 @@ from frequencyWindow import FrequencyWindow
 from signalData import signalData, signalDataArray
 from scalefuncs import getScaleType
 
-# import serial.tools.list_ports
+import serial.tools.list_ports
 import time
 
 from summationWindow import SummationWindow
@@ -71,9 +71,9 @@ class MainWindow(QWidget):
         self.summation_window = None
         
         self.serial_ports_combo = QComboBox(self)
-        # self.serial_ports = serial.tools.list_ports.comports()
-        # serial_ports_desc = [port.name for port in self.serial_ports]
-        # self.serial_ports_combo.addItems(serial_ports_desc)
+        self.serial_ports = serial.tools.list_ports.comports()
+        serial_ports_desc = [port.name for port in self.serial_ports]
+        self.serial_ports_combo.addItems(serial_ports_desc)
         self.serial_ports_combo_label = QLabel('Выберите порт', self)
         self.serial_ports_combo_label.setBuddy(self.serial_ports_combo)        
 
@@ -416,26 +416,26 @@ class MainWindow(QWidget):
                             cur_time = 0
                             #print("bef if")
 
-    #                         if self.first_contact:
-    #                             self.first_contact = 0
-    #                            # print("bef while")
-    #                             while 1:
-    #                                 try:
-    #                                    # print("bef write")
-    #                                     generator_ser.write(bytearray(170))
-    #                                     #print("bef read")
-    #                                     ser_bytes = generator_ser.read(2)
-    #                                     #print("In while")
-    #                                     print(ser_bytes)
-    #                                     if (len(ser_bytes)):
-    #                                         if ser_bytes[0] == 255:#ur_byte == 255:
-    #                                             break
-    #                                 except Exception as exc:
-    #                                     print('error in common input', str(exc))   
+                            if self.first_contact:
+                                self.first_contact = 0
+                               # print("bef while")
+                                while 1:
+                                    try:
+                                       # print("bef write")
+                                        generator_ser.write(bytearray(170))
+                                        #print("bef read")
+                                        ser_bytes = generator_ser.read(2)
+                                        #print("In while")
+                                        print(ser_bytes)
+                                        if (len(ser_bytes)):
+                                            if ser_bytes[0] == 255:#ur_byte == 255:
+                                                break
+                                    except Exception as exc:
+                                        print('error in common input', str(exc))   
                                         
-    #                         #print(generator_ser.portstr)
+                            #print(generator_ser.portstr)
 
-    #                         #data = []
+                            #data = []
 
                             #print('stop flag', self.stop_flag)
                             start_time = time.perf_counter()#time.time()   
@@ -488,13 +488,13 @@ class MainWindow(QWidget):
                                         print('error in input', str(e))
 
 
-    #                             else:
-    #                                 break
+                                else:
+                                    break
 
                                                     
-    #                                     #if(generator_ser.isOpen() and self.stop_flag): generator_ser.close()
+                                        #if(generator_ser.isOpen() and self.stop_flag): generator_ser.close()
 
-    #                                 # self.reDraw(self.data[-50:])
+                                    # self.reDraw(self.data[-50:])
 
                             print("Stop flag:", self.stop_flag)
                             """
@@ -528,20 +528,20 @@ class MainWindow(QWidget):
                             # f.close()
                             #print("Inds", self.data_ind)
                             
-    #                         """
-    #                         self.signal_plot.axes.plot(x, self.data, color='#1f77b4')
-    #                         self.signal_plot.view.draw()
+                            """
+                            self.signal_plot.axes.plot(x, self.data, color='#1f77b4')
+                            self.signal_plot.view.draw()
                             
-    #                         self.data.clear()
-    #                         self.data[0] = 0
-    #                         """
-    #                         return
+                            self.data.clear()
+                            self.data[0] = 0
+                            """
+                            return
                             
-    #                     else:
-    #                         self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
-    #                         return    
-    #         except Exception as e:
-    #             print('error in common input', str(e))           
+                        else:
+                            self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
+                            return    
+            except Exception as e:
+                print('error in common input', str(e))                
 
     def setEnable(self, val):
         self.fs_signal_form_combo.setEnabled(val)
