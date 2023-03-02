@@ -255,6 +255,8 @@ class MainWindow(QWidget):
         self.first_contact = 1
         self.buf1 = dict()
         self.buf2 = dict()
+        self.f = open("Data.txt", "w+")
+        self.f.write("qqq")
 
     def addSignal(self):
         if self.fs_signal_form_combo.currentText() == "-":
@@ -327,6 +329,7 @@ class MainWindow(QWidget):
         self.spectre_plot.axes.set_ylim(0, max(y * 2) * 1.5)
         self.spectre_plot.axes.set_xlim(0, max(x))
         self.spectre_plot.view.draw()
+        self.f.close()
         ###self.stop_flag = True
 
     # @CoolDown(0.1)
@@ -377,8 +380,8 @@ class MainWindow(QWidget):
             print("dict values len", len(self.data_dict.values()))
             """
             #self.signal_plot.axes.plot(self.data_dict.keys(), self.data_dict.values(), color='#1f77b4')
-            self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
-            self.signal_plot.view.draw()
+            #self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
+            #self.signal_plot.view.draw()
             self.data_ind.clear()
             #self.data[0] = 0
         except Exception as e:
@@ -388,7 +391,8 @@ class MainWindow(QWidget):
 
     # @njit(fastmath=True, cache=True, parallel=True)
     def receive_signal(self):
-    
+        # f = open("Data.txt", "w+")
+        # f.write("qqq")
         if self.serial_ports_combo.currentText() == '-':
             self.stop_flag = True
             return         
@@ -435,7 +439,7 @@ class MainWindow(QWidget):
 
                             #print('stop flag', self.stop_flag)
                             start_time = time.perf_counter()#time.time()   
-
+                            
                             while not self.stop_flag or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
 
 
@@ -457,11 +461,20 @@ class MainWindow(QWidget):
                                         self.buf1[cur_time] = cur_byte
                                         #print("len", len(self.buf1))
                                         QApplication.processEvents()
+
                                         if (len(self.buf1) >= 5000):
+                                            #f.write(str(self.buf1.values()))
+                                            val = list(self.buf1.values())
+                                            key = list(self.buf1.keys())
+                                            for i in range(len(val)):
+                                            #     print("key:", key[i], " value:", val[i])
+                                                self.f.write(str("key:" + str(key[i]) + " value:" + str(val[i]) + "\n"))
+                                            
                                             #self.signal_plot.axes.clear()
                                             self.signal_plot.axes.set_xlabel('Time, s')
                                             self.signal_plot.axes.set_ylabel('U, V')
                                             self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
+                                            self.signal_plot.axes.set_xlim(0, max(self.buf1.keys()) * 1.1) 
                                             self.signal_plot.axes.grid(True)
                                             self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
                                             self.signal_plot.view.draw()
@@ -470,6 +483,7 @@ class MainWindow(QWidget):
                                         
                                         #print("Time", float(time.time() - start_time))
                                         #print(cur_byte)
+                                        
                                     except Exception as e:
                                         print('error in input', str(e))
 
@@ -483,7 +497,17 @@ class MainWindow(QWidget):
                                     # self.reDraw(self.data[-50:])
 
                             print("Stop flag:", self.stop_flag)
-                            
+                            """
+                            self.signal_plot.axes.set_xlim(0, max(self.buf1.keys()) * 1.1) 
+                            self.signal_plot.axes.grid(True)
+                            self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
+                            self.signal_plot.view.draw()
+                            """
+                            val = list(self.buf1.values())
+                            key = list(self.buf1.keys())
+                            for i in range(len(val)):
+                                print("key:", key[i], " value:", val[i])
+                            #f.close()
                             """
                             self.signal_plot.clear()
                             self.spectre_plot.clear()
@@ -499,9 +523,9 @@ class MainWindow(QWidget):
                            # print("Data", self.data_dict.values(), "len data", len(self.data_dict.values()), "len dict", len(self.data_dict.keys()))
                             #print("Min/max data: ", min(self.data_dict.values()), max(self.data_dict.values()))
                             #print("Time (keys): ", self.data_dict.keys())
-                            f = open("Data.txt", "a")
-                            f.write(str(self.data_dict.values()))
-                            f.close()
+                            # f = open("Data.txt", "a")
+                            # f.write(str(self.data_dict.values()))
+                            # f.close()
                             #print("Inds", self.data_ind)
                             
                             """
