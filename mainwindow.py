@@ -422,7 +422,7 @@ class MainWindow(QWidget):
                                 while 1:
                                     try:
                                        # print("bef write")
-                                        generator_ser.write(bytearray(170))
+                                        generator_ser.write(bytearray(255))
                                         #print("bef read")
                                         ser_bytes = generator_ser.read(2)
                                         #print("In while")
@@ -606,7 +606,7 @@ class MainWindow(QWidget):
         sigData = self.signalDataArray.getSignalByIndex(ind).getData()
         self.signal_plot.plot(sigData[0], sigData[2], sigData[1],
         self.x_scale_value, self.y_scale_value, animation_flag=self.animation_flag)#,duration_type= sigData[5])
-        self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[3], sigData[5])
+        self.spectre_plot.plot(sigData[0], sigData[1], sigData[2], sigData[3])#, sigData[5])
     
     def slider_frequency_move(self):
         if self.mechanical_slider_frequency.value() % 2 == 0:
