@@ -1,15 +1,16 @@
 from array import array
 
 class signalData:
-    def __init__(self, signalType, amplitude, frequency, duration, isActive = 1):
+    def __init__(self, signalType, amplitude, frequency, duration, isActive = 1, isSingle = 0):
         self.signalType = signalType
         self.amplitude = amplitude
         self.frequency = frequency
         self.duration = duration
-        self.isActive = isActive       
+        self.isActive = isActive
+        self.isSingle = isSingle       
 
     def getData(self):
-        return [self.signalType, self.amplitude, self.frequency, self.duration, self.isActive]
+        return [self.signalType, self.amplitude, self.frequency, self.duration, self.isActive, self.isSingle]
 
     def changeActivity(self):
         self.isActive = not self.isActive
@@ -55,7 +56,7 @@ class signalDataArray:
         if len(self.array) != 0:
             return self.array[len(self.array) - 1]
         else:
-            return signalData("", 0, 0, 0, 0)
+            return signalData("", 0, 0, 0, 0, 0)
 
     def removeLast(self):
         self.array.pop()
