@@ -14,8 +14,10 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QPushButton,
     QDial,
-    QCheckBox
+    QCheckBox,
 )
+
+from PySide6.QtGui import QAction
 
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
@@ -31,7 +33,6 @@ from summationWindow import SummationWindow
 signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
 import time
 from functools import partial, wraps
-from numba import njit
 from wave import (generate_data_spectrum)
 
 class CoolDownDecorator(object):
@@ -249,10 +250,6 @@ class MainWindow(QWidget):
         self.summation_window = SummationWindow(self.signalDataArray, self.animation_flag)   
         self.showMaximized()
 
-        #----------------------------------------------------------------------
-        self.tmp = 0
-        self.x = [0]
-        #----------------------------------------------------------------------
         self.data_ind = [0]
         self.data_dict = dict()
         self.first_contact = 1
@@ -261,6 +258,9 @@ class MainWindow(QWidget):
         self.is_online = False
         self.f = open("Data.txt", "w+")
         self.f.write("qqq")
+
+        finish = QAction("Quit", self)
+        finish.triggered.connect(self.closeEvent)
 
     def real_data_mod_changed(self):
         self.is_online = not self.is_online
@@ -326,89 +326,39 @@ class MainWindow(QWidget):
         self.stop_flag = True
 
     def set_stop_safely(self):
-        #print("click")
         self.thread_manager.start(self.set_stop)
         self.setEnable(True) 
         self.stop_flag = True
-        ###self.stop_listening_button.setEnabled(False)
         if not self.is_online:
-            x, y = generate_data_spectrum(list(self.buf2.values()), max(self.buf2.keys())) ## EDIT THIS VALUE
-            #x, y = generate_data_spectrum(list(self.data_dict.values()), max(self.data_dict.keys())) ## EDIT THIS VALUE
-            self.spectre_plot.axes.plot(x, y * 2, color='#1f77b4')
-            self.spectre_plot.axes.set_ylim(0, max(y * 2) * 1.5)
-            self.spectre_plot.axes.set_xlim(0, max(x))
-            self.spectre_plot.view.draw()
+            x, y = generate_data_spectrum(list(self.buf2.values()), max(self.buf2.keys()))
+        else:
+            x, y = generate_data_spectrum(list(self.buf1.values())[-5000:], max(self.buf1.keys()))
+        self.spectre_plot.axes.plot(x, y * 2, color='#1f77b4')
+        self.spectre_plot.axes.set_ylim(0, max(y * 2) * 1.5)
+        self.spectre_plot.axes.set_xlim(0, max(x))
+        self.spectre_plot.view.draw()
         self.f.close()
        
 
     @CoolDown(0.1)
     # function for drawing data from controller
     def reDraw(self, drdata = [], drind = []):
-        #print("Br", self.stop_flag)
-        try:
-            #while not self.stop_flag:           
-            self.signal_plot.axes.clear() # fixed
-            self.signal_plot.axes.grid(True)
-    #----------------------------------------------------------------------
-            """if self.tmp != 0 and len(self.x):
-                self.x = np.append(self.x, max(self.x) + self.tmp)
-                self.x = np.delete(self.x, 0)
+        try:         
+            if not self.is_online:
+                self.signal_plot.axes.set_xlim(0, max(drind))
             else:
-                self.x = np.arange(0, len(self.data))
-            self.x = self.x * (1/9.5)
-            self.tmp = self.tmp + 1 """
-    #----------------------------------------------------------------------
-            #self.x_scale_value = float(self.mechanical_slider_frequency.value())
+                self.signal_plot.axes.clear()
+                self.signal_plot.axes.grid(True)
             self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
-
-            self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
-            self.signal_plot.axes.set_xlim(0, max(drind))
-            #print("In while ", max(drind))
-            
+            self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
             self.signal_plot.axes.set_xlabel('Time, s')
             self.signal_plot.axes.set_ylabel('U, V')
             self.signal_plot.axes.plot(drind, drdata, color='#1f77b4')
             self.signal_plot.view.draw()
-                #----------------------------------------------------------------------
-                #self.signal_plot.axes.set_xlim(self.x.min(), self.x.max())
-                #self.signal_plot.axes.set_xlim(min(self.data_ind), max(self.data_ind)+0.000000001)
-                #self.signal_plot.axes.set_xlim(min(self.data_dict.keys()), max(self.data_dict.keys())+0.000000001)
-                #----------------------------------------------------------------------
-                # self.spectre_plot.axes.magnitude_spectrum(data, color='#1f77b4')
-
-                #print("Data in redraw", self.data)
-                #print("Inds", self.data_ind)
-                
-                #self.signal_plot.axes.plot(self.data_dict.keys(), self.data_dict.values(), color='#1f77b4')
-                #self.signal_plot.view.draw()      
-                
-                    
-            """
-            print("inds", self.data_ind)
-            print("data", self.data)
-            print("len inds", len(self.data_ind))
-            print("len data", len(self.data))
-            print("dict keys", self.data_dict.keys())
-            print("dict keys len", len(self.data_dict.keys()))
-            print("dict values", self.data_dict.values())
-            print("dict values len", len(self.data_dict.values()))
-            """
-            #self.signal_plot.axes.plot(self.data_dict.keys(), self.data_dict.values(), color='#1f77b4')
-            #print("In draw values:", self.buf1.values())
-            #self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
-            #self.signal_plot.axes.plot(drind, drdata, color='#1f77b4')
-            #self.signal_plot.view.draw()
-            #self.data_ind.clear()
-            #self.data[0] = 0
         except Exception as e:
                 print('error in draw', str(e))
-        # self.spectre_plot.view.draw()
-         
 
-    # @njit(fastmath=True, cache=True, parallel=True)
     def receive_signal(self):
-        # f = open("Data.txt", "w+")
-        # f.write("qqq")
         if self.serial_ports_combo.currentText() == '-':
             self.stop_flag = True
             return         
@@ -423,155 +373,57 @@ class MainWindow(QWidget):
                             # init serial port and bound
                             # bound rate on two ports must be the same
                             #was 9600 // 115200
+                            # new params: generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
                             generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
                             generator_ser.flushInput()
                             generator_ser.flushOutput()
                             generator_ser.set_buffer_size(rx_size = 6, tx_size = 6)
                             cur_time = 0
-                            #print("bef if")
 
                             if self.first_contact:
                                 self.first_contact = 0
-                               # print("bef while")
                                 while 1:
                                     try:
-                                       # print("bef write")
+                                        # new protocol: generator_ser.write(b"R") # Request
                                         generator_ser.write(bytearray(255))
-                                        #print("bef read")
                                         ser_bytes = generator_ser.read(2)
-                                        #print("In while")
                                         print("In protocol", ser_bytes)
                                         if (len(ser_bytes)):
-                                            if ser_bytes[0] == 255:#ur_byte == 255:
+                                            if ser_bytes[0] == 255:
+                                            # new protocol: if ser_bytes[0] == ord('A'): # Accept
                                                 break
                                     except Exception as exc:
                                         print('error in common input', str(exc))   
-                                        
-                            #print(generator_ser.portstr)
 
-                            #data = []
-
-                            #print('stop flag', self.stop_flag)
-                            start_time = time.perf_counter()#time.time()   
+                            start_time = time.perf_counter()
                             
-                            while not self.stop_flag or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
-
-
+                            while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
                                 if (self.stop_flag):
                                     generator_ser.send_break(0)
-                                #print("In while")
                                 point_time = time.perf_counter()   
                                 ser_bytes = generator_ser.read(2)
-                                #print('huint', ser_bytes, len(ser_bytes) )
                                 if len(ser_bytes) != 0:
                                     try:
                                         cur_byte = int.from_bytes(ser_bytes, "little", signed=False) /1023.0*5.0
-                                        #delta_mas.append(float(point_time - start_time) - cur_time)
-                                        #print(delta)
                                         cur_time = float(point_time - start_time)
-                                        # self.data_ind.append(cur_time)
-                                        #self.data.append(cur_byte)
-                                        """self.data_dict[cur_time] = cur_byte"""
                                         self.buf1[cur_time] = cur_byte
-                                        #print("len", len(self.buf1))
                                         QApplication.processEvents()
                                         if self.is_online:
-                                            """
-                                            self.signal_plot.axes.set_xlabel('Time, s')
-                                            self.signal_plot.axes.set_ylabel('U, V')
-                                            self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
-                                            self.signal_plot.axes.set_xlim(0, max(self.buf1.keys()) * 1.1) 
-                                            self.signal_plot.axes.grid(True)
-                                            self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
-                                            self.signal_plot.view.draw()
-                                            """
-                                            self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
+                                            self.reDraw(list(self.buf1.values())[-5000:], list(self.buf1.keys())[-5000:])
                                             
                                         else:
-                                            if (len(self.buf1) >= 5000):
-                                                #f.write(str(self.buf1.values()))
-                                                # val = list(self.buf1.values())
-                                                # key = list(self.buf1.keys())
-                                                # for i in range(len(val)):
-                                                # #     print("key:", key[i], " value:", val[i])
-                                                #     self.f.write(str("key:" + str(key[i]) + " value:" + str(val[i]) + "\n"))
-                                                
-                                                #self.signal_plot.axes.clear()
-                                                self.signal_plot.axes.set_xlabel('Time, s')
-                                                self.signal_plot.axes.set_ylabel('U, V')
-                                                self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
-                                                self.signal_plot.axes.set_xlim(0, max(self.buf1.keys()) * 1.1) 
-                                                self.signal_plot.axes.grid(True)
-                                                self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
-                                                self.signal_plot.view.draw()
+                                            if (len(self.buf1) >= 5000):                                                
+                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
                                                 self.buf2 = self.buf1
                                                 self.buf1.clear()
-                                        
-                                        #print("Time", float(time.time() - start_time))
-                                        #print(cur_byte)
-                                        
+
                                     except Exception as e:
                                         print('error in input', str(e))
-                                # if self.is_online:
-                                #             """
-                                #             self.signal_plot.axes.set_xlabel('Time, s')
-                                #             self.signal_plot.axes.set_ylabel('U, V')
-                                #             self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
-                                #             self.signal_plot.axes.set_xlim(0, max(self.buf1.keys()) * 1.1) 
-                                #             self.signal_plot.axes.grid(True)
-                                #             self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
-                                #             self.signal_plot.view.draw()
-                                #             """
-                                #             #print("vals:",self.buf1.values() )
-                                #             self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
 
                                 else:
                                     break
 
-                                                    
-                                        #if(generator_ser.isOpen() and self.stop_flag): generator_ser.close()
-
-                                    # self.reDraw(self.data[-50:])
-
-                            print("Stop flag:", self.stop_flag)
-                            """
-                            self.signal_plot.axes.set_xlim(0, max(self.buf1.keys()) * 1.1) 
-                            self.signal_plot.axes.grid(True)
-                            self.signal_plot.axes.plot(self.buf1.keys(), self.buf1.values(), color='#1f77b4')
-                            self.signal_plot.view.draw()
-                            """
-                            # val = list(self.buf1.values())
-                            # key = list(self.buf1.keys())
-                            # for i in range(len(val)):
-                            #     print("key:", key[i], " value:", val[i])
-                            #f.close()
-                            """
-                            self.signal_plot.clear()
-                            self.spectre_plot.clear()
-                            self.spectre_plot.axes.magnitude_spectrum(self.data, color='#1f77b4')
-                            self.signal_plot.clear()
-                            """
-                    #----------------------------------------------------------------------
-                            x = np.arange(0, len(self.data_dict.values()))
-                            x = x * (1/9.5)
-                            self.tmp = 0
-                            self.x = [0]
-                    #----------------------------------------------------------------------
-                           # print("Data", self.data_dict.values(), "len data", len(self.data_dict.values()), "len dict", len(self.data_dict.keys()))
-                            #print("Min/max data: ", min(self.data_dict.values()), max(self.data_dict.values()))
-                            #print("Time (keys): ", self.data_dict.keys())
-                            # f = open("Data.txt", "a")
-                            # f.write(str(self.data_dict.values()))
-                            # f.close()
-                            #print("Inds", self.data_ind)
-                            
-                            """
-                            self.signal_plot.axes.plot(x, self.data, color='#1f77b4')
-                            self.signal_plot.view.draw()
-                            
-                            self.data.clear()
-                            self.data[0] = 0
-                            """
+                            print("Stop flag:", self.stop_flag)                            
                             return
                             
                         else:
@@ -598,12 +450,8 @@ class MainWindow(QWidget):
         self.signal_plot.clear()
         self.spectre_plot.clear()
         self.data_dict.clear()
-        self.setEnable(False)
-        ###self.stop_listening_button.setEnabled(True)
-       
-        self.thread_manager.start(self.receive_signal)
-        if self.is_online:
-         self.thread_manager.start(self.reDraw)                          
+        self.setEnable(False)      
+        self.thread_manager.start(self.receive_signal)                       
         
     def click_amplitude_event(self):        
         self.amplitude_window.updateSignalData(self.signalDataArray, self.animation_flag)
@@ -633,7 +481,6 @@ class MainWindow(QWidget):
         else:
             self.active_label.setText("Сигнал неактивен")
 
-            #rewrite clear part
             self.signal_plot.clear(self.x_scale_value, self.y_scale_value)
             self.spectre_plot.clear()
 
@@ -664,6 +511,9 @@ class MainWindow(QWidget):
 
         self.signal_plot.view.draw()
         self.signal_plot.view.flush_events()
+
+    def closeEvent(self, event):
+        self.set_stop_safely()
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
