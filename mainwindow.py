@@ -173,14 +173,29 @@ class MainWindow(QWidget):
         self.sum_create_button.clicked.connect(self.click_sum_event)
 
         self.anim_checkbox = QCheckBox("Включить анимацию")     
-        self.real_data_mod = QCheckBox("Включить отрисовку в режиме реального времени")      
+        self.real_data_get_mod = QCheckBox("Включить отрисовку в режиме реального времени")   
+        self.data_mod_label = QLabel("Режим работы микроконтроллера")
+        self.data_mod = QComboBox()
+        self.data_mod.addItems(['Получение напряжения в цепи', 'Генерация синуса']) 
+        self.data_mod_label.setBuddy(self.data_mod)
+
+        checkbox_params_layout = QVBoxLayout()
+        checkbox_params_layout.addWidget(self.anim_checkbox)
+        checkbox_params_layout.addWidget(self.real_data_get_mod)
+
+        mc_mode_layout = QVBoxLayout()
+        mc_mode_layout.addWidget(self.data_mod_label)
+        mc_mode_layout.addWidget(self.data_mod)
+
+        all_params_layout = QHBoxLayout()
+        all_params_layout.addLayout(checkbox_params_layout)
+        all_params_layout.addLayout(mc_mode_layout)
 
         ampl_layout.addLayout(signals_list_layout)
         ampl_layout.addWidget(self.ampl_create_button)
         ampl_layout.addWidget(self.freq_create_button)
         ampl_layout.addWidget(self.sum_create_button)
-        ampl_layout.addWidget(self.anim_checkbox)
-        ampl_layout.addWidget(self.real_data_mod)
+        ampl_layout.addLayout(all_params_layout)
 
         params_layout = QHBoxLayout()
         params_layout.addLayout(fs_params_layout)
@@ -238,7 +253,7 @@ class MainWindow(QWidget):
         self.signals_list.currentIndexChanged.connect(self.showSignals)
         self.edit_signal_button.clicked.connect(self.editSignal)
         self.anim_checkbox.toggled.connect(self.changed_animation_checkbox_event)
-        self.real_data_mod.toggled.connect(self.real_data_mod_changed)
+        self.real_data_get_mod.toggled.connect(self.real_data_get_mod_changed)
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
         self.animation_flag = 0
@@ -257,7 +272,7 @@ class MainWindow(QWidget):
         finish = QAction("Quit", self)
         finish.triggered.connect(self.closeEvent)
 
-    def real_data_mod_changed(self):
+    def real_data_get_mod_changed(self):
         self.is_online = not self.is_online
 
     def addSignal(self):
@@ -325,17 +340,23 @@ class MainWindow(QWidget):
         self.setEnable(True) 
         self.stop_flag = True
         if not self.is_online:
-            x, y = generate_data_spectrum(list(self.buf2.values()), max(self.buf2.keys()))
+            if (len(self.buf2) == 0):
+                return
+            x, y = generate_data_spectrum(list(self.buf2.values()), max(self.buf2.keys()))       
         else:
+            if (len(self.buf1) == 0):
+                return
             x, y = generate_data_spectrum(list(self.buf1.values())[-5000:], max(self.buf1.keys()))
         self.spectre_plot.axes.plot(x, y * 2, color='#1f77b4')
         self.spectre_plot.axes.set_ylim(0, max(y * 2) * 1.5)
         self.spectre_plot.axes.set_xlim(0, max(x))
         self.spectre_plot.view.draw()
-        self.f.close()
+        self.buf1.clear()
+        self.buf2.clear()
+        # self.f.close()
        
 
-    @CoolDown(0.1)
+    #@CoolDown(0.05)
     # function for drawing data from controller
     def reDraw(self, drdata = [], drind = []):
         try:         
@@ -344,7 +365,7 @@ class MainWindow(QWidget):
             else:
                 self.signal_plot.axes.clear()
                 self.signal_plot.axes.grid(True)
-            self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
+            #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
             self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
             self.signal_plot.axes.set_xlabel('Time, s')
             self.signal_plot.axes.set_ylabel('U, V')
@@ -369,28 +390,46 @@ class MainWindow(QWidget):
                             # bound rate on two ports must be the same
                             #was 9600 // 115200
                             # new params: generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
-                            generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
+                            # generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
+                            # bound rate was 76800
+                            generator_ser = serial.Serial(generator_name, 9600, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS )
                             generator_ser.flushInput()
                             generator_ser.flushOutput()
-                            generator_ser.set_buffer_size(rx_size = 6, tx_size = 6)
+                            generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
                             cur_time = 0
 
                             if self.first_contact:
                                 self.first_contact = 0
+
+                                # send to mc work mode (voltage or sinus)
+                                print("Bef mode")
+                                cur_ind = self.data_mod.currentIndex()
+                                if (cur_ind == 0):
+                                    generator_ser.write(b"M0")
+                                elif (cur_ind == 1):    
+                                    generator_ser.write(b"M1")
+
+                                # open connection protocol
+                                # 1) PC --> MC (R0)
+                                # 2) MC --> PC (A0)
+                                # 3) connection established
                                 while 1:
                                     try:
                                         # new protocol: generator_ser.write(b"R") # Request
+                                        #print("Bef write")
                                         generator_ser.write(b"R0")
                                         # generator_ser.write(bytearray(255))
-                                        ser_bytes = generator_ser.read(4)
+                                        print("Bef read")
+                                        ser_bytes = generator_ser.read(2)
                                         print("In open protocol", ser_bytes)
                                         if (len(ser_bytes)):
-                                            if ser_bytes[0] == b"A" and ser_bytes[1] == b"1":
+                                            if ser_bytes[0] == ord("A") and ser_bytes[1] == ord("0"):
                                             # new protocol: if ser_bytes[0] == ord('A'): # Accept
                                                 break
                                     except Exception as exc:
                                         print('error in open connection protocol', str(exc))   
 
+                            last_num = 0
                             start_time = time.perf_counter()
                             
                             while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
@@ -402,10 +441,10 @@ class MainWindow(QWidget):
                                     while (1):
                                         try:
                                             generator_ser.write(b"C0")
-                                            ser_bytes = generator_ser.read(4)
+                                            ser_bytes = generator_ser.read(2)
                                             print("In close protocol", ser_bytes)
                                             if (len(ser_bytes)):
-                                                if ser_bytes[0] == b"C" and ser_bytes[1] == b"0":
+                                                if ser_bytes[0] == ord("C") and ser_bytes[1] == ord("0"):
                                                     break
                                         except Exception as exc:
                                             print('error in connection close protocol', str(exc)) 
@@ -417,7 +456,12 @@ class MainWindow(QWidget):
                                 ser_bytes = generator_ser.read(2)
                                 if len(ser_bytes) != 0:
                                     try:
-                                        cur_byte = int.from_bytes(ser_bytes, "little", signed=False) /1023.0*5.0
+                                        cur_byte = int.from_bytes(ser_bytes[::-1], "little", signed=False)# /1023.0*5.0
+                                        if (abs(last_num - cur_byte) > 100):
+                                            print(bin(last_num | 0b1000000000000))
+                                            print(bin(cur_byte | 0b1000000000000))
+                                            print('===========')
+                                        last_num = cur_byte
                                         cur_time = float(point_time - start_time)
                                         self.buf1[cur_time] = cur_byte
                                         QApplication.processEvents()
@@ -436,12 +480,14 @@ class MainWindow(QWidget):
                                                 ind = 31250
                                             else:
                                                 if (val % 2):
-                                                    ind = 1562 * pow(10, (val - 5) / 2)
+                                                    ind = 1562 * int(pow(10, (val - 5) // 2))
                                                 else:
-                                                    ind = 312 * pow(10, (val - 4) / 2)
+                                                    ind = 312 * int(pow(10, (val - 4) // 2))
+                                            # print(ind)
+                                            # ind = 1000
                                             self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
                                             if (len(self.buf1) > 31250):
-                                                self.buf1.pop(0)
+                                                 self.buf1.pop(min(self.buf1.keys()))
                                         else:
                                             if (len(self.buf1) >= 5000):
                                                 self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
@@ -531,13 +577,12 @@ class MainWindow(QWidget):
             self.y_scale_value = 0.0011 * 10**(self.mechanical_slider_amplitude.value() // 2)
         else:
             self.y_scale_value = 0.0055 * 10**(self.mechanical_slider_amplitude.value() // 2)
-
-        if len(self.signalDataArray.array) and self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True: 
-            self.drawSignal() 
         
         self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
         # if self.stop_flag:
         self.signal_plot.axes.set_xlim(-self.x_scale_value, self.x_scale_value)
+
+        #print("y in freq move", self.y_scale_value)
 
         self.signal_plot.view.draw()
         self.signal_plot.view.flush_events()

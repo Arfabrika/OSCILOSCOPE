@@ -16,22 +16,17 @@ def receive_signal():
                         print("Found serial port")
                         if 'serial' in port.description.lower() or 'VCP' in port.description.lower():
                             # init serial port and bound
-                            # bound rate on two ports must be the same
-                            #was 9600
-                            generator_ser = serial.Serial(generator_name, 115200, timeout=1)
-                            #generator_ser.flushInput()
-                            
+                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS, timeout = 1)
+                            generator_ser.write(b"M1")
                             
                             while 1:
-                                generator_ser.write(bytearray(255))
+                                generator_ser.write(b"R0")
                                 ser_bytes = generator_ser.read(2)
                                 print(ser_bytes)
 
                                 if (len(ser_bytes)):
-                                    if ser_bytes[0] == 0xFF:#ur_byte == 255:
-                                        break
-                                        
-
+                                    if ser_bytes[0] == ord("A") and ser_bytes[1] == ord("0"):
+                                        break                                      
 
                             start_time = time.perf_counter()
                             point_time = start_time
@@ -40,35 +35,32 @@ def receive_signal():
                             while not stop_flag: # чтение байтов с порта 
                                 point_time = time.perf_counter()
                                 ser_bytes = generator_ser.read(2)
-                                # print('huint', ser_bytes[0], ser_bytes[1] )
                                 if len(ser_bytes) != 0:
                                     try:
                                         # print('ping', time.time() - point_time)
 
-                                        cur_byte = int.from_bytes(ser_bytes, "little", signed=False) /1023.0*5.0
+                                        cur_byte = int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
                                         data.append(cur_byte)
                                   
                                         cur_time = float(point_time - start_time)
                                         #data[cur_time] = cur_byte
                                         #times.append(cur_time)
-                                        datadict[cur_time] = cur_byte
-                                        
+                                        datadict[cur_time] = cur_byte                                    
                                       
-                                        
                                     except Exception as e:
                                         print('error in input', str(e))
                                 if point_time - start_time >= 5:
                                     stop_flag = 1
-                                    
-                                # self.reDraw(self.data[-50:])
-
                             else:
                                 print("Stop flag:", stop_flag)
+                                generator_ser.write(b"C0")
+                                ser_bytes = generator_ser.read(2)
+                                print("In close protocol", ser_bytes)
+                                if (len(ser_bytes)):
+                                    if ser_bytes[0] == ord("C") and ser_bytes[1] == ord("0"):
+                                        break
+                                generator_ser.send_break(0)
                                 
-                                
-    #----------------------------------------------------------------------
-                               
-    #----------------------------------------------------------------------
                                 print(data, len(data), len(datadict.keys()))
                                 # print("Times", datadict.keys())
                                 # print("Len: ", len(datadict.keys()))
@@ -80,14 +72,11 @@ def receive_signal():
                                 plt.show()
 
                                 #print("Inds", self.data_ind)
-                                
-                              
                                 return
                         else:
                             print("Error, no ports")
                             return    
             except Exception as e:
                 print('error in common input', str(e))   
-
 
 receive_signal() 
