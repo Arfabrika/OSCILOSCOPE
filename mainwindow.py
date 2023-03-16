@@ -24,14 +24,12 @@ from SpectrePlotWidget import SpectrePlotWidget
 from amplitudeWindow import AmplitudeWindow
 from frequencyWindow import FrequencyWindow
 from signalData import signalData, signalDataArray
-from scalefuncs import getScaleType
 
 import serial.tools.list_ports
 import time
 
 from summationWindow import SummationWindow
 signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
-import time
 from functools import partial, wraps
 from wave import (generate_data_spectrum)
 
@@ -245,19 +243,16 @@ class MainWindow(QWidget):
         self.y_scale_value = 1.1
         self.animation_flag = 0
 
-        self.amplitude_window = AmplitudeWindow(self.signalDataArray, self.animation_flag)
-        self.frequency_window = FrequencyWindow(self.signalDataArray, self.animation_flag)
-        self.summation_window = SummationWindow(self.signalDataArray, self.animation_flag)   
+        self.amplitude_window = AmplitudeWindow(self.signalDataArray)
+        self.frequency_window = FrequencyWindow(self.signalDataArray)
+        self.summation_window = SummationWindow(self.signalDataArray)   
         self.showMaximized()
 
-        self.data_ind = [0]
-        self.data_dict = dict()
         self.first_contact = 1
         self.buf1 = dict()
         self.buf2 = dict()
         self.is_online = False
         self.f = open("Data.txt", "w+")
-        self.f.write("qqq")
 
         finish = QAction("Quit", self)
         finish.triggered.connect(self.closeEvent)
@@ -385,21 +380,39 @@ class MainWindow(QWidget):
                                 while 1:
                                     try:
                                         # new protocol: generator_ser.write(b"R") # Request
-                                        generator_ser.write(bytearray(255))
-                                        ser_bytes = generator_ser.read(2)
-                                        print("In protocol", ser_bytes)
+                                        generator_ser.write(b"R0")
+                                        # generator_ser.write(bytearray(255))
+                                        ser_bytes = generator_ser.read(4)
+                                        print("In open protocol", ser_bytes)
                                         if (len(ser_bytes)):
-                                            if ser_bytes[0] == 255:
+                                            if ser_bytes[0] == b"A" and ser_bytes[1] == b"1":
                                             # new protocol: if ser_bytes[0] == ord('A'): # Accept
                                                 break
                                     except Exception as exc:
-                                        print('error in common input', str(exc))   
+                                        print('error in open connection protocol', str(exc))   
 
                             start_time = time.perf_counter()
                             
                             while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
                                 if (self.stop_flag):
+                                    # Close connection
+                                    # Me --> C0
+                                    # Me <-- C0
+                                    # generator_ser.send_break(0)
+                                    while (1):
+                                        try:
+                                            generator_ser.write(b"C0")
+                                            ser_bytes = generator_ser.read(4)
+                                            print("In close protocol", ser_bytes)
+                                            if (len(ser_bytes)):
+                                                if ser_bytes[0] == b"C" and ser_bytes[1] == b"0":
+                                                    break
+                                        except Exception as exc:
+                                            print('error in connection close protocol', str(exc)) 
                                     generator_ser.send_break(0)
+                                    self.first_contact = 1
+                                    # Needed?
+                                    break   
                                 point_time = time.perf_counter()   
                                 ser_bytes = generator_ser.read(2)
                                 if len(ser_bytes) != 0:
@@ -409,10 +422,28 @@ class MainWindow(QWidget):
                                         self.buf1[cur_time] = cur_byte
                                         QApplication.processEvents()
                                         if self.is_online:
-                                            self.reDraw(list(self.buf1.values())[-5000:], list(self.buf1.keys())[-5000:])
-                                            
+                                            # TODO num of points depends on x scale
+                                            # now: 1.6 s => 5000 points
+                                            # 0.1 (4) s => 312 points
+                                            # 0.5 (5) s => 1562 points
+                                            # 1 (6) s => 3125 points
+                                            # 5 (7) s => 15625 points
+                                            # 10 (8) s => 31250 points                                          
+                                            val = self.mechanical_slider_frequency.value()
+                                            if (val < 4):
+                                                ind = 312
+                                            elif (val > 8):
+                                                ind = 31250
+                                            else:
+                                                if (val % 2):
+                                                    ind = 1562 * pow(10, (val - 5) / 2)
+                                                else:
+                                                    ind = 312 * pow(10, (val - 4) / 2)
+                                            self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
+                                            if (len(self.buf1) > 31250):
+                                                self.buf1.pop(0)
                                         else:
-                                            if (len(self.buf1) >= 5000):                                                
+                                            if (len(self.buf1) >= 5000):
                                                 self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
                                                 self.buf2 = self.buf1
                                                 self.buf1.clear()
@@ -423,7 +454,7 @@ class MainWindow(QWidget):
                                 else:
                                     break
 
-                            print("Stop flag:", self.stop_flag)                            
+                            print("Stop flag:", self.stop_flag)
                             return
                             
                         else:
@@ -449,20 +480,19 @@ class MainWindow(QWidget):
         self.stop_flag = False
         self.signal_plot.clear()
         self.spectre_plot.clear()
-        self.data_dict.clear()
         self.setEnable(False)      
-        self.thread_manager.start(self.receive_signal)                       
+        self.thread_manager.start(self.receive_signal)
         
     def click_amplitude_event(self):        
-        self.amplitude_window.updateSignalData(self.signalDataArray, self.animation_flag)
+        self.amplitude_window.updateSignalData(self.signalDataArray)
         self.amplitude_window.show()
          
     def click_sum_event(self):
-        self.summation_window.updateSignalData(self.signalDataArray, self.animation_flag)
+        self.summation_window.updateSignalData(self.signalDataArray)
         self.summation_window.show()
 
     def click_frequency_event(self):        
-        self.frequency_window.updateSignalData(self.signalDataArray, self.animation_flag)
+        self.frequency_window.updateSignalData(self.signalDataArray)
         self.frequency_window.show()
 
     def changed_animation_checkbox_event(self):
@@ -513,7 +543,15 @@ class MainWindow(QWidget):
         self.signal_plot.view.flush_events()
 
     def closeEvent(self, event):
-        self.set_stop_safely()
+        if self.first_contact == False:
+            self.set_stop_safely()
+        if self.amplitude_window.isEnabled():
+            self.amplitude_window.close()
+        if self.frequency_window.isEnabled():
+            self.frequency_window.close()
+        if self.summation_window.isEnabled():
+            self.summation_window.close()
+        print("Main window closed")
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -5,19 +5,18 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
-    QDial,
-    QCheckBox
+    QDial
 )
+from PySide6.QtGui import QAction
 from PlotWindow import PlotWindow
 
 from SignalPlotWidget import SignalPlotWidget
 from signalData import signalData, signalDataArray
 
 class SummationWindow(QWidget):
-    def __init__(self, DataArray, animation_flag = 1, parent=None):
+    def __init__(self, DataArray, parent=None):
         super().__init__(parent)
         self.signalDataArray = DataArray
-        self.animation_flag = animation_flag
         self.signalsOnPlot = signalDataArray([])
         self.plot_window = PlotWindow()
         
@@ -116,6 +115,9 @@ class SummationWindow(QWidget):
         self.setLayout(main_layout)
         self.setSignals()
 
+        finish = QAction("Quit", self)
+        finish.triggered.connect(self.closeEvent)
+
     def editScale(self):
         self.x_scale_value = float(self.scale_x.currentText())* 1.1
         self.y_scale_value = float(self.scale_y.currentText())* 1.1
@@ -125,9 +127,8 @@ class SummationWindow(QWidget):
 
         self.button_clicked()
 
-    def updateSignalData(self, signalDataArray, animation_flag):
+    def updateSignalData(self, signalDataArray):
         self.signalDataArray = signalDataArray
-        self.animation_flag = animation_flag
         self.setSignals() 
 
     def setSignals(self):
@@ -205,3 +206,9 @@ class SummationWindow(QWidget):
         curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData()
         self.plot_window.plot_graph(curSignal_fs)
         self.plot_window.show()
+
+    def closeEvent(self, event):
+        self.plot.clear()
+        self.fs_signals_list.setCurrentIndex(1)
+        self.showSignalInfo_fs()
+        print("Summation window closed")
