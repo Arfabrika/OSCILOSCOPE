@@ -122,6 +122,7 @@ class RealSignalWindow(QWidget):
         self.receive_button.clicked.connect(self.receive_signal_safely)
         self.stop_listening_button.clicked.connect(self.set_stop_safely)
         self.is_real_data_mod.toggled.connect(self.is_real_data_mod_changed)
+        self.data_mod.currentIndexChanged.connect(self.data_mod_index_changed)
 
         buttons_layout = QVBoxLayout()
         buttons_layout.addWidget(self.receive_button)
@@ -144,14 +145,40 @@ class RealSignalWindow(QWidget):
         finish = QAction("Quit", self)
         finish.triggered.connect(self.closeEvent)
 
+    def change_singal_mode(self):
+        # send to mc work mode
+        # 0 - Voltage measuring
+        # 1 - Sinus generation
+        if (self.generator_ser):
+            cur_ind = self.data_mod.currentIndex()
+            if (cur_ind == 0):
+                self.generator_ser.write(b"M0")
+                print("Voltage", self.generator_ser)
+            elif (cur_ind == 1):    
+                self.generator_ser.write(b"M1")
+                print("Sinus", self.generator_ser)
+            while 1: 
+                ser_bytes = self.generator_ser.read(2)
+                print("In mode changing", chr(ser_bytes[0]), chr(ser_bytes[1]))
+                if (ser_bytes[0] == ord("A") and ser_bytes[1] == ord("1")):
+                    break
+            print('end')
+            #ser_bytes = self.generator_ser.read(2)
+            #print(ser_bytes)
+
     def is_real_data_mod_changed(self):
         self.is_online = not self.is_online
+
+    def data_mod_index_changed(self):
+        print("changed")
+        #self.thread_manager.start(self.change_singal_mode)
+        self.change_singal_mode()
 
     def receive_signal_safely(self):
         self.stop_flag = False
         self.signal_plot.clear()
         self.spectre_plot.clear()
-        #self.setEnable(False)      
+        self.setEnable(False)      
         self.thread_manager.start(self.receive_signal)
 
     #@CoolDown(0.05)
@@ -187,25 +214,21 @@ class RealSignalWindow(QWidget):
                             # init serial port and bound
                             # bound rate on two ports must be the same
                             #was 9600 // 115200
-                            # new params: generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
-                            # generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
+                            # new params: self.generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
+                            # self.generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
                             # bound rate was 76800
-                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS )
-                            generator_ser.flushInput()
-                            generator_ser.flushOutput()
-                            generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
+                            self.generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS )
+                            self.generator_ser.flushInput()
+                            self.generator_ser.flushOutput()
+                            self.generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
                             cur_time = 0
 
                             if self.first_contact:
                                 self.first_contact = 0
 
-                                # send to mc work mode (voltage or sinus)
+                                
                                 print("Bef mode")
-                                cur_ind = self.data_mod.currentIndex()
-                                if (cur_ind == 0):
-                                    generator_ser.write(b"M0")
-                                elif (cur_ind == 1):    
-                                    generator_ser.write(b"M1")
+                                self.change_singal_mode()
 
                                 # open connection protocol
                                 # 1) PC --> MC (R0)
@@ -213,45 +236,45 @@ class RealSignalWindow(QWidget):
                                 # 3) connection established
                                 while 1:
                                     try:
-                                        # new protocol: generator_ser.write(b"R") # Request
                                         #print("Bef write")
-                                        generator_ser.write(b"R0")
-                                        # generator_ser.write(bytearray(255))
-                                        print("Bef read")
-                                        ser_bytes = generator_ser.read(2)
+                                        self.generator_ser.write(b"R0")
+                                        #print("Bef read")
+                                        ser_bytes = self.generator_ser.read(2)
                                         print("In open protocol", ser_bytes)
                                         if (len(ser_bytes)):
                                             if ser_bytes[0] == ord("A") and ser_bytes[1] == ord("0"):
-                                            # new protocol: if ser_bytes[0] == ord('A'): # Accept
                                                 break
                                     except Exception as exc:
                                         print('error in open connection protocol', str(exc))   
 
                             last_num = 0
                             start_time = time.perf_counter()
-                            
-                            while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
+                            print("bef wh")
+                            while not self.stop_flag:
                                 if (self.stop_flag):
                                     # Close connection
                                     # Me --> C0
                                     # Me <-- C0
-                                    # generator_ser.send_break(0)
+                                    # self.generator_ser.send_break(0)
                                     while (1):
                                         try:
-                                            generator_ser.write(b"C0")
-                                            ser_bytes = generator_ser.read(2)
+                                            self.generator_ser.write(b"C0")
+                                            ser_bytes = self.generator_ser.read(2)
                                             print("In close protocol", ser_bytes)
                                             if (len(ser_bytes)):
                                                 if ser_bytes[0] == ord("C") and ser_bytes[1] == ord("0"):
                                                     break
                                         except Exception as exc:
+                                            print(exc)
                                             print('error in connection close protocol', str(exc)) 
-                                    generator_ser.send_break(0)
+                                    #self.generator_ser.send_break(0)
                                     self.first_contact = 1
                                     # Needed?
                                     break   
+                                print("bef p")
                                 point_time = time.perf_counter()   
-                                ser_bytes = generator_ser.read(2)
+                                ser_bytes = self.generator_ser.read(2)
+                                print("af r", ser_bytes)
                                 if len(ser_bytes) != 0:
                                     try:
                                         cur_byte = int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
@@ -271,8 +294,8 @@ class RealSignalWindow(QWidget):
                                             # 1 (6) s => 3125 points
                                             # 5 (7) s => 15625 points
                                             # 10 (8) s => 31250 points                                          
-                                            val = self.mechanical_slider_frequency.value()
-                                            if (val < 4):
+                                            val = self.mechanical_slider_frequency.value() + 1
+                                            """if (val < 4):
                                                 ind = 312
                                             elif (val > 8):
                                                 ind = 31250
@@ -281,13 +304,24 @@ class RealSignalWindow(QWidget):
                                                     ind = 1562 * int(pow(10, (val - 5) // 2))
                                                 else:
                                                     ind = 312 * int(pow(10, (val - 4) // 2))
-                                            # print(ind)
-                                            # ind = 1000
-                                            self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
+                                            # 
+                                            # ind = 1000"""
+                                            """
+                                            if (val % 2):
+                                                    ind = 50 * int(pow(10, (val) // 2))
+                                                else:
+                                                    ind = 10 * int(pow(10, (val) // 2))
+                                            """
+                                            #ind = int(len(self.buf1) / 12) * val
+                                            ind = 500
+                                            #print(len(self.buf1))
+                                            self.reDraw(list(self.buf1.values())[-ind::10], list(self.buf1.keys())[-ind::10])
+                                            if (len(self.buf1) % 100 == 0):
+                                                print(len(self.buf1))
                                             if (len(self.buf1) > 31250):
                                                  self.buf1.pop(min(self.buf1.keys()))
                                         else:
-                                            if (len(self.buf1) >= 5000):
+                                            if (len(self.buf1) >= 100):
                                                 self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
                                                 self.buf2 = self.buf1
                                                 self.buf1.clear()
@@ -312,7 +346,7 @@ class RealSignalWindow(QWidget):
 
     def set_stop_safely(self):
         self.thread_manager.start(self.set_stop)
-        #self.setEnable(True) 
+        self.setEnable(True) 
         self.stop_flag = True
         if not self.is_online:
             if (len(self.buf2) == 0):
@@ -328,6 +362,10 @@ class RealSignalWindow(QWidget):
         self.spectre_plot.view.draw()
         self.buf1.clear()
         self.buf2.clear()
+    
+    def setEnable(self, state):
+        self.receive_button.setEnabled(state)
+        self.serial_ports_combo.setEnabled(state)
 
     def slider_frequency_move(self):
         if self.mechanical_slider_frequency.value() % 2 == 0:

@@ -10,14 +10,15 @@ def receive_signal():
             serial_ports = serial.tools.list_ports.comports()
             
             try:
-                generator_name = 'COM3'
+                generator_name = 'COM10'
                 for port in serial_ports:
                     if generator_name == port.name:
                         print("Found serial port")
                         if 'serial' in port.description.lower() or 'VCP' in port.description.lower():
                             # init serial port and bound
-                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS, timeout = 1)
+                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
                             generator_ser.write(b"M1")
+                            ser_bytes = generator_ser.read(2)
                             
                             while 1:
                                 generator_ser.write(b"R0")

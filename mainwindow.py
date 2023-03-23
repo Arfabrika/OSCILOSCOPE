@@ -593,8 +593,6 @@ class MainWindow(QWidget):
         self.signal_plot.view.flush_events()
 
     def closeEvent(self, event):
-        if self.first_contact == False:
-            self.set_stop_safely()
         if self.amplitude_window.isVisible():
             self.amplitude_window.close()
         if self.frequency_window.isVisible():
