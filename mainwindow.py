@@ -24,6 +24,7 @@ from SpectrePlotWidget import SpectrePlotWidget
 from amplitudeWindow import AmplitudeWindow
 from frequencyWindow import FrequencyWindow
 from signalData import signalData, signalDataArray
+from RealSingalWindow import RealSignalWindow
 
 import serial.tools.list_ports
 import time
@@ -64,10 +65,6 @@ class MainWindow(QWidget):
         self.stop_flag = False
 
         self.signalDataArray = signalDataArray([])
-
-        self.amplitude_window = None
-
-        self.summation_window = None
         
         self.serial_ports_combo = QComboBox(self)
         self.serial_ports = serial.tools.list_ports.comports()
@@ -171,6 +168,8 @@ class MainWindow(QWidget):
         self.freq_create_button.clicked.connect(self.click_frequency_event)
         self.sum_create_button = QPushButton('Множественное суммирование сигналов')
         self.sum_create_button.clicked.connect(self.click_sum_event)
+        self.real_signal_button = QPushButton('Работа с реальными сигналами')
+        self.real_signal_button.clicked.connect(self.click_real_signal_event)
 
         self.anim_checkbox = QCheckBox("Включить анимацию")     
         self.real_data_get_mod = QCheckBox("Включить отрисовку в режиме реального времени")   
@@ -195,6 +194,7 @@ class MainWindow(QWidget):
         ampl_layout.addWidget(self.ampl_create_button)
         ampl_layout.addWidget(self.freq_create_button)
         ampl_layout.addWidget(self.sum_create_button)
+        ampl_layout.addWidget(self.real_signal_button)
         ampl_layout.addLayout(all_params_layout)
 
         params_layout = QHBoxLayout()
@@ -254,13 +254,15 @@ class MainWindow(QWidget):
         self.edit_signal_button.clicked.connect(self.editSignal)
         self.anim_checkbox.toggled.connect(self.changed_animation_checkbox_event)
         self.real_data_get_mod.toggled.connect(self.real_data_get_mod_changed)
+        #self.data_mod.currentIndexChanged.connect()
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
         self.animation_flag = 0
 
         self.amplitude_window = AmplitudeWindow(self.signalDataArray)
         self.frequency_window = FrequencyWindow(self.signalDataArray)
-        self.summation_window = SummationWindow(self.signalDataArray)   
+        self.summation_window = SummationWindow(self.signalDataArray)
+        self.real_signal_window = RealSignalWindow()   
         self.showMaximized()
 
         self.first_contact = 1
@@ -392,7 +394,7 @@ class MainWindow(QWidget):
                             # new params: generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
                             # generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
                             # bound rate was 76800
-                            generator_ser = serial.Serial(generator_name, 9600, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS )
+                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS )
                             generator_ser.flushInput()
                             generator_ser.flushOutput()
                             generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
@@ -456,7 +458,7 @@ class MainWindow(QWidget):
                                 ser_bytes = generator_ser.read(2)
                                 if len(ser_bytes) != 0:
                                     try:
-                                        cur_byte = int.from_bytes(ser_bytes[::-1], "little", signed=False)# /1023.0*5.0
+                                        cur_byte = int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
                                         if (abs(last_num - cur_byte) > 100):
                                             print(bin(last_num | 0b1000000000000))
                                             print(bin(cur_byte | 0b1000000000000))
@@ -541,6 +543,9 @@ class MainWindow(QWidget):
         self.frequency_window.updateSignalData(self.signalDataArray)
         self.frequency_window.show()
 
+    def click_real_signal_event(self):
+        self.real_signal_window.showMaximized()
+
     def changed_animation_checkbox_event(self):
         if (self.anim_checkbox.isChecked()):
             self.animation_flag = 1
@@ -590,12 +595,14 @@ class MainWindow(QWidget):
     def closeEvent(self, event):
         if self.first_contact == False:
             self.set_stop_safely()
-        if self.amplitude_window.isEnabled():
+        if self.amplitude_window.isVisible():
             self.amplitude_window.close()
-        if self.frequency_window.isEnabled():
+        if self.frequency_window.isVisible():
             self.frequency_window.close()
-        if self.summation_window.isEnabled():
+        if self.summation_window.isVisible():
             self.summation_window.close()
+        if self.real_signal_window.isVisible():
+            self.real_signal_window.close()
         print("Main window closed")
         
 if __name__ == "__main__":
