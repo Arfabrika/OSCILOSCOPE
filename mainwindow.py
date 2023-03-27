@@ -21,6 +21,7 @@ from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 from amplitudeWindow import AmplitudeWindow
 from frequencyWindow import FrequencyWindow
+from phaseWindow import PhaseWindow
 from signalData import signalData, signalDataArray
 from scalefuncs import getScaleType
 
@@ -170,14 +171,18 @@ class MainWindow(QWidget):
         self.ampl_create_button.clicked.connect(self.click_amplitude_event)
         self.freq_create_button = QPushButton('Частотная модуляция')
         self.freq_create_button.clicked.connect(self.click_frequency_event)
+        self.phase_create_button = QPushButton('Фазовая модуляция')
+        self.phase_create_button.clicked.connect(self.click_phase_event)
         self.sum_create_button = QPushButton('Множественное суммирование сигналов')
         self.sum_create_button.clicked.connect(self.click_sum_event)
+        
 
         self.anim_checkbox = QCheckBox("Включить анимацию")        
 
         ampl_layout.addLayout(signals_list_layout)
         ampl_layout.addWidget(self.ampl_create_button)
         ampl_layout.addWidget(self.freq_create_button)
+        ampl_layout.addWidget(self.phase_create_button)
         ampl_layout.addWidget(self.sum_create_button)
         ampl_layout.addWidget(self.anim_checkbox)
 
@@ -244,6 +249,7 @@ class MainWindow(QWidget):
         self.amplitude_window = AmplitudeWindow(self.signalDataArray, self.animation_flag)
         self.frequency_window = FrequencyWindow(self.signalDataArray, self.animation_flag)
         self.summation_window = SummationWindow(self.signalDataArray, self.animation_flag)   
+        self.phase_window = PhaseWindow(self.signalDataArray, self.animation_flag)   
         self.showMaximized()
 
         #----------------------------------------------------------------------
@@ -389,7 +395,7 @@ class MainWindow(QWidget):
         # self.spectre_plot.view.draw()
          
 
-    # @njit(fastmath=True, cache=True, parallel=True)
+    @njit(fastmath=True, cache=True, parallel=True)
     def receive_signal(self):
         # f = open("Data.txt", "w+")
         # f.write("qqq")
@@ -580,6 +586,10 @@ class MainWindow(QWidget):
     def click_frequency_event(self):        
         self.frequency_window.updateSignalData(self.signalDataArray, self.animation_flag)
         self.frequency_window.show()
+
+    def click_phase_event(self):
+        self.phase_window.updateSignalData(self.signalDataArray, self.animation_flag)
+        self.phase_window.show()
 
     def changed_animation_checkbox_event(self):
         if (self.anim_checkbox.isChecked()):

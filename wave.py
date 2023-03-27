@@ -191,16 +191,13 @@ def generate_data_spectrum(data, Fs):
     spec[0] = 0
     return frq, np.abs(spec)
 
-def pulse_amplitude_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
-    x_tmp, y_tmp = mod_generate_square_wave(fs_frequency, fs_duration, fs_amplitude)
-    
-    # x = np.linspace(-fs_duration, fs_duration, int(fs_duration * 40 * int((ss_frequency + fs_frequency))), endpoint=False)
+def phase_modulate(fs_frequency, fs_duration, ss_amplitude, ss_frequency, freq_dev):
+    # enough points?
+    x = np.linspace(-fs_duration, fs_duration, int(fs_duration * 40 * int((ss_frequency + fs_frequency))), endpoint=False)
     y = []
+    
+    twopi = 2 * np.pi
+    for point in x:
+        y.append(ss_amplitude * np.sin(ss_frequency * twopi * point + freq_dev * np.sin(fs_frequency * point * twopi)))
+    return x, y
 
-    t = (2 * np.pi) / (1 / ss_frequency)
-    index = 0
-    for point in x_tmp:
-        y.append((1 + (ss_amplitude // fs_amplitude)*np.cos(t * point))*y_tmp[index])
-        index += 1
-
-    return x_tmp, y
