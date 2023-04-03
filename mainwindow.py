@@ -362,11 +362,11 @@ class MainWindow(QWidget):
     # function for drawing data from controller
     def reDraw(self, drdata = [], drind = []):
         try:         
-            if not self.is_online:
-                self.signal_plot.axes.set_xlim(0, max(drind))
-            else:
-                self.signal_plot.axes.clear()
-                self.signal_plot.axes.grid(True)
+            # if not self.is_online:
+            #     self.signal_plot.axes.set_xlim(0, max(drind))
+            # else:
+            self.signal_plot.axes.clear()
+            self.signal_plot.axes.grid(True)
             #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
             self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
             self.signal_plot.axes.set_xlabel('Time, s')
@@ -434,6 +434,8 @@ class MainWindow(QWidget):
 
                             last_num = 0
                             start_time = time.perf_counter()
+
+                            counter = 1
                             
                             while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
                                 if (self.stop_flag):
@@ -477,21 +479,28 @@ class MainWindow(QWidget):
                                             # 5 (7) s => 15625 points
                                             # 10 (8) s => 31250 points                                          
                                             val = self.mechanical_slider_frequency.value()
-                                            if (val < 4):
-                                                ind = 312
-                                            elif (val > 8):
-                                                ind = 31250
-                                            else:
-                                                if (val % 2):
-                                                    ind = 1562 * int(pow(10, (val - 5) // 2))
-                                                else:
-                                                    ind = 312 * int(pow(10, (val - 4) // 2))
-                                            print(ind)
+                                            # if (val < 4):
+                                            #     ind = 312
+                                            # elif (val > 8):
+                                            #     ind = 31250
+                                            # else:
+                                            #     if (val % 2):
+                                            #         ind = 1562 * int(pow(10, (val - 5) // 2))
+                                            #     else:
+                                            #         ind = 312 * int(pow(10, (val - 4) // 2))
+                                            # print(ind)
                                             # ind = 1000
-                                            if len(self.buf1) % 100:
-                                                self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
-                                            if (len(self.buf1) > 31250):
-                                                 self.buf1.pop(min(self.buf1.keys()))
+                                            # if len(self.buf1) % 100:
+                                            #     self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
+                                            # if (len(self.buf1) > 31250):
+                                            #      self.buf1.pop(min(self.buf1.keys()))
+
+                                            if cur_time >= val:
+                                                self.reDraw(list(self.buf1.values())[counter : len(self.buf1)], list(self.buf1.keys())[counter : len(self.buf1)])
+                                                counter += 1
+                                            else:
+                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
+                                                counter = 1
                                         else:
                                             if (len(self.buf1) >= 5000):
                                                 self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
