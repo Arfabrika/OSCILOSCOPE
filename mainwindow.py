@@ -394,7 +394,8 @@ class MainWindow(QWidget):
                             # new params: generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
                             # generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
                             # bound rate was 76800
-                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS )
+                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS ) 
+                            # generator_ser = serial.Serial(generator_name, 9600, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS )
                             generator_ser.flushInput()
                             generator_ser.flushOutput()
                             generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
@@ -485,9 +486,10 @@ class MainWindow(QWidget):
                                                     ind = 1562 * int(pow(10, (val - 5) // 2))
                                                 else:
                                                     ind = 312 * int(pow(10, (val - 4) // 2))
-                                            # print(ind)
+                                            print(ind)
                                             # ind = 1000
-                                            self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
+                                            if len(self.buf1) % 100:
+                                                self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
                                             if (len(self.buf1) > 31250):
                                                  self.buf1.pop(min(self.buf1.keys()))
                                         else:
