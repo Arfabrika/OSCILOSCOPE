@@ -360,18 +360,19 @@ class MainWindow(QWidget):
 
     #@CoolDown(0.05)
     # function for drawing data from controller
-    def reDraw(self, drdata = [], drind = []):
+    def reDraw(self, drdata = [], drind = [], left_border = 0):
         try:         
             # if not self.is_online:
             #     self.signal_plot.axes.set_xlim(0, max(drind))
             # else:
-            self.signal_plot.axes.clear()
+            # self.signal_plot.axes.clear()
             self.signal_plot.axes.grid(True)
             #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
             self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
             self.signal_plot.axes.set_xlabel('Time, s')
             self.signal_plot.axes.set_ylabel('U, V')
             self.signal_plot.axes.plot(drind, drdata, color='#1f77b4')
+            self.signal_plot.axes.set_xlim(left_border, max(drind))
             self.signal_plot.view.draw()
         except Exception as e:
                 print('error in draw', str(e))
@@ -478,7 +479,10 @@ class MainWindow(QWidget):
                                             # 1 (6) s => 3125 points
                                             # 5 (7) s => 15625 points
                                             # 10 (8) s => 31250 points                                          
-                                            val = self.mechanical_slider_frequency.value()
+                                            if self.mechanical_slider_frequency.value() % 2 == 0:
+                                                val = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
+                                            else:
+                                                val = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
                                             # if (val < 4):
                                             #     ind = 312
                                             # elif (val > 8):
@@ -488,24 +492,23 @@ class MainWindow(QWidget):
                                             #         ind = 1562 * int(pow(10, (val - 5) // 2))
                                             #     else:
                                             #         ind = 312 * int(pow(10, (val - 4) // 2))
-                                            # print(ind)
+                                            print(val)
                                             # ind = 1000
                                             # if len(self.buf1) % 100:
                                             #     self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
                                             # if (len(self.buf1) > 31250):
                                             #      self.buf1.pop(min(self.buf1.keys()))
 
-                                            if cur_time >= val:
-                                                self.reDraw(list(self.buf1.values())[counter : len(self.buf1)], list(self.buf1.keys())[counter : len(self.buf1)])
-                                                counter += 1
+                                            if cur_time / val > 1:
+                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), cur_time - val)
+                                                
                                             else:
                                                 self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
-                                                counter = 1
                                         else:
-                                            if (len(self.buf1) >= 5000):
-                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
-                                                self.buf2 = self.buf1
-                                                self.buf1.clear()
+                                            # if (len(self.buf1) >= 5000):
+                                            self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
+                                            self.buf2 = self.buf1
+                                            self.buf1.clear()
 
                                     except Exception as e:
                                         print('error in input', str(e))
