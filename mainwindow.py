@@ -436,8 +436,7 @@ class MainWindow(QWidget):
                             last_num = 0
                             start_time = time.perf_counter()
 
-                            counter = 1
-                            
+                    
                             while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
                                 if (self.stop_flag):
                                     # Close connection
