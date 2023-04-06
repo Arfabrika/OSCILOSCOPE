@@ -149,18 +149,21 @@ class RealSignalWindow(QWidget):
         # send to mc work mode
         # 0 - Voltage measuring
         # 1 - Sinus generation
-        if (self.generator_ser):
+        if (not self.first_contact):
             cur_ind = self.data_mod.currentIndex()
             if (cur_ind == 0):
-                self.generator_ser.write(b"M0")
+                self.generator_ser.write(b"M0\n")
                 print("Voltage", self.generator_ser)
             elif (cur_ind == 1):    
-                self.generator_ser.write(b"M1")
+                self.generator_ser.write(b"M1\n")
                 print("Sinus", self.generator_ser)
             while 1: 
-                ser_bytes = self.generator_ser.read(2)
-                print("In mode changing", chr(ser_bytes[0]), chr(ser_bytes[1]))
-                if (ser_bytes[0] == ord("A") and ser_bytes[1] == ord("1")):
+                print("bef reading in changing")
+                ser_bytes = self.generator_ser.readline()#self.generator_ser.read(2)
+                print("In mode changing", ser_bytes)#, ser_bytes[0], ser_bytes[1])
+                if (len(ser_bytes) > 1 and ser_bytes[0] == ord("A") and(ser_bytes[1] == ord("1") or ser_bytes[1] == ord("2"))):
+                #print("In mode changing", chr(ser_bytes[0]), chr(ser_bytes[1]))
+                #if (ser_bytes[0] == ord("A") and ser_bytes[1] == ord("1")):
                     break
             print('end')
             #ser_bytes = self.generator_ser.read(2)
@@ -217,10 +220,10 @@ class RealSignalWindow(QWidget):
                             # new params: self.generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
                             # self.generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
                             # bound rate was 76800
-                            self.generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS )
+                            self.generator_ser = serial.Serial(generator_name, 9600, write_timeout=0, timeout=1)#, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS )
                             self.generator_ser.flushInput()
                             self.generator_ser.flushOutput()
-                            self.generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
+                            #self.generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
                             cur_time = 0
 
                             if self.first_contact:
@@ -237,13 +240,13 @@ class RealSignalWindow(QWidget):
                                 while 1:
                                     try:
                                         #print("Bef write")
-                                        self.generator_ser.write(b"R0")
-                                        #print("Bef read")
-                                        ser_bytes = self.generator_ser.read(2)
+                                        self.generator_ser.write(b"R0\n")
+                                        print("Bef read in open protocol")
+                                        ser_bytes = self.generator_ser.readline().strip()#self.generator_ser.read(2)
                                         print("In open protocol", ser_bytes)
-                                        if (len(ser_bytes)):
-                                            if ser_bytes[0] == ord("A") and ser_bytes[1] == ord("0"):
-                                                break
+                                            #if ser_bytes[0] == ord("A") and ser_bytes[1] == ord("0"):
+                                        if len(ser_bytes) > 1 and ser_bytes[0] == ord("A") and ser_bytes[1] == ord("0"):
+                                            break
                                     except Exception as exc:
                                         print('error in open connection protocol', str(exc))   
 
@@ -258,11 +261,12 @@ class RealSignalWindow(QWidget):
                                     # self.generator_ser.send_break(0)
                                     while (1):
                                         try:
-                                            self.generator_ser.write(b"C0")
-                                            ser_bytes = self.generator_ser.read(2)
+                                            self.generator_ser.write(b"C0\n")
+                                            ser_bytes = self.generator_ser.readline().strip()#read(2)
                                             print("In close protocol", ser_bytes)
                                             if (len(ser_bytes)):
-                                                if ser_bytes[0] == ord("C") and ser_bytes[1] == ord("0"):
+                                                #if ser_bytes[0] == ord("C") and ser_bytes[1] == ord("0"):
+                                                if len(ser_bytes) > 1 and ser_bytes[0] == ord("C") and ser_bytes[1] == ord("0"):
                                                     break
                                         except Exception as exc:
                                             print(exc)
@@ -271,13 +275,13 @@ class RealSignalWindow(QWidget):
                                     self.first_contact = 1
                                     # Needed?
                                     break   
-                                print("bef p")
+                                #print("bef p")
                                 point_time = time.perf_counter()   
-                                ser_bytes = self.generator_ser.read(2)
-                                print("af r", ser_bytes)
+                                ser_bytes = self.generator_ser.readline().strip()#read(2)
+                                #print("af r", ser_bytes)
                                 if len(ser_bytes) != 0:
                                     try:
-                                        cur_byte = int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
+                                        cur_byte = int(ser_bytes)#int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
                                         if (abs(last_num - cur_byte) > 100):
                                             print(bin(last_num | 0b1000000000000))
                                             print(bin(cur_byte | 0b1000000000000))
@@ -286,46 +290,48 @@ class RealSignalWindow(QWidget):
                                         cur_time = float(point_time - start_time)
                                         self.buf1[cur_time] = cur_byte
                                         QApplication.processEvents()
-                                        if self.is_online:
-                                            # TODO num of points depends on x scale
-                                            # now: 1.6 s => 5000 points
-                                            # 0.1 (4) s => 312 points
-                                            # 0.5 (5) s => 1562 points
-                                            # 1 (6) s => 3125 points
-                                            # 5 (7) s => 15625 points
-                                            # 10 (8) s => 31250 points                                          
-                                            val = self.mechanical_slider_frequency.value() + 1
-                                            """if (val < 4):
-                                                ind = 312
-                                            elif (val > 8):
-                                                ind = 31250
-                                            else:
+                                        try:
+                                            if self.is_online:
+                                                # TODO num of points depends on x scale
+                                                # now: 1.6 s => 5000 points
+                                                # 0.1 (4) s => 312 points
+                                                # 0.5 (5) s => 1562 points
+                                                # 1 (6) s => 3125 points
+                                                # 5 (7) s => 15625 points
+                                                # 10 (8) s => 31250 points                                          
+                                                val = self.mechanical_slider_frequency.value() + 1
+                                                """if (val < 4):
+                                                    ind = 312
+                                                elif (val > 8):
+                                                    ind = 31250
+                                                else:
+                                                    if (val % 2):
+                                                        ind = 1562 * int(pow(10, (val - 5) // 2))
+                                                    else:
+                                                        ind = 312 * int(pow(10, (val - 4) // 2))
+                                                # 
+                                                # ind = 1000"""
+                                                """
                                                 if (val % 2):
-                                                    ind = 1562 * int(pow(10, (val - 5) // 2))
-                                                else:
-                                                    ind = 312 * int(pow(10, (val - 4) // 2))
-                                            # 
-                                            # ind = 1000"""
-                                            """
-                                            if (val % 2):
-                                                    ind = 50 * int(pow(10, (val) // 2))
-                                                else:
-                                                    ind = 10 * int(pow(10, (val) // 2))
-                                            """
-                                            #ind = int(len(self.buf1) / 12) * val
-                                            ind = 500
-                                            #print(len(self.buf1))
-                                            self.reDraw(list(self.buf1.values())[-ind::10], list(self.buf1.keys())[-ind::10])
-                                            if (len(self.buf1) % 100 == 0):
-                                                print(len(self.buf1))
-                                            if (len(self.buf1) > 31250):
-                                                 self.buf1.pop(min(self.buf1.keys()))
-                                        else:
-                                            if (len(self.buf1) >= 100):
-                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
-                                                self.buf2 = self.buf1
-                                                self.buf1.clear()
-
+                                                        ind = 50 * int(pow(10, (val) // 2))
+                                                    else:
+                                                        ind = 10 * int(pow(10, (val) // 2))
+                                                """
+                                                #ind = int(len(self.buf1) / 12) * val
+                                                ind = 10
+                                                #print(len(self.buf1))
+                                                self.reDraw(list(self.buf1.values())[-ind], list(self.buf1.keys())[-ind])
+                                                if (len(self.buf1) % 100 == 0):
+                                                    print(len(self.buf1))
+                                                if (len(self.buf1) > 31250):
+                                                    self.buf1.pop(min(self.buf1.keys()))
+                                            else:
+                                                if (len(self.buf1) >= 100):
+                                                    self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
+                                                    self.buf2 = self.buf1
+                                                    self.buf1.clear()
+                                        except Exception as e:
+                                            print("Error in autoscale", str(e))
                                     except Exception as e:
                                         print('error in input', str(e))
 

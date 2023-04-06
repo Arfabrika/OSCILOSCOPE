@@ -1,6 +1,4 @@
 import sys
-import struct
-import numpy as np
 from PySide6.QtCore import QThreadPool
 
 from PySide6.QtWidgets import (
@@ -395,7 +393,7 @@ class MainWindow(QWidget):
                             # generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
                             # bound rate was 76800
                             # generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS ) 
-                            generator_ser = serial.Serial(generator_name, 9600, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS )
+                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS )
                             generator_ser.flushInput()
                             generator_ser.flushOutput()
                             generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)

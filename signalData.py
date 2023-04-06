@@ -1,5 +1,3 @@
-from array import array
-
 class signalData:
     def __init__(self, signalType, amplitude, frequency, duration, isActive = 1, isSingle = 0):
         self.signalType = signalType
