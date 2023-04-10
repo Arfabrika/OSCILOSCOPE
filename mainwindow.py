@@ -541,8 +541,9 @@ class MainWindow(QWidget):
         self.stop_flag = False
         self.signal_plot.clear()
         self.spectre_plot.clear()
-        self.setEnable(False)      
-        self.thread_manager.start(self.receive_signal)
+        self.setEnable(False)   
+        self.sin()  
+        # self.thread_manager.start(self.receive_signal)
         
     def click_amplitude_event(self):        
         self.amplitude_window.updateSignalData(self.signalDataArray)
@@ -615,6 +616,36 @@ class MainWindow(QWidget):
         if self.real_signal_window.isVisible():
             self.real_signal_window.close()
         print("Main window closed")
+
+    def sin(self):
+        x_count = 0.01
+        point = 5
+        while 1:
+            if self.mechanical_slider_frequency.value() % 2 == 0:
+                val = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
+            else:
+                val = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
+
+            x = np.linspace(0, x_count, point)
+            frequencies = x * 1
+            y = 1 * np.sin(frequencies * (2 * np.pi))
+            x_count += 0.01
+            point += 5
+
+            if x_count / val > 1:
+                if point % 30 == 0:
+                    self.signal_plot.axes.plot(x, y, color='#1f77b4')
+                    self.signal_plot.axes.set_xlim(x_count - val, max(x))
+                    # self.signal_plot.axes.grid(False)
+                    self.signal_plot.view.draw()
+                    self.signal_plot.view.flush_events()                                 
+            else:
+                if point % 30 == 0:
+                    self.signal_plot.axes.plot(x, y, color='#1f77b4')
+                    self.signal_plot.axes.set_xlim(0, max(x))
+                    # self.signal_plot.axes.grid(False)
+                    self.signal_plot.view.draw()
+                    self.signal_plot.view.flush_events()
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
