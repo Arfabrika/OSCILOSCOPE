@@ -358,18 +358,19 @@ class MainWindow(QWidget):
 
     #@CoolDown(0.05)
     # function for drawing data from controller
-    def reDraw(self, drdata = [], drind = []):
+    def reDraw(self, drdata = [], drind = [], left_border = 0):
         try:         
-            if not self.is_online:
-                self.signal_plot.axes.set_xlim(0, max(drind))
-            else:
-                self.signal_plot.axes.clear()
-                self.signal_plot.axes.grid(True)
+            # if not self.is_online:
+            #     self.signal_plot.axes.set_xlim(0, max(drind))
+            # else:
+            # self.signal_plot.axes.clear()
+            self.signal_plot.axes.grid(True)
             #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
             self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
             self.signal_plot.axes.set_xlabel('Time, s')
             self.signal_plot.axes.set_ylabel('U, V')
             self.signal_plot.axes.plot(drind, drdata, color='#1f77b4')
+            self.signal_plot.axes.set_xlim(left_border, max(drind))
             self.signal_plot.view.draw()
         except Exception as e:
                 print('error in draw', str(e))
@@ -432,7 +433,8 @@ class MainWindow(QWidget):
 
                             last_num = 0
                             start_time = time.perf_counter()
-                            
+
+                    
                             while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
                                 if (self.stop_flag):
                                     # Close connection
@@ -474,27 +476,36 @@ class MainWindow(QWidget):
                                             # 1 (6) s => 3125 points
                                             # 5 (7) s => 15625 points
                                             # 10 (8) s => 31250 points                                          
-                                            val = self.mechanical_slider_frequency.value()
-                                            if (val < 4):
-                                                ind = 312
-                                            elif (val > 8):
-                                                ind = 31250
+                                            if self.mechanical_slider_frequency.value() % 2 == 0:
+                                                val = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
                                             else:
-                                                if (val % 2):
-                                                    ind = 1562 * int(pow(10, (val - 5) // 2))
-                                                else:
-                                                    ind = 312 * int(pow(10, (val - 4) // 2))
-                                            print(ind)
+                                                val = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
+                                            # if (val < 4):
+                                            #     ind = 312
+                                            # elif (val > 8):
+                                            #     ind = 31250
+                                            # else:
+                                            #     if (val % 2):
+                                            #         ind = 1562 * int(pow(10, (val - 5) // 2))
+                                            #     else:
+                                            #         ind = 312 * int(pow(10, (val - 4) // 2))
+                                            print(val)
                                             # ind = 1000
-                                            if len(self.buf1) % 100:
-                                                self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
-                                            if (len(self.buf1) > 31250):
-                                                 self.buf1.pop(min(self.buf1.keys()))
-                                        else:
-                                            if (len(self.buf1) >= 5000):
+                                            # if len(self.buf1) % 100:
+                                            #     self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
+                                            # if (len(self.buf1) > 31250):
+                                            #      self.buf1.pop(min(self.buf1.keys()))
+
+                                            if cur_time / val > 1:
+                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), cur_time - val)
+                                                
+                                            else:
                                                 self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
-                                                self.buf2 = self.buf1
-                                                self.buf1.clear()
+                                        else:
+                                            # if (len(self.buf1) >= 5000):
+                                            self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
+                                            self.buf2 = self.buf1
+                                            self.buf1.clear()
 
                                     except Exception as e:
                                         print('error in input', str(e))
@@ -528,8 +539,9 @@ class MainWindow(QWidget):
         self.stop_flag = False
         self.signal_plot.clear()
         self.spectre_plot.clear()
-        self.setEnable(False)      
-        self.thread_manager.start(self.receive_signal)
+        self.setEnable(False)   
+        self.sin()  
+        # self.thread_manager.start(self.receive_signal)
         
     def click_amplitude_event(self):        
         self.amplitude_window.updateSignalData(self.signalDataArray)
@@ -602,6 +614,36 @@ class MainWindow(QWidget):
         if self.real_signal_window.isVisible():
             self.real_signal_window.close()
         print("Main window closed")
+
+    def sin(self):
+        x_count = 0.01
+        point = 5
+        while 1:
+            if self.mechanical_slider_frequency.value() % 2 == 0:
+                val = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
+            else:
+                val = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
+
+            x = np.linspace(0, x_count, point)
+            frequencies = x * 1
+            y = 1 * np.sin(frequencies * (2 * np.pi))
+            x_count += 0.01
+            point += 5
+
+            if x_count / val > 1:
+                if point % 30 == 0:
+                    self.signal_plot.axes.plot(x, y, color='#1f77b4')
+                    self.signal_plot.axes.set_xlim(x_count - val, max(x))
+                    # self.signal_plot.axes.grid(False)
+                    self.signal_plot.view.draw()
+                    self.signal_plot.view.flush_events()                                 
+            else:
+                if point % 30 == 0:
+                    self.signal_plot.axes.plot(x, y, color='#1f77b4')
+                    self.signal_plot.axes.set_xlim(0, max(x))
+                    # self.signal_plot.axes.grid(False)
+                    self.signal_plot.view.draw()
+                    self.signal_plot.view.flush_events()
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
