@@ -10,12 +10,13 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QApplication
 )
-
 from PySide6.QtCore import QThreadPool
+import PySide6.QtCore as QtCore
 from PySide6.QtGui import QAction
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 from wave import (generate_data_spectrum)
+import pyqtgraph as pg
 
 import serial.tools.list_ports
 import time
@@ -42,6 +43,17 @@ import time
 #     decorator = CoolDownDecorator(func=func,interval=interval)
 #     return wraps(func)(decorator)
 #   return applyDecorator
+
+class TimerThread(QtCore.QThread):
+    update = QtCore.Signal()
+
+    def __init__(self, event):
+        QtCore.QThread.__init__(self)
+        self.stopped = event
+
+    def run(self):
+        while not self.stopped.wait(0.02):    
+            self.update.emit()
 
 class RealSignalWindow(QWidget):
     def __init__(self, parent=None):
@@ -78,7 +90,12 @@ class RealSignalWindow(QWidget):
         main_params_layout.addLayout(serial_ports_layout)
         main_params_layout.addLayout(settings_layout)
 
-        self.signal_plot = SignalPlotWidget()
+        self.signal_plot = pg.plot()#pg.PlotItem()
+        # self.signal_plot.plot()#SignalPlotWidget()
+        # l = pg.GraphicsLayout()
+        # l.addItem(self.signal_plot, row=0, col=0)
+
+
         self.spectre_plot = SpectrePlotWidget()
         graphic_layout = QHBoxLayout()
         graphic_layout.addWidget(self.signal_plot)
@@ -142,13 +159,23 @@ class RealSignalWindow(QWidget):
         self.buf2 = dict()
         self.is_online = False
 
+        # self.timer = QtCore.QTimer()
+        # self.timer.timeout.connect(self.reDraw)
+        # self.timer.start(10)
+        stop_flag = QtCore.QEvent() 
+        self.timer_thread = TimerThread(stop_flag)
+        self.timer_thread.update.connect(self.update_ui)
+        self.timer_thread.start(20)
+
         finish = QAction("Quit", self)
         finish.triggered.connect(self.closeEvent)
+
+        
 
     def change_singal_mode(self):
         # send to mc work mode
         # 0 - Voltage measuring
-        # 1 - Sinus generation
+        # 1 - Sinus generation 
         if (not self.first_contact):
             cur_ind = self.data_mod.currentIndex()
             if (cur_ind == 0):
@@ -181,24 +208,29 @@ class RealSignalWindow(QWidget):
         self.stop_flag = False
         self.signal_plot.clear()
         self.spectre_plot.clear()
+        # timer = QtCore.QTimer()
+        # timer.timeout.connect(self.reDraw)
+        #self.timer.start(10)
         self.setEnable(False)      
         self.thread_manager.start(self.receive_signal)
 
     #@CoolDown(0.05)
     # function for drawing data from controller
-    def reDraw(self, drdata = [], drind = []):
+    def reDraw(self, drdata = [], drind = [], left_border = 0, new_val = 6):
         try:         
-            if not self.is_online:
-                self.signal_plot.axes.set_xlim(0, max(drind))
-            else:
-                self.signal_plot.axes.clear()
-                self.signal_plot.axes.grid(True)
+            # if not self.is_online:
+            #     self.signal_plot.axes.set_xlim(0, max(drind))
+            # else:
+           ## self.signal_plot.axes.clear()
+           ## self.signal_plot.axes.grid(True)
             #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
-            self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
-            self.signal_plot.axes.set_xlabel('Time, s')
-            self.signal_plot.axes.set_ylabel('U, V')
-            self.signal_plot.axes.plot(drind, drdata, color='#1f77b4')
-            self.signal_plot.view.draw()
+           ## self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
+            ##self.signal_plot.axes.set_xlabel('Time, s')
+           ## self.signal_plot.axes.set_ylabel('U, V')
+           ## self.signal_plot.axes.set_xlim(left_border, 3000)
+            self.signal_plot.plot(drind, drdata)            
+            #self.signal_plot.view.draw()
+            #print("ind", drind, "\ndata:", drdata)
         except Exception as e:
                 print('error in draw', str(e))
 
@@ -220,7 +252,7 @@ class RealSignalWindow(QWidget):
                             # new params: self.generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
                             # self.generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
                             # bound rate was 76800
-                            self.generator_ser = serial.Serial(generator_name, 9600, write_timeout=0, timeout=1)#, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS )
+                            self.generator_ser = serial.Serial(generator_name, 9600, write_timeout=0)#, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS )
                             self.generator_ser.flushInput()
                             self.generator_ser.flushOutput()
                             #self.generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
@@ -231,7 +263,7 @@ class RealSignalWindow(QWidget):
 
                                 
                                 print("Bef mode")
-                                self.change_singal_mode()
+                                #self.change_singal_mode()
 
                                 # open connection protocol
                                 # 1) PC --> MC (R0)
@@ -250,9 +282,12 @@ class RealSignalWindow(QWidget):
                                     except Exception as exc:
                                         print('error in open connection protocol', str(exc))   
 
-                            last_num = 0
+                            last_num = []
                             start_time = time.perf_counter()
-                            print("bef wh")
+                            #print("bef wh")
+                            # timer = QtCore.QTimer()
+                            # timer.timeout.connect(self.reDraw)
+                            #self.timer.start(10)
                             while not self.stop_flag:
                                 if (self.stop_flag):
                                     # Close connection
@@ -281,50 +316,42 @@ class RealSignalWindow(QWidget):
                                 #print("af r", ser_bytes)
                                 if len(ser_bytes) != 0:
                                     try:
-                                        cur_byte = int(ser_bytes)#int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
-                                        if (abs(last_num - cur_byte) > 100):
-                                            print(bin(last_num | 0b1000000000000))
-                                            print(bin(cur_byte | 0b1000000000000))
-                                            print('===========')
-                                        last_num = cur_byte
-                                        cur_time = float(point_time - start_time)
-                                        self.buf1[cur_time] = cur_byte
-                                        QApplication.processEvents()
+                                        cur_byte = int(ser_bytes) /1023.0*5.0#int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
+                                        # if (abs(last_num - cur_byte) > 100):
+                                        #     print(bin(last_num | 0b1000000000000))
+                                        #     print(bin(cur_byte | 0b1000000000000))
+                                        #     print('===========')
+                                        # last_num = cur_byte
+                                        cur_time = float(point_time -start_time)
+                                        self.buf1[cur_time] = cur_byte##[cur_time] = cur_byte
+                                        
+                                        #QApplication.processEvents()
                                         try:
-                                            if self.is_online:
-                                                # TODO num of points depends on x scale
-                                                # now: 1.6 s => 5000 points
-                                                # 0.1 (4) s => 312 points
-                                                # 0.5 (5) s => 1562 points
-                                                # 1 (6) s => 3125 points
-                                                # 5 (7) s => 15625 points
-                                                # 10 (8) s => 31250 points                                          
-                                                val = self.mechanical_slider_frequency.value() + 1
-                                                """if (val < 4):
-                                                    ind = 312
-                                                elif (val > 8):
-                                                    ind = 31250
-                                                else:
-                                                    if (val % 2):
-                                                        ind = 1562 * int(pow(10, (val - 5) // 2))
-                                                    else:
-                                                        ind = 312 * int(pow(10, (val - 4) // 2))
-                                                # 
-                                                # ind = 1000"""
-                                                """
-                                                if (val % 2):
-                                                        ind = 50 * int(pow(10, (val) // 2))
-                                                    else:
-                                                        ind = 10 * int(pow(10, (val) // 2))
-                                                """
-                                                #ind = int(len(self.buf1) / 12) * val
-                                                ind = 10
-                                                #print(len(self.buf1))
-                                                self.reDraw(list(self.buf1.values())[-ind], list(self.buf1.keys())[-ind])
-                                                if (len(self.buf1) % 100 == 0):
-                                                    print(len(self.buf1))
-                                                if (len(self.buf1) > 31250):
-                                                    self.buf1.pop(min(self.buf1.keys()))
+                                            if self.is_online:                                       
+                                                """val = self.mechanical_slider_frequency.value() + 1
+                                                # if len(self.buf1) % 100 == 0:
+                                                #     print("%100")
+                                                if cur_time / val > 1:#if len(self.buf1) > 10:#if cur_time / val > 1: 
+                                                    #print("buf",len(self.buf1), "diff", cur_time - val)
+                                                    #print("ind", list(self.buf1.keys())[-10], "\ndata:", list(self.buf1.values())[:-10])
+                                                    ##self.reDraw(list(self.buf1.values())[-10:], list(self.buf1.keys())[-10:], cur_time - val)
+                                                   ## self.buf1.pop(min(list(self.buf1.keys())))
+                                                   self.reDraw(self.buf1, cur_time - val) 
+                                                    #print(cur_time - val)
+                                                    #print()                                                  
+                                                    #self.reDraw([cur_byte], [cur_time], cur_time - val)
+                                                    # for i in range(int(min(list(self.buf1.keys()))), int(cur_time - val)):
+                                                    #     del self.buf1[i]
+                                                    # if (len(self.buf1) > cur_time - val):
+                                                    #     del self.buf1[min(list(self.buf1.keys()))]
+                                                else: 
+                                                   ## self.reDraw(list(self.buf1.values()), list(self.buf1.keys())) 
+                                                   """
+                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), new_val=cur_byte)  
+                                                    #self.reDraw([cur_byte], [cur_time])
+                                                    #print("in else")
+                                                cur_time = float(time.perf_counter() - point_time )
+                                                last_num.append(cur_time)
                                             else:
                                                 if (len(self.buf1) >= 100):
                                                     self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
@@ -339,6 +366,7 @@ class RealSignalWindow(QWidget):
                                     break
 
                             print("Stop flag:", self.stop_flag)
+                            print(last_num)
                             return
                             
                         else:

@@ -272,6 +272,10 @@ class MainWindow(QWidget):
         finish = QAction("Quit", self)
         finish.triggered.connect(self.closeEvent)
 
+        self.receive_button.setEnabled(False)
+        self.stop_listening_button.setEnabled(False)
+        self.serial_ports_combo.setEnabled(False)
+
     def real_data_get_mod_changed(self):
         self.is_online = not self.is_online
 
@@ -614,7 +618,7 @@ class MainWindow(QWidget):
         if self.real_signal_window.isVisible():
             self.real_signal_window.close()
         print("Main window closed")
-
+""""
     def sin(self):
         x_count = 0.01
         point = 5
@@ -644,9 +648,11 @@ class MainWindow(QWidget):
                     # self.signal_plot.axes.grid(False)
                     self.signal_plot.view.draw()
                     self.signal_plot.view.flush_events()
+                    """
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     w = MainWindow()
     w.show()
+    
     sys.exit(app.exec())
