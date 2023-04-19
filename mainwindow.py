@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 from PySide6.QtCore import QThreadPool
 
 from PySide6.QtWidgets import (
@@ -23,13 +24,19 @@ from amplitudeWindow import AmplitudeWindow
 from frequencyWindow import FrequencyWindow
 from signalData import signalData, signalDataArray
 from RealSingalWindow import RealSignalWindow
+from phaseWindow import PhaseWindow
+from signalData import signalData, signalDataArray
 
 import serial.tools.list_ports
 import time
 
 from summationWindow import SummationWindow
 signal_types = ['-', 'sine', 'cosine', 'triangle', 'sawtooth', 'square']
+
 from functools import partial, wraps
+import time
+from functools import partial, wraps
+from numba import njit
 from wave import (generate_data_spectrum)
 
 class CoolDownDecorator(object):
@@ -63,7 +70,9 @@ class MainWindow(QWidget):
         self.stop_flag = False
 
         self.signalDataArray = signalDataArray([])
-        
+
+        self.amplitude_window = None
+        self.summation_window = None      
         self.serial_ports_combo = QComboBox(self)
         self.serial_ports = serial.tools.list_ports.comports()
         serial_ports_desc = [port.name for port in self.serial_ports]
@@ -158,7 +167,7 @@ class MainWindow(QWidget):
         signals_list_layout = QHBoxLayout()
         signals_list_layout.addWidget(self.signals_label)
         signals_list_layout.addWidget(self.signals_list)
-        
+
         ampl_layout = QVBoxLayout()
         self.ampl_create_button = QPushButton('Амплитудная модуляция')
         self.ampl_create_button.clicked.connect(self.click_amplitude_event)
@@ -166,6 +175,10 @@ class MainWindow(QWidget):
         self.freq_create_button.clicked.connect(self.click_frequency_event)
         self.sum_create_button = QPushButton('Множественное суммирование сигналов')
         self.sum_create_button.clicked.connect(self.click_sum_event)
+        
+        self.phase_create_button = QPushButton('Фазовая модуляция')
+        self.phase_create_button.clicked.connect(self.click_phase_event)
+
         self.real_signal_button = QPushButton('Работа с реальными сигналами')
         self.real_signal_button.clicked.connect(self.click_real_signal_event)
 
@@ -191,6 +204,7 @@ class MainWindow(QWidget):
         ampl_layout.addLayout(signals_list_layout)
         ampl_layout.addWidget(self.ampl_create_button)
         ampl_layout.addWidget(self.freq_create_button)
+        ampl_layout.addWidget(self.phase_create_button)
         ampl_layout.addWidget(self.sum_create_button)
         ampl_layout.addWidget(self.real_signal_button)
         ampl_layout.addLayout(all_params_layout)
@@ -252,7 +266,7 @@ class MainWindow(QWidget):
         self.edit_signal_button.clicked.connect(self.editSignal)
         self.anim_checkbox.toggled.connect(self.changed_animation_checkbox_event)
         self.real_data_get_mod.toggled.connect(self.real_data_get_mod_changed)
-        #self.data_mod.currentIndexChanged.connect()
+
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
         self.animation_flag = 0
@@ -336,6 +350,7 @@ class MainWindow(QWidget):
         self.stop_flag = True
 
     def set_stop_safely(self):
+        #print("click")
         self.thread_manager.start(self.set_stop)
         self.setEnable(True) 
         self.stop_flag = True
@@ -347,6 +362,7 @@ class MainWindow(QWidget):
             if (len(self.buf1) == 0):
                 return
             x, y = generate_data_spectrum(list(self.buf1.values())[-5000:], max(self.buf1.keys()))
+
         self.spectre_plot.axes.plot(x, y * 2, color='#1f77b4')
         self.spectre_plot.axes.set_ylim(0, max(y * 2) * 1.5)
         self.spectre_plot.axes.set_xlim(0, max(x))
@@ -375,6 +391,8 @@ class MainWindow(QWidget):
                 print('error in draw', str(e))
 
     def receive_signal(self):
+        # f = open("Data.txt", "w+")
+        # f.write("qqq")
         if self.serial_ports_combo.currentText() == '-':
             self.stop_flag = True
             return         
@@ -503,6 +521,7 @@ class MainWindow(QWidget):
                                     break
 
                             print("Stop flag:", self.stop_flag)
+
                             return
                             
                         else:
@@ -546,6 +565,9 @@ class MainWindow(QWidget):
     def click_real_signal_event(self):
         self.real_signal_window.showMaximized()
 
+    def click_phase_event(self):
+        self.phase_window.updateSignalData(self.signalDataArray, self.animation_flag)
+        self.phase_window.show()
     def changed_animation_checkbox_event(self):
         if (self.anim_checkbox.isChecked()):
             self.animation_flag = 1
@@ -561,7 +583,6 @@ class MainWindow(QWidget):
             self.drawSignal()
         else:
             self.active_label.setText("Сигнал неактивен")
-
             self.signal_plot.clear(self.x_scale_value, self.y_scale_value)
             self.spectre_plot.clear()
 
@@ -582,6 +603,9 @@ class MainWindow(QWidget):
             self.y_scale_value = 0.0011 * 10**(self.mechanical_slider_amplitude.value() // 2)
         else:
             self.y_scale_value = 0.0055 * 10**(self.mechanical_slider_amplitude.value() // 2)
+
+        if len(self.signalDataArray.array) and self.signalDataArray.array[self.signals_list.currentIndex()].getActivity() == True: 
+            self.drawSignal() 
         
         self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)
         # if self.stop_flag:
@@ -602,7 +626,7 @@ class MainWindow(QWidget):
         if self.real_signal_window.isVisible():
             self.real_signal_window.close()
         print("Main window closed")
-        
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     w = MainWindow()

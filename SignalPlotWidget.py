@@ -16,7 +16,7 @@ from wave import (
     mod_generate_square_wave,
     modulating,
     freq_modulating,
-    pulse_amplitude_modulating
+    phase_modulate
 )
 
 wave_generators = {
@@ -302,7 +302,7 @@ class SignalPlotWidget(PlotWidget):
         freq_mas = [fs_frequency, ss_frequency]
         ampl_mas = [fs_amplitude, ss_amplitude]
         freq_mas, ampl_mas = getScaledParamsInMas(freq_mas, ampl_mas, x_type_mas, y_type_mas)
-        x, y = pulse_amplitude_modulating(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        x, y = phase_modulate(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
 
         self.axes.set_xlim(-fs_duration, fs_duration )
         self.axes.set_ylim(-y_scale , y_scale)

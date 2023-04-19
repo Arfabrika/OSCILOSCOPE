@@ -1,3 +1,4 @@
+
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -6,19 +7,19 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QDial,
+    QSpinBox,
 )
-from PySide6.QtGui import QAction
 from ParametrWindow import ParametrWindow
 from PlotWindow import PlotWindow
 
 from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 
-class AmplitudeWindow(QWidget):
-    def __init__(self, signalDataArray, parent=None):
+class PhaseWindow(QWidget):
+    def __init__(self, signalDataArray, animation_flag, parent=None):
         super().__init__(parent)
         self.signalDataArray = signalDataArray
-
+        self.animation_flag = animation_flag
         self.plot_window = PlotWindow()
         self.parametr_window = ParametrWindow()
         
@@ -60,7 +61,7 @@ class AmplitudeWindow(QWidget):
         self.plot1_button = QPushButton('Показать график')
         self.plot1_button.clicked.connect(self.show_plot1)
 
-        self.formula = QLabel('Общая формула АМ: u(t) = (Uн + cos(2*pi*F*t)) * cos(2*pi*f*t)')
+        self.formula = QLabel('Общая формула ФМ: u(t) = Uн * sin(2*pi*f*t + m*sin(2*pi*F*t))')
 
         self.formula_layout = QHBoxLayout()
         self.formula_layout.addWidget(self.formula)
@@ -72,6 +73,13 @@ class AmplitudeWindow(QWidget):
         fs_signal.addLayout(fs_signals_form_layout)
         fs_signal.addLayout(fs_frequency_layout)
         fs_signal.addLayout(fs_amplitude_layout)
+
+        deviation_layout = QHBoxLayout()
+        self.deviation_label = QLabel("Частота девиации:")
+        self.deviation_input = QSpinBox()
+        deviation_layout.addWidget(self.deviation_label)
+        deviation_layout.addWidget(self.deviation_input)
+        fs_signal.addLayout(deviation_layout)
         fs_signal.addWidget(self.plot1_button)
         fs_signal.addLayout(self.formula_layout)
         fs_signal.addWidget(self.signal_plot)
@@ -109,10 +117,12 @@ class AmplitudeWindow(QWidget):
         ss_amplitude_layout.addWidget(self.ss_amplitude_label)
         ss_amplitude_layout.addWidget(self.ss_amplitude_spin)
 
+        ss_duration_layout = QHBoxLayout()
+
         self.plot2_button = QPushButton('Показать график')
         self.plot2_button.clicked.connect(self.show_plot2)
                 
-        self.formula_spectr = QLabel('Общая формула АМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * M/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * M/2) * cos((2*pi*f - 2*pi*F)t)')
+        self.formula_spectr = QLabel('Общая формула спектра ЧМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * m/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * m/2) * cos((2*pi*f - 2*pi*F)t)')
 
         self.formula_spectr_layout = QHBoxLayout()
         self.formula_spectr_layout.addWidget(self.formula_spectr)
@@ -164,6 +174,7 @@ class AmplitudeWindow(QWidget):
         signal_layout.addLayout(fs_signal)
         signal_layout.addLayout(ss_signal)
 
+
         main_layout = QVBoxLayout()
 
         self.parametrs = QPushButton('Показать параметры сигнала')
@@ -176,12 +187,11 @@ class AmplitudeWindow(QWidget):
 
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
+        self.deviation_input.setValue(10)
 
-        finish = QAction("Quit", self)
-        finish.triggered.connect(self.closeEvent)
-
-    def updateSignalData(self, signalDataArray):
+    def updateSignalData(self, signalDataArray, animation_flag):
         self.signalDataArray = signalDataArray
+        self.animation_flag = animation_flag
         self.setSignals()
 
     def closeEvent(self, event):
@@ -239,8 +249,12 @@ class AmplitudeWindow(QWidget):
         ind_ss = self.ss_signals_list.currentIndex()
         signal_fs = self.signalDataArray.getSignalByIndex(ind_fs).getData()
         signal_ss = self.signalDataArray.getSignalByIndex(ind_ss).getData()
-        self.signal_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1],flag = 0, signal_fs=signal_fs, signal_ss=signal_ss)
-        self.specter_plot.modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1], signal_fs, signal_ss)
+        freq_dev = self.deviation_input.value()
+        sig_formula = self.signal_plot.generate_formula_phase(signal_fs, signal_ss, freq_dev)
+        self.signal_plot.axes.set_title(sig_formula)
+        self.specter_plot.axes.set_title(self.specter_plot.generate_formula_spectr(row_formula=sig_formula))
+        self.signal_plot.phase_modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1], freq_dev)
+        self.specter_plot.freq_modulate (signal_fs[2], signal_ss[2], freq_dev)
 
     def slider_frequency_move(self):
         if self.mechanical_slider_frequency.value() % 2 == 0:
@@ -269,7 +283,8 @@ class AmplitudeWindow(QWidget):
         tmp = self.mechanical_slider_frequency.value()
         if signal_fs[3] >= self.mechanical_slider_frequency.value():
             tmp = signal_fs[3]
-        self.signal_plot.modulate(signal_fs[2], tmp, signal_ss[1], signal_ss[2], signal_fs[1], fs_x_scale_type = self.mechanical_slider_frequency.value(), fs_y_scale_type = self.mechanical_slider_amplitude.value(), signal_fs=signal_fs, signal_ss=signal_ss)
+        freq_dev = self.deviation_input.value()
+        self.signal_plot.phase_modulate(signal_fs[2], signal_fs[3], signal_ss[1], signal_ss[2], signal_fs[1], freq_dev)
 
     def show_parametrs_button(self):
         if self.fs_signals_list.currentIndex() == -1 and self.ss_signals_list.currentIndex() == -1:
@@ -290,11 +305,3 @@ class AmplitudeWindow(QWidget):
 
         self.parametr_window.show()
        
-    def closeEvent(self, event):
-        self.specter_plot.clear()
-        self.signal_plot.clear()
-        self.fs_signals_list.setCurrentIndex(1)
-        self.ss_signals_list.setCurrentIndex(1)
-        self.showSignalInfo_fs()
-        self.showSignalInfo_ss()
-        print("Amplitude modulation window closed")
