@@ -69,17 +69,7 @@ class MainWindow(QWidget):
         
         self.stop_flag = False
 
-        self.signalDataArray = signalDataArray([])
-
-        self.amplitude_window = None
-        self.summation_window = None      
-        self.serial_ports_combo = QComboBox(self)
-        self.serial_ports = serial.tools.list_ports.comports()
-        serial_ports_desc = [port.name for port in self.serial_ports]
-        self.serial_ports_combo.addItems(serial_ports_desc)
-        self.serial_ports_combo_label = QLabel('Выберите порт', self)
-        self.serial_ports_combo_label.setBuddy(self.serial_ports_combo)        
-
+        self.signalDataArray = signalDataArray([])   
         self.fs_params_label = QLabel('Текущий сигнал', self)
         self.fs_toggle_button = QPushButton('ВКЛ/ВЫКЛ', self)
         self.fs_toggle_button.setCheckable(True)
@@ -118,10 +108,6 @@ class MainWindow(QWidget):
         self.fs_amplitude_label = QLabel('Амплитуда, В')
         self.fs_amplitude_label.setBuddy(self.fs_amplitude_spin)
 
-        serial_ports_layout = QHBoxLayout()
-        serial_ports_layout.addWidget(self.serial_ports_combo_label)
-        serial_ports_layout.addWidget(self.serial_ports_combo)
-
         fs_params_layout = QVBoxLayout()
 
         fs_switch_layout = QHBoxLayout()
@@ -159,6 +145,7 @@ class MainWindow(QWidget):
         fs_params_layout.addLayout(fs_frequency_input_layout)
         fs_params_layout.addLayout(fs_amplitude_input_layout)
         fs_params_layout.addLayout(fs_signal_buttons_input_layout)
+        fs_params_layout.addSpacing(26)
      
         self.signals_label = QLabel('Список сигналов')
         self.signals_list = QComboBox(self)
@@ -183,23 +170,12 @@ class MainWindow(QWidget):
         self.real_signal_button.clicked.connect(self.click_real_signal_event)
 
         self.anim_checkbox = QCheckBox("Включить анимацию")     
-        self.real_data_get_mod = QCheckBox("Включить отрисовку в режиме реального времени")   
-        self.data_mod_label = QLabel("Режим работы микроконтроллера")
-        self.data_mod = QComboBox()
-        self.data_mod.addItems(['Получение напряжения в цепи', 'Генерация синуса']) 
-        self.data_mod_label.setBuddy(self.data_mod)
 
         checkbox_params_layout = QVBoxLayout()
         checkbox_params_layout.addWidget(self.anim_checkbox)
-        checkbox_params_layout.addWidget(self.real_data_get_mod)
-
-        mc_mode_layout = QVBoxLayout()
-        mc_mode_layout.addWidget(self.data_mod_label)
-        mc_mode_layout.addWidget(self.data_mod)
 
         all_params_layout = QHBoxLayout()
         all_params_layout.addLayout(checkbox_params_layout)
-        all_params_layout.addLayout(mc_mode_layout)
 
         ampl_layout.addLayout(signals_list_layout)
         ampl_layout.addWidget(self.ampl_create_button)
@@ -207,7 +183,7 @@ class MainWindow(QWidget):
         ampl_layout.addWidget(self.phase_create_button)
         ampl_layout.addWidget(self.sum_create_button)
         ampl_layout.addWidget(self.real_signal_button)
-        ampl_layout.addLayout(all_params_layout)
+        ampl_layout.addWidget(self.anim_checkbox)
 
         params_layout = QHBoxLayout()
         params_layout.addLayout(fs_params_layout)
@@ -247,25 +223,17 @@ class MainWindow(QWidget):
         plots_layout.addWidget(self.spectre_plot)        
 
         self.com_error_message = QErrorMessage()
-        self.receive_button = QPushButton('Начать получение сигнала от МК')
-        self.stop_listening_button = QPushButton('Завершить получение сигнала от МК')
-        
+
         main_layout = QVBoxLayout()
-        main_layout.addLayout(serial_ports_layout)
         main_layout.addLayout(params_layout)
         main_layout.addLayout(plots_layout)
-        main_layout.addWidget(self.receive_button)
-        main_layout.addWidget(self.stop_listening_button)
 
         self.setLayout(main_layout)
         self.loadSignals()
         self.add_signal_button.clicked.connect(self.addSignal)
-        self.receive_button.clicked.connect(self.receive_signal_safely)
-        self.stop_listening_button.clicked.connect(self.set_stop_safely)
         self.signals_list.currentIndexChanged.connect(self.showSignals)
         self.edit_signal_button.clicked.connect(self.editSignal)
         self.anim_checkbox.toggled.connect(self.changed_animation_checkbox_event)
-        self.real_data_get_mod.toggled.connect(self.real_data_get_mod_changed)
 
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
@@ -274,6 +242,7 @@ class MainWindow(QWidget):
         self.amplitude_window = AmplitudeWindow(self.signalDataArray)
         self.frequency_window = FrequencyWindow(self.signalDataArray)
         self.summation_window = SummationWindow(self.signalDataArray)
+        self.phase_window = PhaseWindow(self.signalDataArray, self.animation_flag)  
         self.real_signal_window = RealSignalWindow()   
         self.showMaximized()
 

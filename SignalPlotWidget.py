@@ -293,7 +293,7 @@ class SignalPlotWidget(PlotWidget):
     def generate_formula_am(self, signalMainArray, signalModuArray):
         return'Formula: (' + str(signalMainArray[1]) + ' + ' + str(signalModuArray[1]) + ' * cos(' + str(round((2 * np.pi) / (1 / signalModuArray[2]), 2)) + ' * t)) * cos(' + str(round((2 * np.pi) / (1 / signalMainArray[2]), 2)) + ' * t)'
 
-    def pulse_amplitude_modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, y_scale= 1):
+    def phase_modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, y_scale= 1):
         self.clear()    
         fs_x_scale_type, fs_y_scale_type = getScaleType(fs_frequency, fs_amplitude)
         ss_x_scale_type, ss_y_scale_type = getScaleType(ss_frequency, ss_amplitude)
@@ -313,3 +313,6 @@ class SignalPlotWidget(PlotWidget):
 
         self.axes.plot(x, y, color='#1f77b4')
         self.view.draw()      
+
+    def generate_formula_phase(self, signal_fs, signal_ss, freq_dev):
+        return 'Formula: ' + str(signal_ss[1]) + 'sin(' + str(signal_ss[2]) + r'$\cdot2\pi t + ' + str(1 / freq_dev) + 'sin(' + str(signal_fs[2]) + r'\cdot2\pi$' + 't))'

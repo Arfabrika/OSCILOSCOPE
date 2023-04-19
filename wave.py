@@ -105,7 +105,7 @@ def mod_generate_square_wave(freq, duration, ampl):
     return x, y
 
 def modulating (fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude):
-    x = np.linspace(-fs_duration, fs_duration, 440 * int(10 / fs_duration) if 10 / fs_duration > 1 else int(fs_sample_rate * 440), endpoint=False)
+    x = np.linspace(-fs_duration, fs_duration, 8800 * int(10 / fs_duration) if 10 / fs_duration > 1 else int(fs_sample_rate * 440), endpoint=False)
     y = []
 
     t1 = (2 * np.pi) / (1 / ss_frequency)

@@ -186,7 +186,7 @@ class RealSignalWindow(QWidget):
 
     #@CoolDown(0.05)
     # function for drawing data from controller
-    def reDraw(self, drdata = [], drind = []):
+    def reDraw(self, drdata = [], drind = [], left_border = 0):
         try:         
             if not self.is_online:
                 self.signal_plot.axes.set_xlim(0, max(drind))
@@ -194,9 +194,10 @@ class RealSignalWindow(QWidget):
                 self.signal_plot.axes.clear()
                 self.signal_plot.axes.grid(True)
             #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
-            self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
-            self.signal_plot.axes.set_xlabel('Time, s')
-            self.signal_plot.axes.set_ylabel('U, V')
+            self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value) 
+            self.signal_plot.axes.set_xlim(left_border, max(drind))                 
+            # self.signal_plot.axes.set_xlabel('Time, s')
+            # self.signal_plot.axes.set_ylabel('U, V')
             self.signal_plot.axes.plot(drind, drdata, color='#1f77b4')
             self.signal_plot.view.draw()
         except Exception as e:
@@ -281,50 +282,27 @@ class RealSignalWindow(QWidget):
                                 #print("af r", ser_bytes)
                                 if len(ser_bytes) != 0:
                                     try:
-                                        cur_byte = int(ser_bytes)#int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
-                                        if (abs(last_num - cur_byte) > 100):
-                                            print(bin(last_num | 0b1000000000000))
-                                            print(bin(cur_byte | 0b1000000000000))
-                                            print('===========')
-                                        last_num = cur_byte
+                                        cur_byte = int(ser_bytes) /1023.0 * 5.0 #int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
                                         cur_time = float(point_time - start_time)
                                         self.buf1[cur_time] = cur_byte
                                         QApplication.processEvents()
                                         try:
+                                            
                                             if self.is_online:
-                                                # TODO num of points depends on x scale
-                                                # now: 1.6 s => 5000 points
-                                                # 0.1 (4) s => 312 points
-                                                # 0.5 (5) s => 1562 points
-                                                # 1 (6) s => 3125 points
-                                                # 5 (7) s => 15625 points
-                                                # 10 (8) s => 31250 points                                          
-                                                val = self.mechanical_slider_frequency.value() + 1
-                                                """if (val < 4):
-                                                    ind = 312
-                                                elif (val > 8):
-                                                    ind = 31250
+                                                if self.mechanical_slider_frequency.value() % 2 == 0:
+                                                    val = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
                                                 else:
-                                                    if (val % 2):
-                                                        ind = 1562 * int(pow(10, (val - 5) // 2))
-                                                    else:
-                                                        ind = 312 * int(pow(10, (val - 4) // 2))
-                                                # 
-                                                # ind = 1000"""
-                                                """
-                                                if (val % 2):
-                                                        ind = 50 * int(pow(10, (val) // 2))
-                                                    else:
-                                                        ind = 10 * int(pow(10, (val) // 2))
-                                                """
-                                                #ind = int(len(self.buf1) / 12) * val
-                                                ind = 10
-                                                #print(len(self.buf1))
-                                                self.reDraw(list(self.buf1.values())[-ind], list(self.buf1.keys())[-ind])
-                                                if (len(self.buf1) % 100 == 0):
-                                                    print(len(self.buf1))
-                                                if (len(self.buf1) > 31250):
-                                                    self.buf1.pop(min(self.buf1.keys()))
+                                                    val = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
+                                                
+                                                if cur_time / val > 1:
+                                                    self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), cur_time - val)     
+                                                else:
+                                                    self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
+                                                #self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
+                                                # if (len(self.buf1) % 100 == 0):
+                                                #     print(len(self.buf1))
+                                                # if (len(self.buf1) > 31250):
+                                                #     self.buf1.pop(min(self.buf1.keys()))
                                             else:
                                                 if (len(self.buf1) >= 100):
                                                     self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
