@@ -223,16 +223,17 @@ class RealSignalWindow(QWidget):
             # if not self.is_online:
             #     self.signal_plot.axes.set_xlim(0, max(drind))
             # else:
-           ## self.signal_plot.axes.clear()
-           ## self.signal_plot.axes.grid(True)
-            #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
-           ## self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
-            ##self.signal_plot.axes.set_xlabel('Time, s')
-           ## self.signal_plot.axes.set_ylabel('U, V')
-           ## self.signal_plot.axes.set_xlim(left_border, 3000)
+            # self.signal_plot.axes.clear()
+            # self.signal_plot.axes.grid(True)
+            # self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
+            # self.signal_plot.axes.set_ylim(-self.y_scale_value, self.y_scale_value)                  
+            # self.signal_plot.axes.set_xlabel('Time, s')
+            # self.signal_plot.axes.set_ylabel('U, V')
+            # self.signal_plot.axes.set_xlim(left_border, 3000)
+            self.signal_plot.setXRange(left_border, max(drind), padding=0)
             self.signal_plot.plot(drind, drdata)            
-            #self.signal_plot.view.draw()
-            #print("ind", drind, "\ndata:", drdata)
+            # self.signal_plot.view.draw()
+            # print("ind", drind, "\ndata:", drdata)
         except Exception as e:
                 print('error in draw', str(e))
 
@@ -349,11 +350,19 @@ class RealSignalWindow(QWidget):
                                                 else: 
                                                    ## self.reDraw(list(self.buf1.values()), list(self.buf1.keys())) 
                                                    """
-                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), new_val=cur_byte)  
-                                                    #self.reDraw([cur_byte], [cur_time])
-                                                    #print("in else")
-                                                cur_time = float(time.perf_counter() - point_time )
-                                                last_num.append(cur_time)
+                                                if self.mechanical_slider_frequency.value() % 2 == 0:
+                                                    val = 0.0011 * 10**(self.mechanical_slider_frequency.value() // 2)
+                                                else:
+                                                    val = 0.0055 * 10**(self.mechanical_slider_frequency.value() // 2)
+                                                # self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), new_val=cur_byte)  
+                                                #     #self.reDraw([cur_byte], [cur_time])
+                                                #     #print("in else")
+                                                # cur_time = float(time.perf_counter() - point_time )
+                                                # last_num.append(cur_time)
+                                                if cur_time / val > 1:
+                                                    self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), cur_time - val)
+                                                else:
+                                                    self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
                                             else:
                                                 if (len(self.buf1) >= 100):
                                                     self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
