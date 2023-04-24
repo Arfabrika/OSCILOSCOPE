@@ -162,9 +162,9 @@ class RealSignalWindow(QWidget):
         # self.timer = QtCore.QTimer()
         # self.timer.timeout.connect(self.reDraw)
         # self.timer.start(10)
-        stop_flag = QtCore.QEvent() 
+        stop_flag = QtCore.QEvent(QEvent.ActionAdded) 
         self.timer_thread = TimerThread(stop_flag)
-        self.timer_thread.update.connect(self.update_ui)
+        self.timer_thread.update.connect(self.reDraw)
         self.timer_thread.start(20)
 
         finish = QAction("Quit", self)
