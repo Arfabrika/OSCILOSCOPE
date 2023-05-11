@@ -17,9 +17,15 @@ from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 from wave import (generate_data_spectrum)
 import pyqtgraph as pg
+from dvg_pyqtgraph_threadsafe import HistoryChartCurve
+from dvg_qdeviceio import QDeviceIO
 
 import serial.tools.list_ports
 import time
+
+DAQ_INTERVAL_MS    = 10  # 10 [ms]
+CHART_INTERVAL_MS  = 20  # 20 [ms]
+CHART_HISTORY_TIME = 10  # 10 [s]
 
 # from functools import partial, wraps
 # class CoolDownDecorator(object):
@@ -90,7 +96,21 @@ class RealSignalWindow(QWidget):
         main_params_layout.addLayout(serial_ports_layout)
         main_params_layout.addLayout(settings_layout)
 
-        self.signal_plot = pg.plot()#pg.PlotItem()
+        self.gw = pg.GraphicsLayoutWidget()
+        self.signal_plot = self.gw.addPlot()
+        self.signal_plot.setRange(
+            xRange=[-1.04 * CHART_HISTORY_TIME, CHART_HISTORY_TIME * 0.4],
+            yRange=[-5.1, 5.1],
+            disableAutoRange=True,
+        )
+
+        self.history_chart_curve = HistoryChartCurve(
+            capacity=round(CHART_HISTORY_TIME * 1e3 / DAQ_INTERVAL_MS),
+            linked_curve=self.signal_plot.plot(
+                pen=pg.mkPen(color=[255, 255, 0], width=3)
+            ),
+        )
+        #self.signal_plot = pg.plot()#pg.PlotItem()
         # self.signal_plot.plot()#SignalPlotWidget()
         # l = pg.GraphicsLayout()
         # l.addItem(self.signal_plot, row=0, col=0)
@@ -98,7 +118,7 @@ class RealSignalWindow(QWidget):
 
         self.spectre_plot = SpectrePlotWidget()
         graphic_layout = QHBoxLayout()
-        graphic_layout.addWidget(self.signal_plot)
+        graphic_layout.addWidget(self.gw)
         graphic_layout.addWidget(self.spectre_plot)
 
         sliders_layout = QVBoxLayout()
@@ -152,12 +172,28 @@ class RealSignalWindow(QWidget):
 
         self.setLayout(main_layout)
 
+        qdev = QDeviceIO(self) # self ???
+        qdev.create_worker_DAQ(
+        DAQ_function=self.receive_signal,
+        DAQ_interval_ms=DAQ_INTERVAL_MS,
+        DAQ_timer_type=QtCore.Qt.TimerType.PreciseTimer,
+        critical_not_alive_count=1
+        )
+        qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
+
+       
+
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
         self.first_contact = 1
         self.buf1 = dict()
         self.buf2 = dict()
         self.is_online = False
+        
+        self.timer_chart = QtCore.QTimer()
+        # self.timer_chart.timeout.connect(self.history_chart_curve.update)
+        #self.got_timer_signal()
+        self.connect(self.timer_chart, QtCore.SIGNAL('start_tim') , self.got_start_timer_signal)
 
         # self.timer = QtCore.QTimer()
         # self.timer.timeout.connect(self.reDraw)
@@ -165,14 +201,18 @@ class RealSignalWindow(QWidget):
         # stop_flag = QtCore.QEvent(QEvent.ActionAdded) 
         #timer = QtCore.QTimer()
         #stop_flag = QtCore.QEvent()  
-        self.timer_thread = QtCore.QTimer()
-        self.timer_thread.timeout.connect(self.reDraw) 
-        self.timer_thread.start(20) 
+        # self.timer_thread = QtCore.QTimer()
+        # self.timer_thread.timeout.connect(self.reDraw) 
+        # self.timer_thread.start(20) 
 
         finish = QAction("Quit", self)
         finish.triggered.connect(self.closeEvent)
 
-        
+    def got_start_timer_signal(self):
+        print("got signal")
+        self.timer_chart = QtCore.QTimer()
+        self.timer_chart.timeout.connect(self.history_chart_curve.update)
+        self.timer_chart.start(CHART_INTERVAL_MS)
 
     def change_singal_mode(self):
         # send to mc work mode
@@ -220,9 +260,11 @@ class RealSignalWindow(QWidget):
     # function for drawing data from controller
     def reDraw(self, drdata = [], drind = [], left_border = 0, new_val = 6):
         try:         
-            # if not self.is_online:
-            #     self.signal_plot.axes.set_xlim(0, max(drind))
-            # else:
+            if not self.is_online:
+                 self.signal_plot.clear()
+                 print(min(drind), max(drind))
+                 self.signal_plot.setXRange(min(drind), max(drind))
+            #else:
            ## self.signal_plot.axes.clear()
            ## self.signal_plot.axes.grid(True)
             #self.y_scale_value = float(self.mechanical_slider_amplitude.value())* 1.1
@@ -230,13 +272,17 @@ class RealSignalWindow(QWidget):
             ##self.signal_plot.axes.set_xlabel('Time, s')
            ## self.signal_plot.axes.set_ylabel('U, V')
            ## self.signal_plot.axes.set_xlim(left_border, 3000)
-            self.signal_plot.plot(drind, drdata)            
+            print("bef")
+            self.signal_plot.plot(drind, drdata) 
+            print("after")           
             #self.signal_plot.view.draw()
             #print("ind", drind, "\ndata:", drdata)
         except Exception as e:
                 print('error in draw', str(e))
 
     def receive_signal(self):
+        self.emit( QtCore.SIGNAL("start_tim"))
+        print("after emit")
         if self.serial_ports_combo.currentText() == '-':
             self.stop_flag = True
             return         
@@ -286,6 +332,9 @@ class RealSignalWindow(QWidget):
 
                             last_num = []
                             start_time = time.perf_counter()
+                            fix_time = start_time
+                            cnt = 1
+                            self.emit( QtCore.SIGNAL(u"start_tim"))
                             #print("bef wh")
                             # timer = QtCore.QTimer()
                             # timer.timeout.connect(self.reDraw)
@@ -314,53 +363,64 @@ class RealSignalWindow(QWidget):
                                     break   
                                 #print("bef p")
                                 point_time = time.perf_counter()   
+                                
                                 ser_bytes = self.generator_ser.readline().strip()#read(2)
+                                cnt += 1
                                 #print("af r", ser_bytes)
                                 if len(ser_bytes) != 0:
                                     try:
                                         cur_byte = int(ser_bytes) /1023.0*5.0#int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
+                                        ##if (time.perf_counter() - fix_time > 0.01):
+                                        # print("in if", fix_time, time.perf_counter() - fix_time)
                                         # if (abs(last_num - cur_byte) > 100):
                                         #     print(bin(last_num | 0b1000000000000))
                                         #     print(bin(cur_byte | 0b1000000000000))
                                         #     print('===========')
                                         # last_num = cur_byte
                                         cur_time = float(point_time -start_time)
-                                        self.buf1[cur_time] = cur_byte##[cur_time] = cur_byte
+                                        #self.buf1[cur_time] = cur_byte##[cur_time] = cur_byte
                                         
+                                        self.history_chart_curve.appendData(cur_time, cur_byte)
+
                                         #QApplication.processEvents()
-                                        try:
-                                            if self.is_online:                                       
-                                                """val = self.mechanical_slider_frequency.value() + 1
-                                                # if len(self.buf1) % 100 == 0:
-                                                #     print("%100")
-                                                if cur_time / val > 1:#if len(self.buf1) > 10:#if cur_time / val > 1: 
-                                                    #print("buf",len(self.buf1), "diff", cur_time - val)
-                                                    #print("ind", list(self.buf1.keys())[-10], "\ndata:", list(self.buf1.values())[:-10])
-                                                    ##self.reDraw(list(self.buf1.values())[-10:], list(self.buf1.keys())[-10:], cur_time - val)
-                                                   ## self.buf1.pop(min(list(self.buf1.keys())))
-                                                   self.reDraw(self.buf1, cur_time - val) 
-                                                    #print(cur_time - val)
-                                                    #print()                                                  
-                                                    #self.reDraw([cur_byte], [cur_time], cur_time - val)
-                                                    # for i in range(int(min(list(self.buf1.keys()))), int(cur_time - val)):
-                                                    #     del self.buf1[i]
-                                                    # if (len(self.buf1) > cur_time - val):
-                                                    #     del self.buf1[min(list(self.buf1.keys()))]
-                                                else: 
-                                                   ## self.reDraw(list(self.buf1.values()), list(self.buf1.keys())) 
-                                                   """
-                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), new_val=cur_byte)  
-                                                    #self.reDraw([cur_byte], [cur_time])
-                                                    #print("in else")
-                                                cur_time = float(time.perf_counter() - point_time )
-                                                last_num.append(cur_time)
-                                            else:
-                                                if (len(self.buf1) >= 100):
-                                                    self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
-                                                    self.buf2 = self.buf1
-                                                    self.buf1.clear()
-                                        except Exception as e:
-                                            print("Error in autoscale", str(e))
+                                        # try:
+                                        #     if self.is_online:                                       
+                                        #         """val = self.mechanical_slider_frequency.value() + 1
+                                        #         # if len(self.buf1) % 100 == 0:
+                                        #         #     print("%100")
+                                        #         if cur_time / val > 1:#if len(self.buf1) > 10:#if cur_time / val > 1: 
+                                        #             #print("buf",len(self.buf1), "diff", cur_time - val)
+                                        #             #print("ind", list(self.buf1.keys())[-10], "\ndata:", list(self.buf1.values())[:-10])
+                                        #             ##self.reDraw(list(self.buf1.values())[-10:], list(self.buf1.keys())[-10:], cur_time - val)
+                                        #         ## self.buf1.pop(min(list(self.buf1.keys())))
+                                        #         self.reDraw(self.buf1, cur_time - val) 
+                                        #             #print(cur_time - val)
+                                        #             #print()                                                  
+                                        #             #self.reDraw([cur_byte], [cur_time], cur_time - val)
+                                        #             # for i in range(int(min(list(self.buf1.keys()))), int(cur_time - val)):
+                                        #             #     del self.buf1[i]
+                                        #             # if (len(self.buf1) > cur_time - val):
+                                        #             #     del self.buf1[min(list(self.buf1.keys()))]
+                                        #         else: 
+                                        #         ## self.reDraw(list(self.buf1.values()), list(self.buf1.keys())) 
+                                        #         """
+                                        #         print("online")
+                                        #         self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), new_val=cur_byte)  
+                                        #             #self.reDraw([cur_byte], [cur_time])
+                                        #             #print("in else")
+                                        #         cur_time = float(time.perf_counter() - point_time )
+                                        #         last_num.append(cur_time)
+                                        #     else:
+                                        #         if (len(self.buf1) >= 100):
+                                        #             print("clear")
+                                        #             self.reDraw(list(self.buf1.values())[::5], list(self.buf1.keys())[::5])
+                                        #             self.buf2 = self.buf1
+                                        #             self.buf1.clear()
+                                        # except Exception as e:
+                                        #     print("Error in autoscale", str(e))
+                                        # fix_time = time.perf_counter()
+                                        #else:
+                                            #print("else", fix_time, time.perf_counter() - fix_time)
                                     except Exception as e:
                                         print('error in input', str(e))
 
