@@ -27,7 +27,7 @@ from RealSingalWindow import RealSignalWindow
 from phaseWindow import PhaseWindow
 from signalData import signalData, signalDataArray
 
-import serial.tools.list_ports
+# import serial.tools.list_ports
 import time
 
 from summationWindow import SummationWindow
@@ -37,7 +37,7 @@ from functools import partial, wraps
 import time
 from functools import partial, wraps
 from numba import njit
-from wave import (generate_data_spectrum)
+# from wave import (generate_data_spectrum)
 
 class CoolDownDecorator(object):
   def __init__(self,func,interval):
@@ -318,27 +318,27 @@ class MainWindow(QWidget):
     def set_stop(self):
         self.stop_flag = True
 
-    def set_stop_safely(self):
-        #print("click")
-        self.thread_manager.start(self.set_stop)
-        self.setEnable(True) 
-        self.stop_flag = True
-        if not self.is_online:
-            if (len(self.buf2) == 0):
-                return
-            x, y = generate_data_spectrum(list(self.buf2.values()), max(self.buf2.keys()))       
-        else:
-            if (len(self.buf1) == 0):
-                return
-            x, y = generate_data_spectrum(list(self.buf1.values())[-5000:], max(self.buf1.keys()))
+    # def set_stop_safely(self):
+    #     #print("click")
+    #     self.thread_manager.start(self.set_stop)
+    #     self.setEnable(True) 
+    #     self.stop_flag = True
+    #     if not self.is_online:
+    #         if (len(self.buf2) == 0):
+    #             return
+    #         x, y = generate_data_spectrum(list(self.buf2.values()), max(self.buf2.keys()))       
+    #     else:
+    #         if (len(self.buf1) == 0):
+    #             return
+    #         x, y = generate_data_spectrum(list(self.buf1.values())[-5000:], max(self.buf1.keys()))
 
-        self.spectre_plot.axes.plot(x, y * 2, color='#1f77b4')
-        self.spectre_plot.axes.set_ylim(0, max(y * 2) * 1.5)
-        self.spectre_plot.axes.set_xlim(0, max(x))
-        self.spectre_plot.view.draw()
-        self.buf1.clear()
-        self.buf2.clear()
-        # self.f.close()
+    #     self.spectre_plot.axes.plot(x, y * 2, color='#1f77b4')
+    #     self.spectre_plot.axes.set_ylim(0, max(y * 2) * 1.5)
+    #     self.spectre_plot.axes.set_xlim(0, max(x))
+    #     self.spectre_plot.view.draw()
+    #     self.buf1.clear()
+    #     self.buf2.clear()
+    #     # self.f.close()
        
 
     #@CoolDown(0.05)
@@ -359,145 +359,145 @@ class MainWindow(QWidget):
         except Exception as e:
                 print('error in draw', str(e))
 
-    def receive_signal(self):
-        # f = open("Data.txt", "w+")
-        # f.write("qqq")
-        if self.serial_ports_combo.currentText() == '-':
-            self.stop_flag = True
-            return         
-        else:
-            self.stop_flag = False
-            generator_name = self.serial_ports_combo.currentText()
-            try:
-                for port in self.serial_ports:
-                    if generator_name == port.name:
-                        print("Found serial port")
-                        if 'serial' in port.description.lower() or 'VCP' in port.description.lower():
-                            # init serial port and bound
-                            # bound rate on two ports must be the same
-                            #was 9600 // 115200
-                            # new params: generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
-                            # generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
-                            # bound rate was 76800
-                            # generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS ) 
-                            generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS )
-                            generator_ser.flushInput()
-                            generator_ser.flushOutput()
-                            generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
-                            cur_time = 0
+    # def receive_signal(self):
+    #     # f = open("Data.txt", "w+")
+    #     # f.write("qqq")
+    #     if self.serial_ports_combo.currentText() == '-':
+    #         self.stop_flag = True
+    #         return         
+    #     else:
+    #         self.stop_flag = False
+    #         generator_name = self.serial_ports_combo.currentText()
+    #         try:
+    #             for port in self.serial_ports:
+    #                 if generator_name == port.name:
+    #                     print("Found serial port")
+    #                     if 'serial' in port.description.lower() or 'VCP' in port.description.lower():
+    #                         # init serial port and bound
+    #                         # bound rate on two ports must be the same
+    #                         #was 9600 // 115200
+    #                         # new params: generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
+    #                         # generator_ser = serial.Serial(generator_name, baudrate = 115200, timeout=1 )
+    #                         # bound rate was 76800
+    #                         # generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS ) 
+    #                         generator_ser = serial.Serial(generator_name, 76800, stopbits=serial.STOPBITS_TWO, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS )
+    #                         generator_ser.flushInput()
+    #                         generator_ser.flushOutput()
+    #                         generator_ser.set_buffer_size(rx_size = 12800, tx_size = 12800)
+    #                         cur_time = 0
 
-                            if self.first_contact:
-                                self.first_contact = 0
+    #                         if self.first_contact:
+    #                             self.first_contact = 0
 
-                                # send to mc work mode (voltage or sinus)
-                                print("Bef mode")
-                                cur_ind = self.data_mod.currentIndex()
-                                if (cur_ind == 0):
-                                    generator_ser.write(b"M0")
-                                elif (cur_ind == 1):    
-                                    generator_ser.write(b"M1")
+    #                             # send to mc work mode (voltage or sinus)
+    #                             print("Bef mode")
+    #                             cur_ind = self.data_mod.currentIndex()
+    #                             if (cur_ind == 0):
+    #                                 generator_ser.write(b"M0")
+    #                             elif (cur_ind == 1):    
+    #                                 generator_ser.write(b"M1")
 
-                                # open connection protocol
-                                # 1) PC --> MC (R0)
-                                # 2) MC --> PC (A0)
-                                # 3) connection established
-                                while 1:
-                                    try:
-                                        # new protocol: generator_ser.write(b"R") # Request
-                                        #print("Bef write")
-                                        generator_ser.write(b"R0")
-                                        # generator_ser.write(bytearray(255))
-                                        print("Bef read")
-                                        ser_bytes = generator_ser.read(2)
-                                        print("In open protocol", ser_bytes)
-                                        if (len(ser_bytes)):
-                                            if ser_bytes[0] == ord("A") and ser_bytes[1] == ord("0"):
-                                            # new protocol: if ser_bytes[0] == ord('A'): # Accept
-                                                break
-                                    except Exception as exc:
-                                        print('error in open connection protocol', str(exc))   
+    #                             # open connection protocol
+    #                             # 1) PC --> MC (R0)
+    #                             # 2) MC --> PC (A0)
+    #                             # 3) connection established
+    #                             while 1:
+    #                                 try:
+    #                                     # new protocol: generator_ser.write(b"R") # Request
+    #                                     #print("Bef write")
+    #                                     generator_ser.write(b"R0")
+    #                                     # generator_ser.write(bytearray(255))
+    #                                     print("Bef read")
+    #                                     ser_bytes = generator_ser.read(2)
+    #                                     print("In open protocol", ser_bytes)
+    #                                     if (len(ser_bytes)):
+    #                                         if ser_bytes[0] == ord("A") and ser_bytes[1] == ord("0"):
+    #                                         # new protocol: if ser_bytes[0] == ord('A'): # Accept
+    #                                             break
+    #                                 except Exception as exc:
+    #                                     print('error in open connection protocol', str(exc))   
 
-                            last_num = 0
-                            start_time = time.perf_counter()
+    #                         last_num = 0
+    #                         start_time = time.perf_counter()
                             
-                            while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
-                                if (self.stop_flag):
-                                    # Close connection
-                                    # Me --> C0
-                                    # Me <-- C0
-                                    # generator_ser.send_break(0)
-                                    while (1):
-                                        try:
-                                            generator_ser.write(b"C0")
-                                            ser_bytes = generator_ser.read(2)
-                                            print("In close protocol", ser_bytes)
-                                            if (len(ser_bytes)):
-                                                if ser_bytes[0] == ord("C") and ser_bytes[1] == ord("0"):
-                                                    break
-                                        except Exception as exc:
-                                            print('error in connection close protocol', str(exc)) 
-                                    generator_ser.send_break(0)
-                                    self.first_contact = 1
-                                    # Needed?
-                                    break   
-                                point_time = time.perf_counter()   
-                                ser_bytes = generator_ser.read(2)
-                                if len(ser_bytes) != 0:
-                                    try:
-                                        cur_byte = int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
-                                        if (abs(last_num - cur_byte) > 100):
-                                            print(bin(last_num | 0b1000000000000))
-                                            print(bin(cur_byte | 0b1000000000000))
-                                            print('===========')
-                                        last_num = cur_byte
-                                        cur_time = float(point_time - start_time)
-                                        self.buf1[cur_time] = cur_byte
-                                        QApplication.processEvents()
-                                        if self.is_online:
-                                            # TODO num of points depends on x scale
-                                            # now: 1.6 s => 5000 points
-                                            # 0.1 (4) s => 312 points
-                                            # 0.5 (5) s => 1562 points
-                                            # 1 (6) s => 3125 points
-                                            # 5 (7) s => 15625 points
-                                            # 10 (8) s => 31250 points                                          
-                                            val = self.mechanical_slider_frequency.value()
-                                            if (val < 4):
-                                                ind = 312
-                                            elif (val > 8):
-                                                ind = 31250
-                                            else:
-                                                if (val % 2):
-                                                    ind = 1562 * int(pow(10, (val - 5) // 2))
-                                                else:
-                                                    ind = 312 * int(pow(10, (val - 4) // 2))
-                                            print(ind)
-                                            # ind = 1000
-                                            if len(self.buf1) % 100:
-                                                self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
-                                            if (len(self.buf1) > 31250):
-                                                 self.buf1.pop(min(self.buf1.keys()))
-                                        else:
-                                            if (len(self.buf1) >= 5000):
-                                                self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
-                                                self.buf2 = self.buf1
-                                                self.buf1.clear()
+    #                         while not self.stop_flag: #or (self.stop_flag and generator_ser.inWaiting() != 0): # чтение байтов с порта
+    #                             if (self.stop_flag):
+    #                                 # Close connection
+    #                                 # Me --> C0
+    #                                 # Me <-- C0
+    #                                 # generator_ser.send_break(0)
+    #                                 while (1):
+    #                                     try:
+    #                                         generator_ser.write(b"C0")
+    #                                         ser_bytes = generator_ser.read(2)
+    #                                         print("In close protocol", ser_bytes)
+    #                                         if (len(ser_bytes)):
+    #                                             if ser_bytes[0] == ord("C") and ser_bytes[1] == ord("0"):
+    #                                                 break
+    #                                     except Exception as exc:
+    #                                         print('error in connection close protocol', str(exc)) 
+    #                                 generator_ser.send_break(0)
+    #                                 self.first_contact = 1
+    #                                 # Needed?
+    #                                 break   
+    #                             point_time = time.perf_counter()   
+    #                             ser_bytes = generator_ser.read(2)
+    #                             if len(ser_bytes) != 0:
+    #                                 try:
+    #                                     cur_byte = int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
+    #                                     if (abs(last_num - cur_byte) > 100):
+    #                                         print(bin(last_num | 0b1000000000000))
+    #                                         print(bin(cur_byte | 0b1000000000000))
+    #                                         print('===========')
+    #                                     last_num = cur_byte
+    #                                     cur_time = float(point_time - start_time)
+    #                                     self.buf1[cur_time] = cur_byte
+    #                                     QApplication.processEvents()
+    #                                     if self.is_online:
+    #                                         # TODO num of points depends on x scale
+    #                                         # now: 1.6 s => 5000 points
+    #                                         # 0.1 (4) s => 312 points
+    #                                         # 0.5 (5) s => 1562 points
+    #                                         # 1 (6) s => 3125 points
+    #                                         # 5 (7) s => 15625 points
+    #                                         # 10 (8) s => 31250 points                                          
+    #                                         val = self.mechanical_slider_frequency.value()
+    #                                         if (val < 4):
+    #                                             ind = 312
+    #                                         elif (val > 8):
+    #                                             ind = 31250
+    #                                         else:
+    #                                             if (val % 2):
+    #                                                 ind = 1562 * int(pow(10, (val - 5) // 2))
+    #                                             else:
+    #                                                 ind = 312 * int(pow(10, (val - 4) // 2))
+    #                                         print(ind)
+    #                                         # ind = 1000
+    #                                         if len(self.buf1) % 100:
+    #                                             self.reDraw(list(self.buf1.values())[-ind:], list(self.buf1.keys())[-ind:])
+    #                                         if (len(self.buf1) > 31250):
+    #                                              self.buf1.pop(min(self.buf1.keys()))
+    #                                     else:
+    #                                         if (len(self.buf1) >= 5000):
+    #                                             self.reDraw(list(self.buf1.values()), list(self.buf1.keys()))
+    #                                             self.buf2 = self.buf1
+    #                                             self.buf1.clear()
 
-                                    except Exception as e:
-                                        print('error in input', str(e))
+    #                                 except Exception as e:
+    #                                     print('error in input', str(e))
 
-                                else:
-                                    break
+    #                             else:
+    #                                 break
 
-                            print("Stop flag:", self.stop_flag)
+    #                         print("Stop flag:", self.stop_flag)
 
-                            return
+    #                         return
                             
-                        else:
-                            self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
-                            return    
-            except Exception as e:
-                print('error in common input', str(e))                
+    #                     else:
+    #                         self.com_error_message.showMessage("К данному порту не подключено серийное устройство")
+    #                         return    
+    #         except Exception as e:
+    #             print('error in common input', str(e))                
 
     def setEnable(self, val):
         self.fs_signal_form_combo.setEnabled(val)

@@ -198,6 +198,6 @@ def phase_modulate(fs_frequency, fs_duration, ss_amplitude, ss_frequency, freq_d
     
     twopi = 2 * np.pi
     for point in x:
-        y.append(ss_amplitude * np.sin(ss_frequency * twopi * point + freq_dev * np.sin(fs_frequency * point * twopi)))
+        y.append(ss_amplitude * np.cos(ss_frequency * twopi * point + freq_dev * np.cos(fs_frequency * point * twopi)))
     return x, y
 
