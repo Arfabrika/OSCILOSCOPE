@@ -23,9 +23,9 @@ from dvg_qdeviceio import QDeviceIO
 import serial.tools.list_ports
 import time
 
-DAQ_INTERVAL_MS    = 10  # 10 [ms]
-CHART_INTERVAL_MS  = 20  # 20 [ms]
-CHART_HISTORY_TIME = 10  # 10 [s]
+DAQ_INTERVAL_MS    = 0.1  # 10 [ms]
+CHART_INTERVAL_MS  = 0.2  # 20 [ms]
+CHART_HISTORY_TIME = 1000  # 10 [s]
 
 # from functools import partial, wraps
 # class CoolDownDecorator(object):
@@ -172,14 +172,14 @@ class RealSignalWindow(QWidget):
 
         self.setLayout(main_layout)
 
-        qdev = QDeviceIO(self) # self ???
-        qdev.create_worker_DAQ(
-        DAQ_function=self.receive_signal,
-        DAQ_interval_ms=DAQ_INTERVAL_MS,
-        DAQ_timer_type=QtCore.Qt.TimerType.PreciseTimer,
-        critical_not_alive_count=1
-        )
-        qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
+        # self.qdev = QDeviceIO(self) # self ???
+        # self.qdev.create_worker_DAQ(
+        # DAQ_function=self.get_data,
+        # DAQ_interval_ms=DAQ_INTERVAL_MS,
+        # DAQ_timer_type=QtCore.Qt.TimerType.PreciseTimer,
+        # critical_not_alive_count=1
+        # )
+        #self.qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
 
        
 
@@ -193,7 +193,9 @@ class RealSignalWindow(QWidget):
         self.timer_chart = QtCore.QTimer()
         # self.timer_chart.timeout.connect(self.history_chart_curve.update)
         #self.got_timer_signal()
-        self.connect(self.timer_chart, QtCore.SIGNAL('start_tim') , self.got_start_timer_signal)
+        #self.my_signal = QtCore.pyqtSignal(name='start_tim')
+        #self.my_signal.connect(self.got_start_timer_signal, QtCore.SIGNAL('start_tim'))
+        #self.connect(self.timer_chart, QtCore.SIGNAL('start_tim') , self.got_start_timer_signal)
 
         # self.timer = QtCore.QTimer()
         # self.timer.timeout.connect(self.reDraw)
@@ -208,11 +210,11 @@ class RealSignalWindow(QWidget):
         finish = QAction("Quit", self)
         finish.triggered.connect(self.closeEvent)
 
-    def got_start_timer_signal(self):
-        print("got signal")
-        self.timer_chart = QtCore.QTimer()
-        self.timer_chart.timeout.connect(self.history_chart_curve.update)
-        self.timer_chart.start(CHART_INTERVAL_MS)
+    # def got_start_timer_signal(self):
+    #     print("got signal")
+    #     self.timer_chart = QtCore.QTimer()
+    #     self.timer_chart.timeout.connect(self.history_chart_curve.update)
+    #     self.timer_chart.start(CHART_INTERVAL_MS)
 
     def change_singal_mode(self):
         # send to mc work mode
@@ -254,7 +256,11 @@ class RealSignalWindow(QWidget):
         # timer.timeout.connect(self.reDraw)
         #self.timer.start(10)
         self.setEnable(False)      
-        self.thread_manager.start(self.receive_signal)
+        #self.thread_manager.start(self.receive_signal)
+        self.receive_signal()
+        # self.timer_chart.timeout.connect(self.history_chart_curve.update)
+        # self.qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
+        # self.timer_chart.start(1)
 
     #@CoolDown(0.05)
     # function for drawing data from controller
@@ -280,8 +286,21 @@ class RealSignalWindow(QWidget):
         except Exception as e:
                 print('error in draw', str(e))
 
+    def get_data(self):
+        point_time = time.perf_counter()   
+                                
+        ser_bytes = self.generator_ser.readline().strip()#read(2)
+        if len(ser_bytes) != 0:
+            try:
+                cur_byte = int(ser_bytes) /1023.0*5.0#int.from_bytes(ser_bytes[::-1], "little", signed=False) /1023.0*5.0
+                cur_time = float(point_time - self.start_time)
+                
+                self.history_chart_curve.appendData(cur_time, cur_byte)
+            except Exception as e:
+                print('error in input', str(e))
+
     def receive_signal(self):
-        self.emit( QtCore.SIGNAL("start_tim"))
+        #self.emit( QtCore.SIGNAL("start_tim"))
         print("after emit")
         if self.serial_ports_combo.currentText() == '-':
             self.stop_flag = True
@@ -331,14 +350,24 @@ class RealSignalWindow(QWidget):
                                         print('error in open connection protocol', str(exc))   
 
                             last_num = []
-                            start_time = time.perf_counter()
-                            fix_time = start_time
+                            self.start_time = time.perf_counter()
+                            #fix_time = start_time
                             cnt = 1
-                            self.emit( QtCore.SIGNAL(u"start_tim"))
+                            #self.emit( QtCore.SIGNAL(u"start_tim"))
                             #print("bef wh")
                             # timer = QtCore.QTimer()
                             # timer.timeout.connect(self.reDraw)
                             #self.timer.start(10)
+                            self.qdev = QDeviceIO(self.generator_ser) # self ???
+                            self.qdev.create_worker_DAQ(
+                            DAQ_function=self.get_data,
+                            DAQ_interval_ms=DAQ_INTERVAL_MS,
+                            DAQ_timer_type=QtCore.Qt.TimerType.PreciseTimer,
+                            critical_not_alive_count=1
+                            )
+                            self.timer_chart.timeout.connect(self.history_chart_curve.update)
+                            self.qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
+                            self.timer_chart.start(1)
                             while not self.stop_flag:
                                 if (self.stop_flag):
                                     # Close connection
@@ -362,6 +391,7 @@ class RealSignalWindow(QWidget):
                                     # Needed?
                                     break   
                                 #print("bef p")
+                                """
                                 point_time = time.perf_counter()   
                                 
                                 ser_bytes = self.generator_ser.readline().strip()#read(2)
@@ -385,7 +415,7 @@ class RealSignalWindow(QWidget):
                                         #QApplication.processEvents()
                                         # try:
                                         #     if self.is_online:                                       
-                                        #         """val = self.mechanical_slider_frequency.value() + 1
+                                        #         ""val = self.mechanical_slider_frequency.value() + 1
                                         #         # if len(self.buf1) % 100 == 0:
                                         #         #     print("%100")
                                         #         if cur_time / val > 1:#if len(self.buf1) > 10:#if cur_time / val > 1: 
@@ -403,7 +433,7 @@ class RealSignalWindow(QWidget):
                                         #             #     del self.buf1[min(list(self.buf1.keys()))]
                                         #         else: 
                                         #         ## self.reDraw(list(self.buf1.values()), list(self.buf1.keys())) 
-                                        #         """
+                                        #         ""
                                         #         print("online")
                                         #         self.reDraw(list(self.buf1.values()), list(self.buf1.keys()), new_val=cur_byte)  
                                         #             #self.reDraw([cur_byte], [cur_time])
@@ -423,9 +453,10 @@ class RealSignalWindow(QWidget):
                                             #print("else", fix_time, time.perf_counter() - fix_time)
                                     except Exception as e:
                                         print('error in input', str(e))
-
-                                else:
-                                    break
+                                    """
+                                self.get_data()
+                                # else:
+                                #     break
 
                             print("Stop flag:", self.stop_flag)
                             print(last_num)
