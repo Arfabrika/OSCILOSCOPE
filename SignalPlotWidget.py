@@ -293,7 +293,7 @@ class SignalPlotWidget(PlotWidget):
     def generate_formula_am(self, signalMainArray, signalModuArray):
         return'Formula: (' + str(signalMainArray[1]) + ' + ' + str(signalModuArray[1]) + ' * cos(' + str(round((2 * np.pi) / (1 / signalModuArray[2]), 2)) + ' * t)) * cos(' + str(round((2 * np.pi) / (1 / signalMainArray[2]), 2)) + ' * t)'
 
-    def phase_modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, y_scale= 1):
+    def phase_modulate(self, fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude, freq_def, y_scale= 1):
         self.clear()    
         fs_x_scale_type, fs_y_scale_type = getScaleType(fs_frequency, fs_amplitude)
         ss_x_scale_type, ss_y_scale_type = getScaleType(ss_frequency, ss_amplitude)
@@ -302,7 +302,7 @@ class SignalPlotWidget(PlotWidget):
         freq_mas = [fs_frequency, ss_frequency]
         ampl_mas = [fs_amplitude, ss_amplitude]
         freq_mas, ampl_mas = getScaledParamsInMas(freq_mas, ampl_mas, x_type_mas, y_type_mas)
-        x, y = phase_modulate(fs_frequency, fs_duration, ss_amplitude, ss_frequency, fs_amplitude)
+        x, y = phase_modulate(fs_frequency, fs_duration, ss_amplitude, ss_frequency, freq_def)
 
         self.axes.set_xlim(-fs_duration, fs_duration )
         self.axes.set_ylim(-y_scale , y_scale)

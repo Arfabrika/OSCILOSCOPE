@@ -122,7 +122,7 @@ class PhaseWindow(QWidget):
         self.plot2_button = QPushButton('Показать график')
         self.plot2_button.clicked.connect(self.show_plot2)
                 
-        self.formula_spectr = QLabel('Общая формула спектра ЧМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * m/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * m/2) * cos((2*pi*f - 2*pi*F)t)')
+        self.formula_spectr = QLabel('Общая формула спектра ФМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * m/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * m/2) * cos((2*pi*f - 2*pi*F)t)')
 
         self.formula_spectr_layout = QHBoxLayout()
         self.formula_spectr_layout.addWidget(self.formula_spectr)
