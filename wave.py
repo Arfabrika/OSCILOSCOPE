@@ -63,22 +63,7 @@ def mod_generate_triangle_wave(freq, duration, ampl):
         i += 1
     return x, y
 
-def tmp(freq, duration, ampl):
-    num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq)
-    T = 1 / freq
-    omega = freq * 2 * np.pi
-    x = np.linspace(0, 10, num_of_points, endpoint=False)
-    y = [0] * len(x)
-    i = 1
-    for i in range(1, len(x) - 1):
-        y[i] = (ampl * x[i] / 2) * (np.sin(omega * x[i] / 4)**2) / ((omega * x[i] / 4)**2)
-        #ampl * np.sin(omega * x[i] / 2) / (omega * x[i] / 2)
-        if i % 396 == 0:
-            print(i, " ", y[i])
-        i += 1
-    return x, y
-
-def mod_generate_sawtooth_wave(freq, duration):
+def mod_generate_sawtooth_wave(freq, duration, ampl):
     num_of_points = 440 * max((int(10 / duration) if 10 / duration > 1 else int(duration)), freq)
     omega = freq * 2 * np.pi
     x = np.linspace(0, 10 if freq <= 5 else freq * 2, num_of_points, endpoint=False)
