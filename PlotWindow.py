@@ -24,4 +24,4 @@ class PlotWindow(QWidget):
     def plot_graph(self, signalDataArray):
         self.signal_plot.clear()
 
-        self.signal_plot.plot(signalDataArray[0], signalDataArray[2], signalDataArray[1], signalDataArray[3],flag=0)
+        self.signal_plot.plot(signalDataArray[0], signalDataArray[2], signalDataArray[1], signalDataArray[3])

@@ -101,4 +101,3 @@ class SpectrePlotWidget(PlotWidget):
     
     def generate_formula_am(self, signalMainArray, signalModuArray):
         return 'Formula:' + str(signalMainArray[1]) + ' * cos(' + str(round((2 * np.pi) / (1 / signalMainArray[2]), 2)) + 't) + ' + str(round(((2 * np.pi) / (1 / signalMainArray[2])) * ((signalModuArray[1] / signalMainArray[1]) / 2), 2)) + ' * cos(' + str(round(((2 * np.pi) / (1 / signalMainArray[2])) + ((2 * np.pi) / (1 / signalModuArray[2])), 2)) + ' * t))  + ' + str(round(((2 * np.pi) / (1 / signalMainArray[2])) * ((signalModuArray[1] / signalMainArray[1]) / 2), 2)) + ' * cos(' + str(round(((2 * np.pi) / (1 / signalMainArray[2])) - ((2 * np.pi) / (1 / signalModuArray[2])), 2)) + ' * t))'
-

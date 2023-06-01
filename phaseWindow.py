@@ -26,7 +26,7 @@ class PhaseWindow(QWidget):
         self.fs_signals_label = QLabel('Моделируемый сигнал')
         self.fs_signals_list = QComboBox(self)
         self.fs_signals_label.setBuddy(self.fs_signals_list)
-        self.fs_signals_list.currentIndexChanged.connect(self.showSignalInfo_fs)
+        self.fs_signals_list.currentIndexChanged.connect(self.showSignalInfo_ps)
 
         fs_signals_layout = QHBoxLayout()
         fs_signals_layout.addWidget(self.fs_signals_label)
@@ -122,7 +122,7 @@ class PhaseWindow(QWidget):
         self.plot2_button = QPushButton('Показать график')
         self.plot2_button.clicked.connect(self.show_plot2)
                 
-        self.formula_spectr = QLabel('Общая формула спектра ЧМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * m/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * m/2) * cos((2*pi*f - 2*pi*F)t)')
+        self.formula_spectr = QLabel('Общая формула спектра ФМ: u(t) = Uн * cos(2*pi*f*t) + (Uн * m/2) * cos((2*pi*f + 2*pi*F)t) + (Uн * m/2) * cos((2*pi*f - 2*pi*F)t)')
 
         self.formula_spectr_layout = QHBoxLayout()
         self.formula_spectr_layout.addWidget(self.formula_spectr)
@@ -209,7 +209,7 @@ class PhaseWindow(QWidget):
                 self.fs_signals_list.addItem('Сигнал ' + str(i + 1))
                 self.ss_signals_list.addItem('Сигнал ' + str(i + 1))
 
-    def showSignalInfo_fs(self):
+    def showSignalInfo_ps(self):
         if len(self.signalDataArray.getArray()) > 0:
             curSignal_fs = self.signalDataArray.getSignalByIndex(self.fs_signals_list.currentIndex()).getData() 
 

@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QDial
 )
+from PySide6.QtGui import QAction
 from ParametrWindow import ParametrWindow
 from PlotWindow import PlotWindow
 
@@ -16,10 +17,9 @@ from SpectrePlotWidget import SpectrePlotWidget
 from scalefuncs import *
 
 class FrequencyWindow(QWidget):
-    def __init__(self, signalDataArray, animation_flag = 1, parent=None):
+    def __init__(self, signalDataArray, parent=None):
         super().__init__(parent)
         self.signalDataArray = signalDataArray
-        self.animation_flag = animation_flag
         self.plot_window = PlotWindow()
         self.parametr_window = ParametrWindow()
 
@@ -181,9 +181,11 @@ class FrequencyWindow(QWidget):
         self.deviation_input.setValue(10)
         self.setLayout(tmp)
 
-    def updateSignalData(self, signalDataArray, animation_flag):
+        finish = QAction("Quit", self)
+        finish.triggered.connect(self.closeEvent)
+
+    def updateSignalData(self, signalDataArray):
         self.signalDataArray = signalDataArray
-        self.animation_flag = animation_flag
         self.setSignals()
 
     def closeEvent(self, event):
@@ -288,3 +290,12 @@ class FrequencyWindow(QWidget):
         self.parametr_window.show_parametrs(formula)
 
         self.parametr_window.show()
+
+    def closeEvent(self, event):
+        self.specter_plot.clear()
+        self.signal_plot.clear()
+        self.fs_signals_list.setCurrentIndex(1)
+        self.ss_signals_list.setCurrentIndex(1)
+        self.showSignalInfo_fs()
+        self.showSignalInfo_ss()
+        print("Frequency modulation window closed")

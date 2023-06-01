@@ -302,7 +302,6 @@ class SignalPlotWidget(PlotWidget):
         freq_mas = [fs_frequency, ss_frequency]
         ampl_mas = [fs_amplitude, ss_amplitude]
         freq_mas, ampl_mas = getScaledParamsInMas(freq_mas, ampl_mas, x_type_mas, y_type_mas)
-        # получаем модулированный сигнал
         x, y = phase_modulate(fs_frequency, fs_duration, ss_amplitude, ss_frequency, freq_dev)
 
         self.axes.set_xlim(-fs_duration, fs_duration )
@@ -313,9 +312,7 @@ class SignalPlotWidget(PlotWidget):
 
 
         self.axes.plot(x, y, color='#1f77b4')
-        self.view.draw()    
-
+        self.view.draw()      
 
     def generate_formula_phase(self, signal_fs, signal_ss, freq_dev):
         return 'Formula: ' + str(signal_ss[1]) + 'sin(' + str(signal_ss[2]) + r'$\cdot2\pi t + ' + str(1 / freq_dev) + 'sin(' + str(signal_fs[2]) + r'\cdot2\pi$' + 't))'
-  

@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QDial,
 )
+from PySide6.QtGui import QAction
 from ParametrWindow import ParametrWindow
 from PlotWindow import PlotWindow
 
@@ -14,10 +15,10 @@ from SignalPlotWidget import SignalPlotWidget
 from SpectrePlotWidget import SpectrePlotWidget
 
 class AmplitudeWindow(QWidget):
-    def __init__(self, signalDataArray, animation_flag, parent=None):
+    def __init__(self, signalDataArray, parent=None):
         super().__init__(parent)
         self.signalDataArray = signalDataArray
-        # self.animation_flag = animation_flag
+
         self.plot_window = PlotWindow()
         self.parametr_window = ParametrWindow()
         
@@ -108,8 +109,6 @@ class AmplitudeWindow(QWidget):
         ss_amplitude_layout.addWidget(self.ss_amplitude_label)
         ss_amplitude_layout.addWidget(self.ss_amplitude_spin)
 
-        ss_duration_layout = QHBoxLayout()
-
         self.plot2_button = QPushButton('Показать график')
         self.plot2_button.clicked.connect(self.show_plot2)
                 
@@ -165,7 +164,6 @@ class AmplitudeWindow(QWidget):
         signal_layout.addLayout(fs_signal)
         signal_layout.addLayout(ss_signal)
 
-
         main_layout = QVBoxLayout()
 
         self.parametrs = QPushButton('Показать параметры сигнала')
@@ -179,9 +177,11 @@ class AmplitudeWindow(QWidget):
         self.x_scale_value = 1.1
         self.y_scale_value = 1.1
 
-    def updateSignalData(self, signalDataArray, animation_flag):
+        finish = QAction("Quit", self)
+        finish.triggered.connect(self.closeEvent)
+
+    def updateSignalData(self, signalDataArray):
         self.signalDataArray = signalDataArray
-        # self.animation_flag = animation_flag
         self.setSignals()
 
     def closeEvent(self, event):
@@ -290,3 +290,11 @@ class AmplitudeWindow(QWidget):
 
         self.parametr_window.show()
        
+    def closeEvent(self, event):
+        self.specter_plot.clear()
+        self.signal_plot.clear()
+        self.fs_signals_list.setCurrentIndex(1)
+        self.ss_signals_list.setCurrentIndex(1)
+        self.showSignalInfo_fs()
+        self.showSignalInfo_ss()
+        print("Amplitude modulation window closed")
